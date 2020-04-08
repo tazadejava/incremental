@@ -7,30 +7,39 @@ import com.chroma.ColorSpace;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import me.dracorrein.incremental.Utils;
 
 public class Task {
 
-    protected String name, className;
-    protected LocalDateTime dueDate;
-    protected float originalEstimatedCompletionTime, estimatedCompletionTime;
-    protected List<String> subTasks;
+    private String name, className;
+    private LocalDateTime dueDate;
+    private float originalEstimatedCompletionTime, calculatedEstimatedCompletionTime;
+    private List<String> subTasks;
+
+    private boolean isTaskComplete;
+    private LocalDateTime lastTaskWorkTime;
+    private float loggedHoursToComplete;
 
     private int mainColor, endColor;
 
-    public Task(String name, LocalDateTime dueDate) {
+    public Task(String name, LocalDateTime dueDate, String taskClass, float calculatedEstimatedCompletionTime) {
         this.name = name;
         this.dueDate = dueDate;
+
+        isTaskComplete = false;
+        loggedHoursToComplete = 0;
+
+        setEstimatedCompletionTime(calculatedEstimatedCompletionTime);
+        setClassName(taskClass);
 
         calculateCardColors();
     }
 
     public void setEstimatedCompletionTime(float hours) {
         originalEstimatedCompletionTime = hours;
-        estimatedCompletionTime = hours;
+        calculatedEstimatedCompletionTime = hours;
     }
 
     private void calculateCardColors() {
@@ -59,7 +68,7 @@ public class Task {
                 return 1;
             }
 
-            return (float) (originalEstimatedCompletionTime - estimatedCompletionTime) / originalEstimatedCompletionTime;
+            return (float) (originalEstimatedCompletionTime - calculatedEstimatedCompletionTime) / originalEstimatedCompletionTime;
         }
     }
 
@@ -86,15 +95,26 @@ public class Task {
     }
 
     public String getEstimatedCompletionTimeFormatted() {
-        if(estimatedCompletionTime == (int) estimatedCompletionTime) {
-            return String.valueOf((int) estimatedCompletionTime);
+        if(calculatedEstimatedCompletionTime == (int) calculatedEstimatedCompletionTime) {
+            return String.valueOf((int) calculatedEstimatedCompletionTime);
         } else {
-            return String.valueOf(estimatedCompletionTime);
+            return String.valueOf(calculatedEstimatedCompletionTime);
+        }
+    }
+
+    public float getDailyHoursOfWork() {
+        LocalDate now = LocalDate.now();
+        LocalDate date = dueDate.toLocalDate();
+
+        if(date.equals(now) || date.equals(now.plusDays(1))) {
+            return calculatedEstimatedCompletionTime;
+        } else {
+            return (float) Math.ceil(calculatedEstimatedCompletionTime / java.time.temporal.ChronoUnit.DAYS.between(now, date) * 2f) / 2f;
         }
     }
 
     public float getEstimatedCompletionTime() {
-        return estimatedCompletionTime;
+        return calculatedEstimatedCompletionTime;
     }
 
     public List<String> getSubTasks() {
@@ -104,5 +124,27 @@ public class Task {
     public int getCompletedSubtasks() {
         //TODO: STORE AS VARIABLE
         return 0;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    public boolean isOverdue() {
+        return LocalDateTime.now().isAfter(dueDate);
+    }
+
+    public void incrementTask(float loggedHours) {
+        lastTaskWorkTime = LocalDateTime.now();
+        loggedHoursToComplete += loggedHours;
+    }
+
+    public void completeTask(float loggedHours) {
+        isTaskComplete = true;
+        loggedHoursToComplete += loggedHours;
+    }
+
+    public boolean shouldTaskBeActive(LocalDate date) {
+        return !lastTaskWorkTime.toLocalDate().equals(LocalDate.now()) && !isTaskComplete && !date.isAfter(dueDate.toLocalDate());
     }
 }

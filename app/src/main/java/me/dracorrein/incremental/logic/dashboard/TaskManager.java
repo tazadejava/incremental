@@ -9,10 +9,16 @@ public class TaskManager {
 
     //goal of this class: creates the days in which tasks are allocated; stores all the tasks
 
-    private List<Task> allTasks;
+    private List<Task> allTasks, completedTasks;
+    private List<RepeatingTask> allRepeatingTasks;
+
+    private List<String> allClasses;
 
     public TaskManager() {
         allTasks = new ArrayList<>();
+        completedTasks = new ArrayList<>();
+        allRepeatingTasks = new ArrayList<>();
+        allClasses = new ArrayList<>();
 
         load();
     }
@@ -30,16 +36,42 @@ public class TaskManager {
         save();
     }
 
+    public void addNewRepeatingTask(RepeatingTask repeatingTask) {
+        allRepeatingTasks.add(repeatingTask);
+
+        if(repeatingTask.hasPendingTasks()) {
+            for(Task task : repeatingTask.popAllPendingTasks()) {
+                addNewTask(task);
+            }
+        }
+    }
+
     public List<Task> getTasks() {
         return allTasks;
+    }
+
+    public List<String> getAllClasses() {
+        return allClasses;
+    }
+
+    private void addPendingRepeatingTasks() {
+        for(RepeatingTask repeatingTask : allRepeatingTasks) {
+            if(repeatingTask.hasPendingTasks()) {
+                for(Task task : repeatingTask.popAllPendingTasks()) {
+                    addNewTask(task);
+                }
+            }
+        }
     }
 
     public void load() {
         //TODO: get all tasks from the text files
 
-        addNewTask(new Task("Pset 3", LocalDateTime.now().plusDays(1)));
-        addNewTask(new Task("Finish Lab 1", LocalDateTime.now().plusDays(7)));
-        addNewTask(new Task("Clean Room", LocalDateTime.now().plusDays(13)));
+        addNewTask(new Task("Pset 3", LocalDateTime.now().plusDays(1), "", (int) (Math.random() * 5)));
+        addNewTask(new Task("Finish Lab 1", LocalDateTime.now().plusDays(7), "", (int) (Math.random() * 5)));
+        addNewTask(new Task("Clean Room", LocalDateTime.now().plusDays(13), "", (int) (Math.random() * 5)));
+
+        addPendingRepeatingTasks();
     }
 
     public void save() {

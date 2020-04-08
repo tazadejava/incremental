@@ -15,8 +15,8 @@ public class Day {
 
         tasks = new ArrayList<>();
         for(Task task : allTasks) {
-            //TODO: revise when it is overdue; if so, then show up again on future dates
-            if(task.getDueDate().toLocalDate().isAfter(date.plusDays(-1).toLocalDate())) {
+            System.out.println(date + " " + task);
+            if(task.shouldTaskBeActive(date.toLocalDate())) {
                 tasks.add(task);
             }
         }
@@ -25,16 +25,8 @@ public class Day {
     public float getEstimatedHoursOfWork() {
         float totalHours = 0;
 
-        LocalDate now = LocalDate.now();
-
         for(Task task : tasks) {
-            LocalDate date = task.getDueDate().toLocalDate();
-
-            if(date.equals(now) || date.equals(now.plusDays(1))) {
-                totalHours += task.getEstimatedCompletionTime();
-            } else {
-                totalHours += task.getEstimatedCompletionTime() / java.time.temporal.ChronoUnit.DAYS.between(date, now);
-            }
+            totalHours += task.getDailyHoursOfWork();
         }
 
         return Math.round(totalHours * 2) / 2.0f;

@@ -76,7 +76,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
         holder.taskClass.setText(task.getClassName());
 
         if(task.getSubTasks() == null) {
-            holder.taskSubtasksLeft.setText("est. " + task.getEstimatedCompletionTimeFormatted() + " hour" + (task.getEstimatedCompletionTime() == 1 ? "" : "s") + " remaining");
+            holder.taskSubtasksLeft.setText("est. " + task.getEstimatedCompletionTimeFormatted() + " hour" + (task.getEstimatedCompletionTime() == 1 ? "" : "s") + " remaining - do " + (task.getDailyHoursOfWork()) + " hours today!");
             holder.taskHoursRemaining.setText("");
         } else {
             holder.taskSubtasksLeft.setText(task.getCompletedSubtasks() + "/" + task.getSubTasks().size() + " subtasks completed");
