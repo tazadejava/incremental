@@ -64,6 +64,11 @@ public class TaskManager {
         }
     }
 
+    public void completeTask(Task task) {
+        allTasks.remove(task);
+        completedTasks.add(task);
+    }
+
     public void load() {
         //TODO: get all tasks from the text files
 

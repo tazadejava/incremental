@@ -7,20 +7,21 @@ import com.chroma.ColorSpace;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import me.dracorrein.incremental.Utils;
+import me.dracorrein.incremental.ui.main.IncrementalApplication;
 
 public class Task {
 
     private String name, className;
     private LocalDateTime dueDate;
     private float originalEstimatedCompletionTime, calculatedEstimatedCompletionTime;
-    private List<String> subTasks;
 
-    private boolean isTaskComplete;
-    private LocalDateTime lastTaskWorkTime;
-    private float loggedHoursToComplete;
+    private boolean isTaskComplete, isTaskInProgress, doneWithTaskForDay;
+    private LocalDateTime lastTaskWorkTime, lastTaskWorkStartTime;
+    private float loggedHoursToComplete, beginningLoggedHoursToComplete;
 
     private int mainColor, endColor;
 
@@ -30,6 +31,10 @@ public class Task {
 
         isTaskComplete = false;
         loggedHoursToComplete = 0;
+
+        //TODO: ADD A CHECK: IF A NEW DAY, need to update beginningLoggedHoursToComplete
+        beginningLoggedHoursToComplete = loggedHoursToComplete;
+        doneWithTaskForDay = false;
 
         setEstimatedCompletionTime(calculatedEstimatedCompletionTime);
         setClassName(taskClass);
@@ -61,15 +66,12 @@ public class Task {
     }
 
     public float getTaskCompletionPercentage() {
-        if(subTasks != null) {
-            return (float) getCompletedSubtasks() / subTasks.size();
-        } else {
-            if(originalEstimatedCompletionTime == 0) {
-                return 1;
-            }
-
-            return (float) (originalEstimatedCompletionTime - calculatedEstimatedCompletionTime) / originalEstimatedCompletionTime;
-        }
+//        if(originalEstimatedCompletionTime == 0) {
+//            return 1;
+//        }
+//
+//        return (float) (originalEstimatedCompletionTime - calculatedEstimatedCompletionTime) / originalEstimatedCompletionTime;
+        return loggedHoursToComplete / originalEstimatedCompletionTime;
     }
 
     public String getName() {
@@ -109,21 +111,12 @@ public class Task {
         if(date.equals(now) || date.equals(now.plusDays(1))) {
             return calculatedEstimatedCompletionTime;
         } else {
-            return (float) Math.ceil(calculatedEstimatedCompletionTime / java.time.temporal.ChronoUnit.DAYS.between(now, date) * 2f) / 2f;
+            return (float) Math.ceil(calculatedEstimatedCompletionTime / ChronoUnit.DAYS.between(now, date) * 2f) / 2f;
         }
     }
 
     public float getEstimatedCompletionTime() {
         return calculatedEstimatedCompletionTime;
-    }
-
-    public List<String> getSubTasks() {
-        return subTasks;
-    }
-
-    public int getCompletedSubtasks() {
-        //TODO: STORE AS VARIABLE
-        return 0;
     }
 
     public void setClassName(String className) {
@@ -134,6 +127,20 @@ public class Task {
         return LocalDateTime.now().isAfter(dueDate);
     }
 
+    public void startTask() {
+        lastTaskWorkStartTime = LocalDateTime.now();
+        isTaskInProgress = true;
+    }
+
+    public float getCurrentTaskWorkHours() {
+        float hoursSpent = lastTaskWorkStartTime.until(LocalDateTime.now(), ChronoUnit.MINUTES) / 60f;
+        return (float) Math.ceil(hoursSpent * 10f) / 10f;
+    }
+
+    public void completeTaskForTheDay() {
+        doneWithTaskForDay = true;
+    }
+
     public void incrementTask(float loggedHours) {
         lastTaskWorkTime = LocalDateTime.now();
         loggedHoursToComplete += loggedHours;
@@ -141,10 +148,27 @@ public class Task {
 
     public void completeTask(float loggedHours) {
         isTaskComplete = true;
+
         loggedHoursToComplete += loggedHours;
+
+        IncrementalApplication.taskManager.completeTask(this);
     }
 
     public boolean shouldTaskBeActive(LocalDate date) {
-        return !lastTaskWorkTime.toLocalDate().equals(LocalDate.now()) && !isTaskComplete && !date.isAfter(dueDate.toLocalDate());
+        if(isTaskComplete) {
+            return false;
+        }
+        if(date.isAfter(dueDate.toLocalDate())) {
+            return false;
+        }
+        if(lastTaskWorkTime != null && lastTaskWorkTime.toLocalDate().equals(LocalDate.now()) && doneWithTaskForDay) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean isTaskInProgress() {
+        return isTaskInProgress;
     }
 }

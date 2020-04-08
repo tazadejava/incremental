@@ -37,6 +37,10 @@ public class Day {
         return (estimation == (int) estimation) ? "" + (int) estimation : "" + estimation;
     }
 
+    public void completeTask(Task task) {
+        tasks.remove(task);
+    }
+
     public String getDayFormatted() {
         if(date.toLocalDate().equals(LocalDate.now())) {
             return "Today, " + date.getMonthValue() + "/" + date.getDayOfMonth();
@@ -45,6 +49,10 @@ public class Day {
         String dayOfWeek = date.getDayOfWeek().toString();
 
         return dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase() + ", " + date.getMonthValue() + "/" + date.getDayOfMonth();
+    }
+
+    public boolean isToday() {
+        return date.toLocalDate().equals(LocalDate.now());
     }
 
     public List<Task> getTasks() {
