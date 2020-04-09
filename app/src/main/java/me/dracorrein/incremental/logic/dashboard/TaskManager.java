@@ -1,8 +1,10 @@
 package me.dracorrein.incremental.logic.dashboard;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 public class TaskManager {
@@ -12,6 +14,13 @@ public class TaskManager {
     private List<Task> allTasks, completedTasks;
     private List<RepeatingTask> allRepeatingTasks;
 
+    private HashMap<String, List<Task>> completedTasksByTimePeriod;
+    private HashMap<String, List<RepeatingTask>> completedRepeatingTasksByTimePeriod;
+
+    private String currentTimePeriod;
+    private List<String> timePeriods;
+    private HashMap<String, LocalDate[]> timePeriodSpans;
+
     private List<String> allClasses;
 
     public TaskManager() {
@@ -19,6 +28,13 @@ public class TaskManager {
         completedTasks = new ArrayList<>();
         allRepeatingTasks = new ArrayList<>();
         allClasses = new ArrayList<>();
+
+        completedTasksByTimePeriod = new HashMap<>();
+        timePeriods = new ArrayList<>();
+        timePeriodSpans = new HashMap<>();
+
+        timePeriods.add("Default");
+        currentTimePeriod = timePeriods.get(0);
 
         load();
     }
@@ -34,6 +50,29 @@ public class TaskManager {
         });
 
         save();
+    }
+
+    //return false if not allowed in some way: cannot be duplicate name, cannot end before it starts, cannot overlap with another date range
+    //sets as current time period
+    public boolean addNewTimePeriod(String timePeriod, LocalDate startDate, LocalDate endDate) {
+        if(timePeriods.contains(timePeriod)) {
+            return false;
+        }
+        if(endDate.isBefore(startDate)) {
+            return false;
+        }
+
+        for(LocalDate[] span : timePeriodSpans.values()) {
+            if(span[0].isBefore(startDate) || span[1].isAfter(endDate)) {
+                return false;
+            }
+        }
+
+        timePeriods.add(timePeriod);
+        currentTimePeriod = timePeriod;
+        timePeriodSpans.put(timePeriod, new LocalDate[] {startDate, endDate});
+
+        return true;
     }
 
     public void addNewRepeatingTask(RepeatingTask repeatingTask) {
@@ -64,17 +103,30 @@ public class TaskManager {
         }
     }
 
+    public String getCurrentTimePeriod() {
+        return currentTimePeriod;
+    }
+
     public void completeTask(Task task) {
         allTasks.remove(task);
-        completedTasks.add(task);
+
+        completedTasksByTimePeriod.putIfAbsent(currentTimePeriod, new ArrayList<>());
+        completedTasksByTimePeriod.get(task.getTimePeriod()).add(task);
+    }
+
+    public void completeRepeatingTask(RepeatingTask task) {
+        allRepeatingTasks.remove(task);
+
+        completedRepeatingTasksByTimePeriod.putIfAbsent(currentTimePeriod, new ArrayList<>());
+        completedRepeatingTasksByTimePeriod.get(task.getTimePeriod()).add(task);
     }
 
     public void load() {
         //TODO: get all tasks from the text files
 
-        addNewTask(new Task("Pset 3", LocalDateTime.now().plusDays(1), "", (int) (Math.random() * 5)));
-        addNewTask(new Task("Finish Lab 1", LocalDateTime.now().plusDays(7), "", (int) (Math.random() * 5)));
-        addNewTask(new Task("Clean Room", LocalDateTime.now().plusDays(13), "", (int) (Math.random() * 5)));
+        addNewTask(new Task("Pset 3", LocalDateTime.now().plusDays(1), "", "Default", (int) (Math.random() * 5)));
+        addNewTask(new Task("Finish Lab 1", LocalDateTime.now().plusDays(7), "", "Default", (int) (Math.random() * 5)));
+        addNewTask(new Task("Clean Room", LocalDateTime.now().plusDays(13), "", "Default", (int) (Math.random() * 5)));
 
         addPendingRepeatingTasks();
     }

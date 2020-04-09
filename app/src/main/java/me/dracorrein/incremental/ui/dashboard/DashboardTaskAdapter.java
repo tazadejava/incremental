@@ -21,7 +21,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import me.dracorrein.incremental.R;
 import me.dracorrein.incremental.logic.dashboard.Day;
 import me.dracorrein.incremental.logic.dashboard.Task;
-import me.dracorrein.incremental.ui.create_task.CreateTaskActivity;
+
+import java.util.HashMap;
 
 public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdapter.ViewHolder> {
 
@@ -51,10 +52,16 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
 
     private Context context;
     private Day day;
+    private DashboardAdapter dashboardAdapter;
 
-    public DashboardTaskAdapter(Context context, Day day) {
+    private HashMap<Task, ConstraintLayout> taskLayout;
+
+    public DashboardTaskAdapter(Context context, Day day, DashboardAdapter dashboardAdapter) {
         this.context = context;
         this.day = day;
+        this.dashboardAdapter = dashboardAdapter;
+
+        taskLayout = new HashMap<>();
     }
 
     @NonNull
@@ -70,11 +77,14 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
 
         updateTaskColor(task, holder.taskCardConstraintLayout);
 
+        taskLayout.put(task, holder.taskCardConstraintLayout);
+
         holder.taskName.setText(task.getName());
         holder.taskClass.setText(task.getClassName());
 
-        holder.taskSubtasksLeft.setText("est. " + task.getEstimatedCompletionTimeFormatted() + " hour" + (task.getEstimatedCompletionTime() == 1 ? "" : "s") + " remaining - do " + (task.getDailyHoursOfWork()) + " hours today!");
         holder.taskHoursRemaining.setText("");
+        holder.taskSubtasksLeft.setText("est. " + task.getEstimatedCompletionTimeFormatted() + " hour" + (task.getEstimatedCompletionTime() == 1 ? "" : "s") + " remaining" +
+                "\n" + (task.getTodaysHoursOfWorkFormatted()) + " hour" + (task.getTodaysHoursOfWork() == 1 ? "" : "s") + " of work");
 
         holder.taskDueDate.setText(task.getDueDateFormatted());
 
@@ -93,6 +103,12 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
         } else {
             holder.actionTaskText.setVisibility(View.GONE);
             holder.horizontalLine.setVisibility(View.GONE);
+        }
+    }
+
+    protected void updateTaskColor(Task task) {
+        if(taskLayout.containsKey(task)) {
+            updateTaskColor(task, taskLayout.get(task));
         }
     }
 
@@ -135,6 +151,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                     }
 
                     input.setText(estimatedHours);
+                    input.setSelectAllOnFocus(true);
                     builder.setView(input);
 
                     builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
@@ -153,8 +170,10 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                                     task.completeTaskForTheDay();
 
                                     day.completeTask(task);
-                                    updateTaskColor(task, taskCardConstraintLayout);
+                                    dashboardAdapter.updateTaskColors(task);
                                     updateLayout();
+
+                                    hideKeyboard(v);
                                 }
                             });
 
@@ -166,8 +185,10 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
                                     day.completeTask(task);
-                                    updateTaskColor(task, taskCardConstraintLayout);
+                                    dashboardAdapter.updateTaskColors(task);
                                     updateLayout();
+
+                                    hideKeyboard(v);
                                 }
                             });
 
@@ -178,13 +199,13 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
-                                    updateTaskColor(task, taskCardConstraintLayout);
+                                    dashboardAdapter.updateTaskColors(task);
+
+                                    hideKeyboard(v);
                                 }
                             });
 
                             finishedTaskBuilder.show();
-                            InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
                         }
                     });
 
@@ -213,6 +234,16 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                 }
             };
         }
+    }
+
+    private void hideKeyboard(View v) {
+        v.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            }
+        }, 50);
     }
 
     private void updateLayout() {

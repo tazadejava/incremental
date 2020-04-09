@@ -1,27 +1,29 @@
 package me.dracorrein.incremental.logic.dashboard;
 
+import me.dracorrein.incremental.ui.main.IncrementalApplication;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class RepeatingTask {
 
-    private String taskName;
     private DayOfWeek dayOfWeekTaskBegins, dayOfWeekTaskDue;
     private LocalTime timeTaskDue;
-    private String taskClass;
+    private String taskClass, timePeriod;
     private float estimatedHoursCompletion;
 
-    private List<String> eventNames;
+    private String[] taskNames;
+    private int currentTaskIndex;
 
     private LocalDate lastPendingTaskUpdate;
 
-    public RepeatingTask(String taskName, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, String taskClass, float estimatedHoursCompletion) {
-        this.taskName = taskName;
+    public RepeatingTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, String taskClass, String timePeriod, float estimatedHoursCompletion) {
+        this.taskNames = taskNames;
+        currentTaskIndex = 0;
 
         this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
         this.dayOfWeekTaskDue = dayOfWeekTaskDue;
@@ -29,15 +31,13 @@ public class RepeatingTask {
         this.taskClass = taskClass;
         this.estimatedHoursCompletion = estimatedHoursCompletion;
 
+        this.timePeriod = timePeriod;
+
         lastPendingTaskUpdate = LocalDate.now().minusDays(1);
     }
 
     public void setDayOfWeekTaskBegins(DayOfWeek dayOfWeek) {
         dayOfWeekTaskBegins = dayOfWeek;
-    }
-
-    public void setEventNames(List<String> eventNames) {
-        this.eventNames = eventNames;
     }
 
     public DayOfWeek getDayOfWeekTaskBegins() {
@@ -48,8 +48,8 @@ public class RepeatingTask {
         return dayOfWeekTaskDue;
     }
 
-    public List<String> getEventNames() {
-        return eventNames;
+    public String getTimePeriod() {
+        return timePeriod;
     }
 
     private int getDaysBetweenDaysOfWeek(DayOfWeek start, DayOfWeek end) {
@@ -99,15 +99,26 @@ public class RepeatingTask {
 
     //release pending tasks, and empty the task list
     public List<Task> popAllPendingTasks() {
+        if(currentTaskIndex == taskNames.length) {
+            return new ArrayList<>();
+        }
+
         List<LocalDateTime> pendingTaskDates = getMissedTaskDays();
         lastPendingTaskUpdate = LocalDate.now();
 
         List<Task> pendingTasks = new ArrayList<>();
 
         for(LocalDateTime dueDate : pendingTaskDates) {
-            Task task = new Task(taskName, dueDate, taskClass, estimatedHoursCompletion);
+            Task task = new Task(taskNames[currentTaskIndex], dueDate, taskClass, timePeriod, estimatedHoursCompletion);
 
             pendingTasks.add(task);
+
+            currentTaskIndex++;
+
+            if(currentTaskIndex == taskNames.length) {
+                IncrementalApplication.taskManager.completeRepeatingTask(this);
+                break;
+            }
         }
 
         return pendingTasks;

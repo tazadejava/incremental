@@ -3,6 +3,7 @@ package me.dracorrein.incremental.ui.main;
 import android.content.Intent;
 import android.os.Bundle;
 
+import android.widget.TextView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -28,6 +29,8 @@ import me.dracorrein.incremental.ui.create_task.CreateTaskActivity;
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
+
+    private TextView currentTimePeriod;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +59,9 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+
+        currentTimePeriod = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriod);
+        currentTimePeriod.setText(IncrementalApplication.taskManager.getCurrentTimePeriod());
     }
 
     @Override

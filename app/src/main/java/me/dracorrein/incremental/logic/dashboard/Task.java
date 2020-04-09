@@ -15,7 +15,7 @@ import me.dracorrein.incremental.ui.main.IncrementalApplication;
 
 public class Task {
 
-    private String name, className;
+    private String name, className, timePeriod;
     private LocalDateTime dueDate;
     private float originalEstimatedCompletionTime, calculatedEstimatedCompletionTime;
 
@@ -25,7 +25,7 @@ public class Task {
 
     private int mainColor, endColor;
 
-    public Task(String name, LocalDateTime dueDate, String taskClass, float calculatedEstimatedCompletionTime) {
+    public Task(String name, LocalDateTime dueDate, String taskClass, String timePeriod, float calculatedEstimatedCompletionTime) {
         this.name = name;
         this.dueDate = dueDate;
 
@@ -38,6 +38,8 @@ public class Task {
 
         setEstimatedCompletionTime(calculatedEstimatedCompletionTime);
         setClassName(taskClass);
+
+        this.timePeriod = timePeriod;
 
         calculateCardColors();
     }
@@ -104,7 +106,7 @@ public class Task {
         }
     }
 
-    public float getDailyHoursOfWork() {
+    public float getTodaysHoursOfWork() {
         LocalDate now = LocalDate.now();
         LocalDate date = dueDate.toLocalDate();
 
@@ -114,6 +116,17 @@ public class Task {
             return (float) Math.ceil(calculatedEstimatedCompletionTime / ChronoUnit.DAYS.between(now, date) * 2f) / 2f;
         }
     }
+
+    public String getTodaysHoursOfWorkFormatted() {
+        float hours = getTodaysHoursOfWork();
+
+        if(hours == (int) hours) {
+            return "" + (int) hours;
+        } else {
+            return "" + hours;
+        }
+    }
+
 
     public float getEstimatedCompletionTime() {
         return calculatedEstimatedCompletionTime;
@@ -170,5 +183,9 @@ public class Task {
 
     public boolean isTaskInProgress() {
         return isTaskInProgress;
+    }
+
+    public String getTimePeriod() {
+        return timePeriod;
     }
 }

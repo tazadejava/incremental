@@ -12,10 +12,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import me.dracorrein.incremental.R;
 import me.dracorrein.incremental.logic.dashboard.Day;
+import me.dracorrein.incremental.logic.dashboard.Task;
 import me.dracorrein.incremental.ui.main.IncrementalApplication;
 
 public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.ViewHolder> {
@@ -38,8 +40,12 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
 
     private List<Day> daysList;
 
+    private List<DashboardTaskAdapter> taskAdapters;
+
     public DashboardAdapter(Context context) {
         this.context = context;
+
+        taskAdapters = new ArrayList<>();
 
         resetDays();
     }
@@ -63,8 +69,11 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Day day = daysList.get(position);
 
-        holder.taskList.setAdapter(new DashboardTaskAdapter(context, day));
+        DashboardTaskAdapter adapter;
+        holder.taskList.setAdapter(adapter = new DashboardTaskAdapter(context, day, this));
         holder.taskList.setLayoutManager(new LinearLayoutManager(context));
+
+        taskAdapters.add(adapter);
 
         holder.taskName.setText(day.getDayFormatted());
 
@@ -72,6 +81,12 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
             holder.estimatedTime.setText("No tasks here!");
         } else {
             holder.estimatedTime.setText("est. " + day.getEstimatedHoursOfWorkFormatted() + " hour" + (day.getEstimatedHoursOfWork() == 1 ? "" : "s") + " of work remaining");
+        }
+    }
+
+    public void updateTaskColors(Task task) {
+        for(DashboardTaskAdapter adapter : taskAdapters) {
+            adapter.updateTaskColor(task);
         }
     }
 

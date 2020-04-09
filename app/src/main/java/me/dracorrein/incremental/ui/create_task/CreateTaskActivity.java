@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import me.dracorrein.incremental.R;
 import me.dracorrein.incremental.Utils;
 import me.dracorrein.incremental.logic.dashboard.RepeatingTask;
@@ -55,6 +57,9 @@ public class CreateTaskActivity extends AppCompatActivity {
     private ConstraintLayout repeatingEventDateLayout;
     private TextView startDate;
     private LocalDate startDateFormatted;
+
+    private RecyclerView repeatingTaskNamesList;
+    private RepeatingTaskAdapter repeatingTaskAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,6 +167,9 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                         startDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + startDateFormatted.getMonthValue()
                                 + "/" + startDateFormatted.getDayOfMonth() + "/" + startDateFormatted.getYear());
+
+                        repeatingTaskAdapter.setStartDate(startDateFormatted);
+                        repeatingTaskAdapter.notifyDataSetChanged();
                     }
                 });
 
@@ -174,18 +182,27 @@ public class CreateTaskActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked) {
                     repeatingEventDateLayout.setVisibility(View.VISIBLE);
+                    nameOfTaskEdit.setEnabled(false);
 
                     startDateFormatted = LocalDate.now();
                     String dayOfWeek = startDateFormatted.getDayOfWeek().toString();
                     startDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + startDateFormatted.getMonthValue()
                             + "/" + startDateFormatted.getDayOfMonth()+ "/" + startDateFormatted.getYear());
+
+                    repeatingTaskAdapter.setStartDate(startDateFormatted);
                 } else {
                     repeatingEventDateLayout.setVisibility(View.GONE);
+                    nameOfTaskEdit.setEnabled(true);
 
                     startDateFormatted = null;
                 }
             }
         });
+
+        repeatingTaskNamesList = findViewById(R.id.repeatingTaskNamesList);
+
+        repeatingTaskNamesList.setAdapter(repeatingTaskAdapter = new RepeatingTaskAdapter(repeatingTaskNamesList, startDateFormatted));
+        repeatingTaskNamesList.setLayoutManager(new LinearLayoutManager(this));
 
         classSpinner = findViewById(R.id.classSpinner);
 
@@ -257,12 +274,14 @@ public class CreateTaskActivity extends AppCompatActivity {
                 String taskClass = classSpinner.getSelectedItem().toString();
                 float estimatedHours = Float.parseFloat(estimatedHoursEdit.getText().toString());
 
+                String timePeriod = taskManager.getCurrentTimePeriod();
+
                 if(startDateFormatted != null) {
-                    RepeatingTask repeatingTask = new RepeatingTask(nameOfTaskEdit.getText().toString(), startDateFormatted.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeFormatted, taskClass, estimatedHours);
+                    RepeatingTask repeatingTask = new RepeatingTask(repeatingTaskAdapter.getTaskNames(), startDateFormatted.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeFormatted, taskClass, timePeriod, estimatedHours);
 
                     taskManager.addNewRepeatingTask(repeatingTask);
                 } else {
-                    Task task = new Task(nameOfTaskEdit.getText().toString(), dueDateAndTime, taskClass, estimatedHours);
+                    Task task = new Task(nameOfTaskEdit.getText().toString(), dueDateAndTime, taskClass, timePeriod, estimatedHours);
 
                     taskManager.addNewTask(task);
                 }

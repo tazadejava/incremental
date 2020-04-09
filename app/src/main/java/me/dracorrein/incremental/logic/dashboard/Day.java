@@ -26,7 +26,7 @@ public class Day {
         float totalHours = 0;
 
         for(Task task : tasks) {
-            totalHours += task.getDailyHoursOfWork();
+            totalHours += task.getTodaysHoursOfWork();
         }
 
         return Math.round(totalHours * 2) / 2.0f;

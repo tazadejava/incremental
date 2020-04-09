@@ -104,8 +104,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/repeatingEventDateLayout"
-        android:layout_width="409dp"
-        android:layout_height="46dp"
+        android:layout_width="0dp"
+        android:layout_height="150dp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/horizontalLine"
         app:layout_constraintEnd_toEndOf="parent"
@@ -135,6 +135,16 @@
             app:layout_constraintStart_toEndOf="@+id/startDateText"
             app:layout_constraintTop_toTopOf="@+id/guideline" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/repeatingTaskNamesList"
+            android:scrollbars="vertical"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/startDate" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <View
@@ -142,12 +152,12 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:background="@color/separatorGray"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/repeatingEventSwitch" />
+        app:layout_constraintTop_toBottomOf="@+id/repeatingEventDateLayout" />
 
     <TextView
         android:id="@+id/textView5"
