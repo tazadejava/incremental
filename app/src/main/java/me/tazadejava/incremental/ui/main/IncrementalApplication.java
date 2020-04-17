@@ -1,14 +1,18 @@
-package me.dracorrein.incremental.ui.main;
+package me.tazadejava.incremental.ui.main;
 
-import me.dracorrein.incremental.logic.dashboard.TaskManager;
+import me.tazadejava.incremental.logic.dashboard.TaskManager;
 
 public class IncrementalApplication extends android.app.Application {
 
     public static TaskManager taskManager;
 
+    public static String filesDir;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+        filesDir = getFilesDir().getAbsolutePath();
 
         taskManager = new TaskManager();
     }

@@ -1,4 +1,4 @@
-package me.dracorrein.incremental.ui.dashboard;
+package me.tazadejava.incremental.ui.dashboard;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -18,9 +18,9 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import me.dracorrein.incremental.R;
-import me.dracorrein.incremental.logic.dashboard.Day;
-import me.dracorrein.incremental.logic.dashboard.Task;
+import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.dashboard.Day;
+import me.tazadejava.incremental.logic.dashboard.Task;
 
 import java.util.HashMap;
 
@@ -80,7 +80,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
         taskLayout.put(task, holder.taskCardConstraintLayout);
 
         holder.taskName.setText(task.getName());
-        holder.taskClass.setText(task.getClassName());
+        holder.taskClass.setText(task.getGroupName());
 
         holder.taskHoursRemaining.setText("");
         holder.taskSubtasksLeft.setText("est. " + task.getEstimatedCompletionTimeFormatted() + " hour" + (task.getEstimatedCompletionTime() == 1 ? "" : "s") + " remaining" +
@@ -171,7 +171,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
 
                                     day.completeTask(task);
                                     dashboardAdapter.updateTaskColors(task);
-                                    updateLayout();
+                                    updateLayout(task);
 
                                     hideKeyboard(v);
                                 }
@@ -186,7 +186,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
 
                                     day.completeTask(task);
                                     dashboardAdapter.updateTaskColors(task);
-                                    updateLayout();
+                                    updateLayout(task);
 
                                     hideKeyboard(v);
                                 }
@@ -246,8 +246,12 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
         }, 50);
     }
 
-    private void updateLayout() {
-        notifyDataSetChanged();
+    private void updateLayout(Task task) {
+        dashboardAdapter.updateDayLayouts(task);
+    }
+
+    public boolean hasTask(Task task) {
+        return taskLayout.containsKey(task);
     }
 
     @Override

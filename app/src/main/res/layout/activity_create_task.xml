@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.create_task.CreateTaskActivity">
+    tools:context=".ui.create.CreateTaskActivity">
 
     <EditText
         android:id="@+id/nameOfTask"
@@ -20,6 +20,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/dueDateGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="dueDate,textView2,dueTime,at,dueDateLine" />
 
     <TextView
         android:id="@+id/textView2"
@@ -78,7 +85,7 @@
         app:layout_constraintTop_toBottomOf="@+id/dueDate" />
 
     <View
-        android:id="@+id/view4"
+        android:id="@+id/dueDateLine"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginStart="8dp"
@@ -88,6 +95,51 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/dueTime" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/startText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Start:"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="@+id/startDateNonRepeating"
+        app:layout_constraintEnd_toStartOf="@+id/startDateNonRepeating"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/startDateNonRepeating" />
+
+    <TextView
+        android:id="@+id/startDateNonRepeating"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Lunes, 10 de febrero de 2020"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/startText"
+        app:layout_constraintTop_toBottomOf="@+id/dueDateLine" />
+
+    <View
+        android:id="@+id/startDateLine"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@color/separatorGray"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/startDateNonRepeating" />
 
     <Switch
         android:id="@+id/repeatingEventSwitch"
@@ -100,7 +152,7 @@
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view4" />
+        app:layout_constraintTop_toBottomOf="@+id/startDateLine" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/repeatingEventDateLayout"
@@ -137,9 +189,9 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/repeatingTaskNamesList"
-            android:scrollbars="vertical"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:scrollbars="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

@@ -1,4 +1,4 @@
-package me.dracorrein.incremental.logic.dashboard;
+package me.tazadejava.incremental.logic.dashboard;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

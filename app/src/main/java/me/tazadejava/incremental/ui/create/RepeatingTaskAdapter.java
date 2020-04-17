@@ -1,4 +1,4 @@
-package me.dracorrein.incremental.ui.create_task;
+package me.tazadejava.incremental.ui.create;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -11,7 +11,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import me.dracorrein.incremental.R;
+import me.tazadejava.incremental.R;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -39,6 +39,7 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
     }
 
     private RecyclerView recyclerView;
+    private CreateTaskActivity activity;
 
     private List<String> taskNames;
 
@@ -49,9 +50,10 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
 
     private LocalDate startDate;
 
-    public RepeatingTaskAdapter(RecyclerView recyclerView, LocalDate startDate) {
+    public RepeatingTaskAdapter(RecyclerView recyclerView, LocalDate startDate, CreateTaskActivity activity) {
         this.recyclerView = recyclerView;
         this.startDate = startDate;
+        this.activity = activity;
 
         taskNames = new ArrayList<>();
         disabledPositions = new HashSet<>();
@@ -114,16 +116,16 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
             public void afterTextChanged(Editable s) {
                 System.out.println("CHANGED " + position);
                 String text = holder.fillInBlankEdit.getText().toString();
-                if (!text.isEmpty()) {
-                    if (position == taskNames.size()) {
-                        taskNames.add(text);
-                        lastSelectedEdit = position;
+                if (position == taskNames.size()) {
+                    taskNames.add(text);
+                    lastSelectedEdit = position;
 
-                        refreshLayout();
-                    } else {
-                        taskNames.set(position, text);
-                    }
+                    refreshLayout();
+                } else {
+                    taskNames.set(position, text);
                 }
+
+                activity.updateSaveButton();
             }
         });
 
@@ -142,6 +144,8 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
 
                     }
                 }
+
+                activity.updateSaveButton();
             }
         });
 
@@ -162,6 +166,8 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
                 if(isChecked) {
                     disabledPositions.remove(position);
                 }
+
+                activity.updateSaveButton();
             }
         });
     }
@@ -196,5 +202,15 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
         }
 
         return taskNamesRevised.toArray(new String[0]);
+    }
+
+    public boolean areAllTasksNamed() {
+        for(int i = 0; i < taskNames.size(); i++) {
+            if(taskNames.get(i).isEmpty() && !disabledPositions.contains(i)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

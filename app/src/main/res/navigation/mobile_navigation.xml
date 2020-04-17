@@ -7,13 +7,13 @@
 
     <fragment
         android:id="@+id/nav_dashboard"
-        android:name="me.dracorrein.incremental.ui.dashboard.DashboardFragment"
+        android:name="me.tazadejava.incremental.ui.dashboard.DashboardFragment"
         android:label="@string/menu_dashboard"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/nav_archive"
-        android:name="me.dracorrein.incremental.ui.archive.GalleryFragment"
+        android:name="me.tazadejava.incremental.ui.archive.GalleryFragment"
         android:label="@string/menu_archive"
         tools:layout="@layout/fragment_gallery" />
 </navigation>

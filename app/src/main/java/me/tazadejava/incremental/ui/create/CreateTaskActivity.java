@@ -1,4 +1,4 @@
-package me.dracorrein.incremental.ui.create_task;
+package me.tazadejava.incremental.ui.create;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -25,7 +25,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -35,19 +34,20 @@ import java.util.List;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import me.dracorrein.incremental.R;
-import me.dracorrein.incremental.Utils;
-import me.dracorrein.incremental.logic.dashboard.RepeatingTask;
-import me.dracorrein.incremental.logic.dashboard.Task;
-import me.dracorrein.incremental.logic.dashboard.TaskManager;
-import me.dracorrein.incremental.ui.main.IncrementalApplication;
-import me.dracorrein.incremental.ui.main.MainActivity;
+import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.Utils;
+import me.tazadejava.incremental.logic.dashboard.RepeatingTask;
+import me.tazadejava.incremental.logic.dashboard.Task;
+import me.tazadejava.incremental.logic.dashboard.TaskManager;
+import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.MainActivity;
 
 public class CreateTaskActivity extends AppCompatActivity {
 
     private EditText nameOfTaskEdit, estimatedHoursEdit;
-    private TextView dueDate, dueTime;
-    private LocalDate dueDateFormatted;
+    private TextView dueDate, dueTime, startDateNonRepeating;
+    private LocalDate dueDateFormatted, startDateNonrepeatingFormatted;
     private LocalTime dueTimeFormatted;
     private Spinner classSpinner;
 
@@ -85,7 +85,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                saveButton.setEnabled(areRequiredFieldsFilled());
+                updateSaveButton();
             }
         });
 
@@ -102,7 +102,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                saveButton.setEnabled(areRequiredFieldsFilled());
+                updateSaveButton();
             }
         });
 
@@ -112,6 +112,10 @@ public class CreateTaskActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 DatePickerDialog datePicker = new DatePickerDialog(CreateTaskActivity.this);
+
+                if(dueDateFormatted != null) {
+                    datePicker.updateDate(dueDateFormatted.getYear(), dueDateFormatted.getMonthValue() - 1, dueDateFormatted.getDayOfMonth());
+                }
 
                 datePicker.setOnDateSetListener(new DatePickerDialog.OnDateSetListener() {
                     @Override
@@ -148,6 +152,34 @@ public class CreateTaskActivity extends AppCompatActivity {
             }
         });
 
+        startDateNonRepeating = findViewById(R.id.startDateNonRepeating);
+
+        startDateNonRepeating.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DatePickerDialog datePicker = new DatePickerDialog(CreateTaskActivity.this);
+
+                if(startDateNonrepeatingFormatted != null) {
+                    datePicker.updateDate(startDateNonrepeatingFormatted.getYear(), startDateNonrepeatingFormatted.getMonthValue() - 1, startDateNonrepeatingFormatted.getDayOfMonth());
+                }
+
+                datePicker.setOnDateSetListener(new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                        month++;
+                        startDateNonrepeatingFormatted = LocalDate.of(year, month, dayOfMonth);
+
+                        String dayOfWeek = startDateNonrepeatingFormatted.getDayOfWeek().toString();
+
+                        startDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + startDateNonrepeatingFormatted.getMonthValue()
+                                + "/" + startDateNonrepeatingFormatted.getDayOfMonth() + "/" + startDateNonrepeatingFormatted.getYear());
+                    }
+                });
+
+                datePicker.show();
+            }
+        });
+
         repeatingEventSwitch = findViewById(R.id.repeatingEventSwitch);
         repeatingEventDateLayout = findViewById(R.id.repeatingEventDateLayout);
         startDate = findViewById(R.id.startDate);
@@ -156,6 +188,10 @@ public class CreateTaskActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 DatePickerDialog datePicker = new DatePickerDialog(CreateTaskActivity.this);
+
+                if(startDateFormatted != null) {
+                    datePicker.updateDate(startDateFormatted.getYear(), startDateFormatted.getMonthValue() - 1, startDateFormatted.getDayOfMonth());
+                }
 
                 datePicker.setOnDateSetListener(new DatePickerDialog.OnDateSetListener() {
                     @Override
@@ -201,7 +237,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
         repeatingTaskNamesList = findViewById(R.id.repeatingTaskNamesList);
 
-        repeatingTaskNamesList.setAdapter(repeatingTaskAdapter = new RepeatingTaskAdapter(repeatingTaskNamesList, startDateFormatted));
+        repeatingTaskNamesList.setAdapter(repeatingTaskAdapter = new RepeatingTaskAdapter(repeatingTaskNamesList, startDateFormatted, this));
         repeatingTaskNamesList.setLayoutManager(new LinearLayoutManager(this));
 
         classSpinner = findViewById(R.id.classSpinner);
@@ -210,7 +246,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
         items.add("Select class");
 
-        items.addAll(taskManager.getAllClasses());
+        items.addAll(taskManager.getAllGroupNames());
 
         items.add("Add new class...");
 
@@ -218,6 +254,9 @@ public class CreateTaskActivity extends AppCompatActivity {
         classSpinner.setAdapter(classAdapter);
 
         classSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            private int lastPosition = 0;
+
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 //If the user has no classes or needs a new one, open a dialog to create a new one!
@@ -233,11 +272,13 @@ public class CreateTaskActivity extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             if(!input.getText().toString().isEmpty()) {
+                                lastPosition = position;
+
                                 String className = input.getText().toString();
 
                                 if(!items.contains(className)) {
                                     items.add(items.size() - 1, className);
-                                    taskManager.getAllClasses().add(className);
+                                    taskManager.addNewGroup(className);
                                     classSpinner.setSelection(items.size() - 2);
 
                                     classAdapter.notifyDataSetChanged();
@@ -253,8 +294,17 @@ public class CreateTaskActivity extends AppCompatActivity {
                         }
                     });
 
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            classSpinner.setSelection(lastPosition);
+                        }
+                    });
+
                     builder.show();
                     input.requestFocus();
+                } else {
+                    lastPosition = position;
                 }
             }
 
@@ -274,14 +324,14 @@ public class CreateTaskActivity extends AppCompatActivity {
                 String taskClass = classSpinner.getSelectedItem().toString();
                 float estimatedHours = Float.parseFloat(estimatedHoursEdit.getText().toString());
 
-                String timePeriod = taskManager.getCurrentTimePeriod();
+                TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
 
                 if(startDateFormatted != null) {
-                    RepeatingTask repeatingTask = new RepeatingTask(repeatingTaskAdapter.getTaskNames(), startDateFormatted.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeFormatted, taskClass, timePeriod, estimatedHours);
+                    RepeatingTask repeatingTask = new RepeatingTask(repeatingTaskAdapter.getTaskNames(), startDateFormatted.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeFormatted, taskManager.getGroupByName(taskClass), timePeriod, estimatedHours);
 
                     taskManager.addNewRepeatingTask(repeatingTask);
                 } else {
-                    Task task = new Task(nameOfTaskEdit.getText().toString(), dueDateAndTime, taskClass, timePeriod, estimatedHours);
+                    Task task = new Task(nameOfTaskEdit.getText().toString(), startDateNonrepeatingFormatted, dueDateAndTime, taskManager.getGroupByName(taskClass), timePeriod, estimatedHours);
 
                     taskManager.addNewTask(task);
                 }
@@ -299,7 +349,12 @@ public class CreateTaskActivity extends AppCompatActivity {
         nameOfTaskEdit.requestFocus();
     }
 
+    public void updateSaveButton() {
+        saveButton.setEnabled(areRequiredFieldsFilled());
+    }
+
     private void setDefaultValues() {
+        startDateNonrepeatingFormatted = LocalDate.now();
         dueDateFormatted = LocalDate.now();
 
         String dayOfWeek = dueDateFormatted.getDayOfWeek().toString();
@@ -307,15 +362,27 @@ public class CreateTaskActivity extends AppCompatActivity {
         dueDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + dueDateFormatted.getMonthValue()
                 + "/" + dueDateFormatted.getDayOfMonth()+ "/" + dueDateFormatted.getYear());
 
+        startDateNonRepeating.setText(dueDate.getText().toString());
+
         dueTimeFormatted = LocalTime.of(23, 59);
         dueTime.setText(Utils.getDueDateTimeFormatted(23, 59));
     }
 
     public boolean areRequiredFieldsFilled() {
-        if(nameOfTaskEdit.getText().toString().isEmpty()) {
-            return false;
+        if(repeatingEventSwitch.isChecked()) {
+            if(!repeatingTaskAdapter.areAllTasksNamed()) {
+                return false;
+            }
+        } else {
+            if(nameOfTaskEdit.getText().length() == 0) {
+                return false;
+            }
+            if(startDateNonrepeatingFormatted.isAfter(dueDateFormatted)) {
+                return false;
+            }
         }
-        if(estimatedHoursEdit.getText().toString().isEmpty()) {
+
+        if(estimatedHoursEdit.getText().length() == 0) {
             return false;
         }
         if(classSpinner.getSelectedItemPosition() == AdapterView.INVALID_POSITION || classSpinner.getSelectedItemPosition() == 0) {

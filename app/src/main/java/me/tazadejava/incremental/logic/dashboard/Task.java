@@ -1,4 +1,4 @@
-package me.dracorrein.incremental.logic.dashboard;
+package me.tazadejava.incremental.logic.dashboard;
 
 import android.graphics.Color;
 
@@ -8,52 +8,50 @@ import com.chroma.ColorSpace;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
-import me.dracorrein.incremental.Utils;
-import me.dracorrein.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.Utils;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class Task {
 
-    private String name, className, timePeriod;
+    private String name;
+    private LocalDate startDate;
     private LocalDateTime dueDate;
-    private float originalEstimatedCompletionTime, calculatedEstimatedCompletionTime;
+    private Group group;
+    private TimePeriod timePeriod;
 
     private boolean isTaskComplete, isTaskInProgress, doneWithTaskForDay;
     private LocalDateTime lastTaskWorkTime, lastTaskWorkStartTime;
-    private float loggedHoursToComplete, beginningLoggedHoursToComplete;
+    private float loggedHoursOfWork, estimatedTotalHoursToCompletion;
 
     private int mainColor, endColor;
 
-    public Task(String name, LocalDateTime dueDate, String taskClass, String timePeriod, float calculatedEstimatedCompletionTime) {
+    private RepeatingTask parent;
+
+    public Task(String name, LocalDate startDate, LocalDateTime dueDate, Group group, TimePeriod timePeriod, float estimatedTotalHoursToCompletion) {
         this.name = name;
+        this.startDate = startDate;
         this.dueDate = dueDate;
+        this.group = group;
+        this.timePeriod = timePeriod;
+        this.estimatedTotalHoursToCompletion = estimatedTotalHoursToCompletion;
 
         isTaskComplete = false;
-        loggedHoursToComplete = 0;
-
-        //TODO: ADD A CHECK: IF A NEW DAY, need to update beginningLoggedHoursToComplete
-        beginningLoggedHoursToComplete = loggedHoursToComplete;
+        loggedHoursOfWork = 0;
         doneWithTaskForDay = false;
-
-        setEstimatedCompletionTime(calculatedEstimatedCompletionTime);
-        setClassName(taskClass);
-
-        this.timePeriod = timePeriod;
 
         calculateCardColors();
     }
 
-    public void setEstimatedCompletionTime(float hours) {
-        originalEstimatedCompletionTime = hours;
-        calculatedEstimatedCompletionTime = hours;
+    public void setRepeatingTaskParent(RepeatingTask parent) {
+        this.parent = parent;
     }
 
     private void calculateCardColors() {
         Chroma originalColor = new Chroma("#1d98cb");
         double[] lch = originalColor.getLCH();
 
-        lch[2] = Math.random() * 360d;
+        lch[2] = Math.random() * group.getColor();
 
         mainColor = Color.parseColor(new Chroma(ColorSpace.LCH, lch[0], lch[1], lch[2], 255).hexString());
         endColor = Color.parseColor(new Chroma(ColorSpace.LCH, 100, lch[1], lch[2], 255).hexString());
@@ -73,15 +71,15 @@ public class Task {
 //        }
 //
 //        return (float) (originalEstimatedCompletionTime - calculatedEstimatedCompletionTime) / originalEstimatedCompletionTime;
-        return loggedHoursToComplete / originalEstimatedCompletionTime;
+        return loggedHoursOfWork / estimatedTotalHoursToCompletion;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getClassName() {
-        return className;
+    public String getGroupName() {
+        return group.getGroupName();
     }
 
     public LocalDateTime getDueDate() {
@@ -99,11 +97,12 @@ public class Task {
     }
 
     public String getEstimatedCompletionTimeFormatted() {
-        if(calculatedEstimatedCompletionTime == (int) calculatedEstimatedCompletionTime) {
-            return String.valueOf((int) calculatedEstimatedCompletionTime);
-        } else {
-            return String.valueOf(calculatedEstimatedCompletionTime);
-        }
+        float hoursLeft = getHoursLeftOfWork();
+        return String.valueOf((hoursLeft == (int) hoursLeft) ? (int) hoursLeft : hoursLeft);
+    }
+
+    public float getHoursLeftOfWork() {
+        return estimatedTotalHoursToCompletion - loggedHoursOfWork;
     }
 
     public float getTodaysHoursOfWork() {
@@ -111,9 +110,9 @@ public class Task {
         LocalDate date = dueDate.toLocalDate();
 
         if(date.equals(now) || date.equals(now.plusDays(1))) {
-            return calculatedEstimatedCompletionTime;
+            return getHoursLeftOfWork();
         } else {
-            return (float) Math.ceil(calculatedEstimatedCompletionTime / ChronoUnit.DAYS.between(now, date) * 2f) / 2f;
+            return (float) Math.ceil(getHoursLeftOfWork() / ChronoUnit.DAYS.between(now, date) * 2f) / 2f;
         }
     }
 
@@ -127,13 +126,8 @@ public class Task {
         }
     }
 
-
     public float getEstimatedCompletionTime() {
-        return calculatedEstimatedCompletionTime;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
+        return estimatedTotalHoursToCompletion;
     }
 
     public boolean isOverdue() {
@@ -156,13 +150,17 @@ public class Task {
 
     public void incrementTask(float loggedHours) {
         lastTaskWorkTime = LocalDateTime.now();
-        loggedHoursToComplete += loggedHours;
+        loggedHoursOfWork += loggedHours;
     }
 
     public void completeTask(float loggedHours) {
         isTaskComplete = true;
 
-        loggedHoursToComplete += loggedHours;
+        loggedHoursOfWork += loggedHours;
+
+        if(parent != null) {
+            parent.incrementTotalHours(loggedHoursOfWork);
+        }
 
         IncrementalApplication.taskManager.completeTask(this);
     }
@@ -174,6 +172,10 @@ public class Task {
         if(date.isAfter(dueDate.toLocalDate())) {
             return false;
         }
+        if(date.isBefore(startDate)) {
+            return false;
+        }
+        //don't show up if the user doesn't want to work on it anymore today
         if(lastTaskWorkTime != null && lastTaskWorkTime.toLocalDate().equals(LocalDate.now()) && doneWithTaskForDay) {
             return false;
         }
@@ -185,7 +187,7 @@ public class Task {
         return isTaskInProgress;
     }
 
-    public String getTimePeriod() {
+    public TimePeriod getTimePeriod() {
         return timePeriod;
     }
 }

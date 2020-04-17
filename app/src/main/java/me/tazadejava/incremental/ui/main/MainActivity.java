@@ -1,11 +1,12 @@
-package me.dracorrein.incremental.ui.main;
+package me.tazadejava.incremental.ui.main;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
 import android.widget.TextView;
+import androidx.appcompat.app.AlertDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import android.view.View;
 
@@ -23,8 +24,9 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
 
-import me.dracorrein.incremental.R;
-import me.dracorrein.incremental.ui.create_task.CreateTaskActivity;
+import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.ui.create.CreateTaskActivity;
+import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,8 +44,6 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
                 Intent createTask = new Intent(MainActivity.this, CreateTaskActivity.class);
                 startActivity(createTask);
             }
@@ -61,7 +61,12 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navigationView, navController);
 
         currentTimePeriod = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriod);
-        currentTimePeriod.setText(IncrementalApplication.taskManager.getCurrentTimePeriod());
+        currentTimePeriod.setText(IncrementalApplication.taskManager.getCurrentTimePeriod().getName());
+
+        //check if need new time period
+        if(IncrementalApplication.taskManager.isTimePeriodExpired()) {
+            showRenewalTimePeriodDialog();
+        }
     }
 
     @Override
@@ -76,5 +81,36 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    private void showRenewalTimePeriodDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        boolean defaultTimePeriod = IncrementalApplication.taskManager.getCurrentTimePeriod().getName().isEmpty();
+
+        if(defaultTimePeriod) {
+            builder.setTitle("Create a new time period?");
+            builder.setMessage("A time period is a good way to group your tasks and partition them automatically into set start/end dates.");
+        } else {
+            builder.setTitle("Your time period has expired!");
+            builder.setMessage("Do you want to define a new time period moving forward?");
+        }
+
+        builder.setPositiveButton("Define New Time Period", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent newTimePeriodAct = new Intent(MainActivity.this, CreateTimePeriodActivity.class);
+                startActivity(newTimePeriodAct);
+            }
+        });
+
+        builder.setNegativeButton("Dismiss", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        builder.show();
     }
 }

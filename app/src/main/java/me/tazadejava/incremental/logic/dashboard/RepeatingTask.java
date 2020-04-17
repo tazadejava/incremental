@@ -1,6 +1,6 @@
-package me.dracorrein.incremental.logic.dashboard;
+package me.tazadejava.incremental.logic.dashboard;
 
-import me.dracorrein.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -13,25 +13,27 @@ public class RepeatingTask {
 
     private DayOfWeek dayOfWeekTaskBegins, dayOfWeekTaskDue;
     private LocalTime timeTaskDue;
-    private String taskClass, timePeriod;
+    private TimePeriod timePeriod;
     private float estimatedHoursCompletion;
+    private Group group;
 
     private String[] taskNames;
-    private int currentTaskIndex;
+    private int currentTaskIndex, totalTasksCompleted;
+    private float totalHoursWorked;
 
     private LocalDate lastPendingTaskUpdate;
 
-    public RepeatingTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, String taskClass, String timePeriod, float estimatedHoursCompletion) {
+    public RepeatingTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group group, TimePeriod timePeriod, float estimatedHoursCompletion) {
         this.taskNames = taskNames;
-        currentTaskIndex = 0;
-
         this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
         this.dayOfWeekTaskDue = dayOfWeekTaskDue;
         this.timeTaskDue = timeTaskDue;
-        this.taskClass = taskClass;
+        this.group = group;
+        this.timePeriod = timePeriod;
         this.estimatedHoursCompletion = estimatedHoursCompletion;
 
-        this.timePeriod = timePeriod;
+        currentTaskIndex = 0;
+        totalHoursWorked = 0;
 
         lastPendingTaskUpdate = LocalDate.now().minusDays(1);
     }
@@ -48,7 +50,7 @@ public class RepeatingTask {
         return dayOfWeekTaskDue;
     }
 
-    public String getTimePeriod() {
+    public TimePeriod getTimePeriod() {
         return timePeriod;
     }
 
@@ -93,6 +95,11 @@ public class RepeatingTask {
         return missedTaskDueDates;
     }
 
+    public void incrementTotalHours(float hours) {
+        totalHoursWorked += hours;
+        totalTasksCompleted += 1;
+    }
+
     public boolean hasPendingTasks() {
         return !getMissedTaskDays().isEmpty();
     }
@@ -109,7 +116,9 @@ public class RepeatingTask {
         List<Task> pendingTasks = new ArrayList<>();
 
         for(LocalDateTime dueDate : pendingTaskDates) {
-            Task task = new Task(taskNames[currentTaskIndex], dueDate, taskClass, timePeriod, estimatedHoursCompletion);
+            Task task = new Task(taskNames[currentTaskIndex], LocalDate.now(), dueDate, group, timePeriod, estimatedHoursCompletion);
+
+            task.setRepeatingTaskParent(this);
 
             pendingTasks.add(task);
 

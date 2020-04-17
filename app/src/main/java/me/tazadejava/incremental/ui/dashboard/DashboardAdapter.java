@@ -1,4 +1,4 @@
-package me.dracorrein.incremental.ui.dashboard;
+package me.tazadejava.incremental.ui.dashboard;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -12,13 +12,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-import me.dracorrein.incremental.R;
-import me.dracorrein.incremental.logic.dashboard.Day;
-import me.dracorrein.incremental.logic.dashboard.Task;
-import me.dracorrein.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.dashboard.Day;
+import me.tazadejava.incremental.logic.dashboard.Task;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.ViewHolder> {
 
@@ -87,6 +86,14 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
     public void updateTaskColors(Task task) {
         for(DashboardTaskAdapter adapter : taskAdapters) {
             adapter.updateTaskColor(task);
+        }
+    }
+
+    public void updateDayLayouts(Task task) {
+        for(DashboardTaskAdapter adapter : taskAdapters) {
+            if(adapter.hasTask(task)) {
+                adapter.notifyDataSetChanged();
+            }
         }
     }
 

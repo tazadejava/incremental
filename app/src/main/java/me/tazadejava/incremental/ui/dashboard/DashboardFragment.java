@@ -1,4 +1,4 @@
-package me.dracorrein.incremental.ui.dashboard;
+package me.tazadejava.incremental.ui.dashboard;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,7 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import me.dracorrein.incremental.R;
+import me.tazadejava.incremental.R;
 
 public class DashboardFragment extends Fragment {
 
