@@ -51,7 +51,7 @@ public class Task {
         Chroma originalColor = new Chroma("#1d98cb");
         double[] lch = originalColor.getLCH();
 
-        lch[2] = Math.random() * group.getColor();
+        lch[2] = group.getColor();
 
         mainColor = Color.parseColor(new Chroma(ColorSpace.LCH, lch[0], lch[1], lch[2], 255).hexString());
         endColor = Color.parseColor(new Chroma(ColorSpace.LCH, 100, lch[1], lch[2], 255).hexString());

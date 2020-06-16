@@ -127,6 +127,8 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                         dueDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + dueDateFormatted.getMonthValue()
                                 + "/" + dueDateFormatted.getDayOfMonth() + "/" + dueDateFormatted.getYear());
+
+                        updateSaveButton();
                     }
                 });
 
@@ -171,8 +173,10 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                         String dayOfWeek = startDateNonrepeatingFormatted.getDayOfWeek().toString();
 
-                        startDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + startDateNonrepeatingFormatted.getMonthValue()
+                        startDateNonRepeating.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + startDateNonrepeatingFormatted.getMonthValue()
                                 + "/" + startDateNonrepeatingFormatted.getDayOfMonth() + "/" + startDateNonrepeatingFormatted.getYear());
+
+                        updateSaveButton();
                     }
                 });
 
@@ -283,6 +287,8 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                                     classAdapter.notifyDataSetChanged();
                                 }
+
+                                updateSaveButton();
                             }
                         }
                     });
@@ -338,6 +344,9 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                 Intent returnToMain = new Intent(CreateTaskActivity.this, MainActivity.class);
                 startActivity(returnToMain);
+
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(saveButton.getWindowToken(), 0);
             }
         });
 
