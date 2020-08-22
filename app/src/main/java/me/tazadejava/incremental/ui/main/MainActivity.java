@@ -40,14 +40,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+
+        FloatingActionButton addTaskButton = findViewById(R.id.fab);
+        addTaskButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent createTask = new Intent(MainActivity.this, CreateTaskActivity.class);
                 startActivity(createTask);
             }
         });
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
@@ -64,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         currentTimePeriod.setText(IncrementalApplication.taskManager.getCurrentTimePeriod().getName());
 
         //check if need new time period
-        if(IncrementalApplication.taskManager.isTimePeriodExpired()) {
+        if(IncrementalApplication.taskManager.hasTimePeriodExpired()) {
             showRenewalTimePeriodDialog();
         }
     }
@@ -90,10 +92,10 @@ public class MainActivity extends AppCompatActivity {
 
         if(defaultTimePeriod) {
             builder.setTitle("Create a new time period?");
-            builder.setMessage("A time period is a good way to group your tasks and partition them automatically into set start/end dates.");
+            builder.setMessage("A time period is a good way to automatically partition your tasks into specific start and end dates.");
         } else {
             builder.setTitle("Your time period has expired!");
-            builder.setMessage("Do you want to define a new time period moving forward?");
+            builder.setMessage("Do you want to define a new time period?");
         }
 
         builder.setPositiveButton("Define New Time Period", new DialogInterface.OnClickListener() {

@@ -31,6 +31,7 @@ public class DashboardFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        adapter.update();
+        //refresh contents
+        dashboardView.setAdapter(adapter);
     }
 }

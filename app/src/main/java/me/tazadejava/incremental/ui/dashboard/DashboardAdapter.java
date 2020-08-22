@@ -10,13 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.dashboard.Day;
-import me.tazadejava.incremental.logic.dashboard.Task;
+import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.ViewHolder> {
@@ -37,7 +37,7 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
 
     private Context context;
 
-    private List<Day> daysList;
+    private TimePeriod timePeriod;
 
     private List<DashboardTaskAdapter> taskAdapters;
 
@@ -46,15 +46,7 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
 
         taskAdapters = new ArrayList<>();
 
-        resetDays();
-    }
-
-    private void resetDays() {
-        daysList = new ArrayList<>();
-
-        for(int i = 0; i < 7; i++) {
-            daysList.add(new Day(LocalDateTime.now().plusDays(i), IncrementalApplication.taskManager.getTasks()));
-        }
+        timePeriod = IncrementalApplication.taskManager.getCurrentTimePeriod();
     }
 
     @NonNull
@@ -66,21 +58,34 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Day day = daysList.get(position);
+        LocalDate date = LocalDate.now().plusDays(position);
+        List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
         DashboardTaskAdapter adapter;
-        holder.taskList.setAdapter(adapter = new DashboardTaskAdapter(context, day, this));
+        holder.taskList.setAdapter(adapter = new DashboardTaskAdapter(context, date, dayTasks, this));
         holder.taskList.setLayoutManager(new LinearLayoutManager(context));
 
         taskAdapters.add(adapter);
 
-        holder.taskName.setText(day.getDayFormatted());
+        holder.taskName.setText(dayToTitleFormat(date));
 
-        if(day.getTasks().isEmpty()) {
+        if(dayTasks.isEmpty()) {
             holder.estimatedTime.setText("No tasks here!");
         } else {
-            holder.estimatedTime.setText("est. " + day.getEstimatedHoursOfWorkFormatted() + " hour" + (day.getEstimatedHoursOfWork() == 1 ? "" : "s") + " of work remaining");
+            float estimatedHoursOfWork = timePeriod.getEstimatedHoursOfWorkForDate(date);
+            holder.estimatedTime.setText("est. " + estimatedHoursOfWork + " hour" + (estimatedHoursOfWork == 1 ? "" : "s") + " of work remaining");
         }
+    }
+
+    private String dayToTitleFormat(LocalDate date) {
+        if(date.equals(LocalDate.now())) {
+            return "Today, " + date.getMonthValue() + "/" + date.getDayOfMonth();
+        } else if(date.equals(LocalDate.now().plusDays(1))) {
+            return "Tomorrow, " + date.getMonthValue() + "/" + date.getDayOfMonth();
+        }
+
+        String dayOfWeek = date.getDayOfWeek().toString();
+        return dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase() + ", " + date.getMonthValue() + "/" + date.getDayOfMonth();
     }
 
     public void updateTaskColors(Task task) {
@@ -99,10 +104,6 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
 
     @Override
     public int getItemCount() {
-        return daysList.size();
-    }
-
-    public void update() {
-        resetDays();
+        return 7;
     }
 }

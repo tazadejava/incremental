@@ -194,7 +194,7 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
 
         int position = 0;
         for(String str : taskNames) {
-            if(disabledPositions.contains(position)) {
+            if(!disabledPositions.contains(position)) {
                 taskNamesRevised.add(str);
             }
 

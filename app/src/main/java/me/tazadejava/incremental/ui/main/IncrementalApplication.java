@@ -1,6 +1,6 @@
 package me.tazadejava.incremental.ui.main;
 
-import me.tazadejava.incremental.logic.dashboard.TaskManager;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 
 public class IncrementalApplication extends android.app.Application {
 

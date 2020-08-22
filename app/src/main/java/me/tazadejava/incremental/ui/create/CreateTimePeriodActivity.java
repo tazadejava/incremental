@@ -11,14 +11,10 @@ import android.widget.DatePicker;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.Utils;
-import me.tazadejava.incremental.logic.dashboard.TaskManager;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 public class CreateTimePeriodActivity extends AppCompatActivity {
 
