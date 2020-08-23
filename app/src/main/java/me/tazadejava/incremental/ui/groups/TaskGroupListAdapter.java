@@ -18,7 +18,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -41,12 +40,12 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
 
-            taskGroupName = itemView.findViewById(R.id.taskGroupName);
+            taskGroupName = itemView.findViewById(R.id.timePeriodName);
             tasksCount = itemView.findViewById(R.id.tasksCount);
-            weeklyHoursCount = itemView.findViewById(R.id.weeklyHoursCount);
+            weeklyHoursCount = itemView.findViewById(R.id.timePeriodDatesText);
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
 
-            timePeriodText = itemView.findViewById(R.id.timePeriodText);
+            timePeriodText = itemView.findViewById(R.id.timePeriodActiveText);
         }
     }
 

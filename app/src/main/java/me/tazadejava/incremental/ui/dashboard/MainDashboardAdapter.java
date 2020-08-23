@@ -30,7 +30,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
             super(itemView);
 
             taskList = itemView.findViewById(R.id.dashboard_tasks_list);
-            taskName = itemView.findViewById(R.id.taskGroupName);
+            taskName = itemView.findViewById(R.id.timePeriodName);
             estimatedTime = itemView.findViewById(R.id.dashoboard_estimated_time);
         }
     }

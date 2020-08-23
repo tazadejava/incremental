@@ -30,7 +30,7 @@
             android:background="@drawable/task_card_gradient">
 
             <TextView
-                android:id="@+id/taskGroupName"
+                android:id="@+id/timePeriodName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -71,7 +71,7 @@
                 android:paddingBottom="32dp"
                 android:text="~3 hours left"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/taskGroupName" />
+                app:layout_constraintTop_toBottomOf="@+id/timePeriodName" />
 
             <TextView
                 android:id="@+id/task_due_date"

@@ -6,8 +6,10 @@
     <string name="nav_header_subtitle"></string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="action_delete_task">Delete Task</string>
 
     <string name="menu_dashboard">Dashboard</string>
+    <string name="menu_time_periods">Time Periods</string>
     <string name="menu_task_groups">Task Groups</string>
     <string name="menu_archive">Archive</string>
 </resources>

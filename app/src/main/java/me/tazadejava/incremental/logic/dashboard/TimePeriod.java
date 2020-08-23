@@ -15,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,7 +40,8 @@ public class TimePeriod {
     private List<TaskGenerator> allTaskGenerators = new ArrayList<>();
     private List<TaskGenerator> allCompletedTaskGenerators = new ArrayList<>();
 
-    private List<Task> allTasks = new ArrayList<>();
+    //tasks that are to do today
+    private List<Task> allActiveTasks = new ArrayList<>();
     private List<Task> allCompletedTasks = new ArrayList<>();
 
     private HashMap<String, Group> groups = new HashMap<>();
@@ -103,9 +103,9 @@ public class TimePeriod {
 
             if(timePeriodFolder.exists()) {
                 File currentTasksFile = new File(timePeriodFolder + "/currentTasks.json");
-                loadTasksFromFile(taskManager, gson, currentTasksFile, allTaskGenerators, allTasks);
+                loadTasksFromFile(taskManager, gson, currentTasksFile, allTaskGenerators, allActiveTasks);
 
-                for(Task task : allTasks) {
+                for(Task task : allActiveTasks) {
                     addTaskToDailyLists(task, false);
                 }
 
@@ -152,7 +152,7 @@ public class TimePeriod {
             }
 
             File currentTasksFile = new File(timePeriodFolder + "/currentTasks.json");
-            saveTasksToFile(gson, currentTasksFile, allTaskGenerators, allTasks);
+            saveTasksToFile(gson, currentTasksFile, allTaskGenerators, allActiveTasks);
 
             File completedTasksFile = new File(timePeriodFolder + "/completedTasks.json");
             saveTasksToFile(gson, completedTasksFile, allCompletedTaskGenerators, allCompletedTasks);
@@ -175,11 +175,14 @@ public class TimePeriod {
         for(JsonElement generator : generatorsObject) {
             JsonObject generatorObject = generator.getAsJsonObject();
 
+            TaskGenerator generatedTask;
             if(generatorObject.has("generatorType") && generatorObject.get("generatorType").getAsString().equals("repeating")) {
-                generators.add(RepeatingTask.createInstance(gson, taskManager, this, generatorObject));
+                generatedTask = RepeatingTask.createInstance(gson, taskManager, this, generatorObject);
             } else {
-                generators.add(NonrepeatingTask.createInstance(gson, taskManager, this, generatorObject));
+                generatedTask = NonrepeatingTask.createInstance(gson, taskManager, this, generatorObject);
             }
+
+            generators.add(generatedTask);
         }
 
         JsonArray tasksObject = data.getAsJsonArray("tasks");
@@ -198,6 +201,7 @@ public class TimePeriod {
 
             if(parent != null) {
                 Task loadedTask = Task.createInstance(gson, taskObject, parent, this);
+
                 tasks.add(loadedTask);
                 parent.loadLatestTaskFromFile(loadedTask);
             }
@@ -261,20 +265,26 @@ public class TimePeriod {
     }
 
     public void completeTask(Task task) {
-        allTasks.remove(task);
+        allActiveTasks.remove(task);
         allCompletedTasks.add(task);
 
         removeTaskFromDailyLists(task);
     }
 
     public void removeTask(Task task) {
-        allTasks.remove(task);
+        allActiveTasks.remove(task);
         removeTaskFromDailyLists(task);
+    }
+
+    public void deleteTaskCompletely(Task task, TaskGenerator generator) {
+        removeTask(task);
+        removeTaskByParent(generator);
+        allTaskGenerators.remove(generator);
     }
 
     public int removeTaskByParent(TaskGenerator parent) {
         int removed = 0;
-        Iterator<Task> allTasksIterator = allTasks.iterator();
+        Iterator<Task> allTasksIterator = allActiveTasks.iterator();
         while(allTasksIterator.hasNext()) {
             Task task = allTasksIterator.next();
 
@@ -316,7 +326,7 @@ public class TimePeriod {
 
     private void addTaskToDailyLists(Task task, boolean addToTasksList, LocalDate taskStartDate, LocalDate taskDueDate) {
         if(addToTasksList) {
-            addTaskInCreationOrder(allTasks, task);
+            addTaskInCreationOrder(allActiveTasks, task);
         }
 
         //place respectively in the daily task list

@@ -34,20 +34,11 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="Pset 0"
+                android:text="My Time Period"
                 android:textSize="30sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/tasksCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="3 tasks"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/timePeriodName" />
 
             <TextView
                 android:id="@+id/timePeriodDatesText"
@@ -55,9 +46,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:paddingBottom="16dp"
-                android:text="Worked 16 hours this week"
+                android:text="8/21/2020 - 8/31/2020"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tasksCount" />
+                app:layout_constraintTop_toBottomOf="@+id/timePeriodName" />
 
             <TextView
                 android:id="@+id/timePeriodActiveText"
@@ -65,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
                 android:layout_marginBottom="4dp"
-                android:text="Global Group"
+                android:text="Active"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/guideline3"
                 app:layout_constraintTop_toBottomOf="@+id/timePeriodDatesText" />
@@ -94,7 +85,7 @@
                 android:layout_height="0dp"
                 android:background="?attr/selectableItemBackground"
                 android:gravity="center"
-                android:text="Randomize Color"
+                android:text="Edit Start/End Dates"
                 android:textStyle="bold"
                 android:visibility="visible"
                 app:layout_constraintBottom_toBottomOf="parent"

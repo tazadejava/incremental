@@ -63,7 +63,7 @@ public class NonrepeatingTask extends TaskGenerator {
 
     @Override
     public Task[] getPendingTasks() {
-        if(!hasTaskStarted && startDate.isBefore(LocalDate.now())) {
+        if(!hasTaskStarted && (startDate.isEqual(LocalDate.now()) || startDate.isBefore(LocalDate.now()))) {
             hasTaskStarted = true;
             return new Task[] {latestTask};
         } else {

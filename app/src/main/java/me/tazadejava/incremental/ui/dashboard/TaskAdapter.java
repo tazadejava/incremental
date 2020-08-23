@@ -47,7 +47,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
             expandedOptionsLayout = itemView.findViewById(R.id.expandedOptionsLayout);
 
-            taskName = itemView.findViewById(R.id.taskGroupName);
+            taskName = itemView.findViewById(R.id.timePeriodName);
             taskClass = itemView.findViewById(R.id.task_class);
             totalHoursRemaining = itemView.findViewById(R.id.estimatedTotalTimeLeft);
             dailyHoursRemaining = itemView.findViewById(R.id.estimatedDailyHours);
@@ -134,7 +134,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskClass.setText(task.getGroupName());
 
         float totalHoursLeft = task.getTotalHoursLeftOfWork();
-        String totalHoursLeftFormatted = String.valueOf((totalHoursLeft == (int) totalHoursLeft) ? (int) totalHoursLeft : totalHoursLeft);
+        String totalHoursLeftFormatted = totalHoursLeft % 1 == 0 ? String.valueOf((int) totalHoursLeft) : String.valueOf(totalHoursLeft);
 
         if(date.equals(LocalDate.now())) {
             float hoursLeftToday = task.getTodaysHoursLeft();
@@ -143,17 +143,17 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 hoursLeftToday = 0;
             }
 
-            String hoursTodayFormatted = hoursLeftToday % 1 == 0 ? String.valueOf((int) hoursLeftToday) : String.valueOf(hoursLeftToday);
+            String hoursTodayFormatted = hoursLeftToday % 1 == 0 ? String.valueOf((int) hoursLeftToday) : String.valueOf(Math.round(hoursLeftToday * 2.0f) / 2.0f);
             holder.dailyHoursRemaining.setText(hoursTodayFormatted + " hour" + (hoursLeftToday == 1 ? "" : "s") + " of work today");
         } else {
-            float dailyHoursLeft = task.getDayHoursOfWorkTotal(date);
+            float hoursLeftThisDay = task.getDayHoursOfWorkTotal(date);
 
-            if(dailyHoursLeft < 0) {
-                dailyHoursLeft = 0;
+            if(hoursLeftThisDay < 0) {
+                hoursLeftThisDay = 0;
             }
 
-            String hoursLeftThisDay = dailyHoursLeft % 1 == 0 ? String.valueOf((int) dailyHoursLeft) : String.valueOf(dailyHoursLeft);
-            holder.dailyHoursRemaining.setText(hoursLeftThisDay + " hour" + (dailyHoursLeft == 1 ? "" : "s") + " of work");
+            String hoursLeftThisDayFormatted = hoursLeftThisDay % 1 == 0 ? String.valueOf((int) hoursLeftThisDay) : String.valueOf(Math.round(hoursLeftThisDay * 2.0f) / 2.0f);
+            holder.dailyHoursRemaining.setText(hoursLeftThisDayFormatted + " hour" + (hoursLeftThisDay == 1 ? "" : "s") + " of work");
         }
 
         if(task.isOverdue()) {

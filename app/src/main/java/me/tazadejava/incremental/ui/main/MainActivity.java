@@ -6,9 +6,6 @@ import android.os.Bundle;
 
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import android.view.View;
 
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -25,7 +22,6 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navigationView = findViewById(R.id.nav_view);
 
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_dashboard, R.id.nav_task_groups, R.id.nav_archive)
+                R.id.nav_dashboard, R.id.nav_time_periods, R.id.nav_task_groups, R.id.nav_archive)
                 .setDrawerLayout(drawer)
                 .build();
 
@@ -66,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 

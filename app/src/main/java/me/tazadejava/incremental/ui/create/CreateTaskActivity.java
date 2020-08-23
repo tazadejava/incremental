@@ -3,6 +3,8 @@ package me.tazadejava.incremental.ui.create;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.text.InputType;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
@@ -65,12 +67,12 @@ public class CreateTaskActivity extends AppCompatActivity {
     private RecyclerView repeatingTaskNamesList;
     private RepeatingTaskNamesAdapter repeatingTaskNamesAdapter;
 
+    private TaskManager taskManager = IncrementalApplication.taskManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_task);
-
-        TaskManager taskManager = IncrementalApplication.taskManager;
 
         estimatedHoursEdit = findViewById(R.id.estimatedCompletionTime);
 
@@ -412,6 +414,51 @@ public class CreateTaskActivity extends AppCompatActivity {
         imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 
         nameOfTaskEdit.requestFocus();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if(taskManager.getActiveEditTask() == null) {
+            return super.onCreateOptionsMenu(menu);
+        }
+
+        getMenuInflater().inflate(R.menu.menu_edit_task, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch(id) {
+            case R.id.action_delete_task:
+                AlertDialog.Builder confirmation = new AlertDialog.Builder(this);
+
+                confirmation.setTitle("Are you sure you want to delete this task?");
+
+                if(taskManager.getActiveEditTask().getParent() instanceof RepeatingTask) {
+                    confirmation.setMessage("All tasks in this chain will be deleted. This cannot be undone!");
+                } else {
+                    confirmation.setMessage("This task will be deleted. This cannot be undone!");
+                }
+
+                confirmation.setPositiveButton("DELETE TASK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        taskManager.getCurrentTimePeriod().deleteTaskCompletely(taskManager.getActiveEditTask(), taskManager.getActiveEditTask().getParent());
+
+                        taskManager.saveData(true, taskManager.getCurrentTimePeriod());
+
+                        Intent returnToMain = new Intent(CreateTaskActivity.this, MainActivity.class);
+                        startActivity(returnToMain);
+                    }
+                });
+
+                confirmation.show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public void updateSaveButton() {

@@ -12,6 +12,12 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
+        android:id="@+id/nav_time_periods"
+        android:name="me.tazadejava.incremental.ui.timeperiods.TimePeriodsFragment"
+        android:label="@string/menu_time_periods"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
         android:id="@+id/nav_task_groups"
         android:name="me.tazadejava.incremental.ui.groups.GroupViewFragment"
         android:label="@string/menu_task_groups"
