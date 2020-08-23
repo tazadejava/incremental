@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+<<<<<<< Updated upstream
         FloatingActionButton addTaskButton = findViewById(R.id.fab);
         addTaskButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -50,12 +51,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+=======
+>>>>>>> Stashed changes
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_dashboard, R.id.nav_archive)
+                R.id.nav_dashboard, R.id.nav_task_groups, R.id.nav_archive)
                 .setDrawerLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);

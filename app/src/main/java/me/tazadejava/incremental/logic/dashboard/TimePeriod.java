@@ -13,9 +13,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import me.tazadejava.incremental.logic.tasks.NonrepeatingTask;
@@ -25,6 +28,8 @@ import me.tazadejava.incremental.logic.tasks.TaskGenerator;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 
 public class TimePeriod {
+
+    public static final int DAILY_LOGS_AHEAD_COUNT = 7;
 
     private TaskManager taskManager;
 
@@ -45,9 +50,9 @@ public class TimePeriod {
     private TimePeriod(TaskManager taskManager) {
         this.taskManager = taskManager;
 
-        tasksByDay = new List[7];
+        tasksByDay = new List[DAILY_LOGS_AHEAD_COUNT];
 
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < tasksByDay.length; i++) {
             tasksByDay[i] = new ArrayList<>();
         }
     }
@@ -75,6 +80,15 @@ public class TimePeriod {
         }
         if(data.has("endDate")) {
             endDate = LocalDate.parse(data.get("endDate").getAsString());
+        }
+
+        if(data.has("groupData")) {
+            JsonArray groupData = data.getAsJsonArray("groupData");
+
+            for(JsonElement group : groupData) {
+                Group groupObject = new Group(group.getAsJsonObject());
+                groups.put(groupObject.getGroupName(), groupObject);
+            }
         }
 
         loadTaskData(taskManager, gson, dataFolder);
@@ -112,6 +126,16 @@ public class TimePeriod {
         }
         if(endDate != null) {
             data.addProperty("endDate", endDate.toString());
+        }
+
+        if(!groups.isEmpty()) {
+            JsonArray groupData = new JsonArray();
+
+            for(Group group : groups.values()) {
+                groupData.add(group.save());
+            }
+
+            data.add("groupData", groupData);
         }
 
         return data;
@@ -208,6 +232,7 @@ public class TimePeriod {
 
     public void checkForPendingTasks() {
         Iterator<TaskGenerator> iterator = allTaskGenerators.iterator();
+        boolean hasChanged = false;
         while(iterator.hasNext()) {
             TaskGenerator generator = iterator.next();
 
@@ -217,7 +242,13 @@ public class TimePeriod {
                 continue;
             }
 
-            processPendingTasks(generator);
+            if(processPendingTasks(generator)) {
+                hasChanged = true;
+            }
+        }
+
+        if(hasChanged) {
+            taskManager.saveData(false, this);
         }
     }
 
@@ -230,41 +261,82 @@ public class TimePeriod {
     public void completeTask(Task task) {
         allTasks.remove(task);
         allCompletedTasks.add(task);
+<<<<<<< Updated upstream
+=======
+
+        removeTaskFromDailyLists(task);
+    }
+
+    public void removeTask(Task task) {
+        allTasks.remove(task);
+        removeTaskFromDailyLists(task);
+    }
+
+    public int removeTaskByParent(TaskGenerator parent) {
+        int removed = 0;
+        Iterator<Task> allTasksIterator = allTasks.iterator();
+        while(allTasksIterator.hasNext()) {
+            Task task = allTasksIterator.next();
+
+            if(task.getParent() == parent) {
+                removed++;
+                allTasksIterator.remove();
+                removeTaskFromDailyLists(task);
+            }
+        }
+
+        return removed;
+>>>>>>> Stashed changes
     }
 
     public float getEstimatedHoursOfWorkForDate(LocalDate date) {
         int deltaDays = (int) ChronoUnit.DAYS.between(LocalDate.now(), date);
 
-        if(deltaDays < 0 || deltaDays > 7) {
+        if(deltaDays < 0 || deltaDays > tasksByDay.length) {
             return -1;
         } else {
             int estimatedHours = 0;
 
             for(Task task : tasksByDay[deltaDays]) {
-                estimatedHours += task.getTodaysHoursOfWork();
+                estimatedHours += task.getDayHoursOfWorkTotal(date, false);
             }
 
-            return Math.round(estimatedHours * 2) / 2.0f;
+            return Math.round(estimatedHours * 2.0f) / 2.0f;
         }
     }
 
+<<<<<<< Updated upstream
     private void addTaskToDailyLists(Task task, boolean addToAllTasks) {
         if(addToAllTasks) {
+=======
+    private void removeTaskFromDailyLists(Task task) {
+        for (int i = 0; i < tasksByDay.length; i++) {
+            tasksByDay[i].remove(task);
+        }
+    }
+
+    private void addTaskToDailyLists(Task task, boolean addToTasksList) {
+        addTaskToDailyLists(task, addToTasksList, LocalDate.now(), task.getDueDateTime().toLocalDate());
+    }
+
+    private void addTaskToDailyLists(Task task, boolean addToTasksList, LocalDate taskStartDate, LocalDate taskDueDate) {
+        if(addToTasksList) {
+>>>>>>> Stashed changes
             allTasks.add(task);
         }
 
-        //sort task list
-        for (int i = 0; i < 7; i++) {
+        //place respectively in the daily task list
+        for (int i = 0; i < tasksByDay.length; i++) {
             LocalDate date = LocalDate.now().plusDays(i);
             LocalDate taskDueDate = task.getDueDateTime().toLocalDate();
 
-            if (taskDueDate.equals(date) || date.isBefore(taskDueDate)) {
+            if (date.equals(taskDueDate) || date.isBefore(taskDueDate) || (i == 0 && taskDueDate.isBefore(date))) {
                 tasksByDay[i].add(task);
             }
         }
     }
 
-    private void processPendingTasks(TaskGenerator generator) {
+    public boolean processPendingTasks(TaskGenerator generator) {
         Task[] generatedTasks = generator.getPendingTasks();
 
         if(generatedTasks.length > 0) {
@@ -272,10 +344,59 @@ public class TimePeriod {
                 addTaskToDailyLists(task, true);
             }
         }
+<<<<<<< Updated upstream
+=======
+
+        //add an upcoming task, if applicable, to the weekly commitment list
+
+        Task upcomingTask = generator.getNextUpcomingTask();
+        if(upcomingTask != null) {
+            LocalDate upcomingTaskStartDate = generator.getNextUpcomingTaskStartDate();
+            LocalDate upcomingTaskDueDate = upcomingTask.getDueDateTime().toLocalDate();
+
+            upcomingTask.setStartDate(upcomingTaskStartDate);
+
+            addTaskToDailyLists(upcomingTask, false, upcomingTaskStartDate, upcomingTaskDueDate);
+        }
+
+        return generatedTasks.length > 0;
+    }
+
+    public boolean doesGroupExist(String name) {
+        return groups.containsKey(name);
+>>>>>>> Stashed changes
     }
 
     public Group getGroupByName(String name) {
-        return groups.getOrDefault(name, taskManager.getGroupByName(name));
+        return groups.getOrDefault(name, taskManager.getPersistentGroupByName(name));
+    }
+
+    public void addNewGroup(String name) {
+        if(groups.containsKey(name)) {
+            return;
+        }
+
+        groups.put(name, new Group(name));
+
+        taskManager.saveData(true, this);
+    }
+
+    public boolean updateGroupName(Group group, String name) {
+        if(groups.containsKey(name)) {
+            return false;
+        }
+
+        groups.remove(group.getGroupName());
+        group.setGroupName(name);
+        groups.put(name, group);
+
+        taskManager.saveData(true, this);
+
+        return true;
+    }
+
+    public Collection<Group> getAllGroups() {
+        return groups.values();
     }
 
     public String getName() {
@@ -298,15 +419,38 @@ public class TimePeriod {
         return !beginDate.isBefore(start) && !endDate.isAfter(end);
     }
 
-    public void extendEndDate(int days) {
-        endDate = endDate.plusDays(days);
+    public LocalDate getBeginDate() {
+        return beginDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
     }
 
     public List<Task> getTasksByDay(int index) {
-        if(index < 0 || index >= 7) {
+        if(index < 0 || index >= tasksByDay.length) {
             return null;
         }
 
         return tasksByDay[index];
+    }
+
+    public int getTasksCountThisWeekByGroup(Group group) {
+        int count = 0;
+
+        Set<Task> countedTasks = new HashSet<>();
+        for(List<Task> tasks : tasksByDay) {
+            for(Task task : tasks) {
+                if(!countedTasks.contains(task)) {
+                    countedTasks.add(task);
+
+                    if(task.getGroup().equals(group)) {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        return count;
     }
 }

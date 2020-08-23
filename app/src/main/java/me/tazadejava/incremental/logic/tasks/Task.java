@@ -15,15 +15,22 @@ public class Task {
 
     private transient TaskGenerator parent;
 
+<<<<<<< Updated upstream
     private String name;
+=======
+    private LocalDate startDate;
+
+    private String name, taskNotes;
+>>>>>>> Stashed changes
     private LocalDateTime dueDateTime;
     private transient Group group;
     private transient TimePeriod timePeriod;
     private float estimatedTotalHoursToCompletion;
 
     private boolean isTaskComplete, isTaskCurrentlyWorkedOn, isDoneWithTaskToday;
+
+    private float totalLoggedHoursOfWork, loggedHoursOfWorkToday;
     private LocalDateTime lastTaskWorkEndTime, lastTaskWorkStartTime;
-    private float loggedHoursOfWork;
 
     public Task(TaskGenerator parent, String name, LocalDateTime dueDateTime, Group group, TimePeriod timePeriod, float estimatedTotalHoursToCompletion) {
         this.parent = parent;
@@ -37,7 +44,7 @@ public class Task {
         isTaskCurrentlyWorkedOn = false;
         isDoneWithTaskToday = false;
 
-        loggedHoursOfWork = 0;
+        totalLoggedHoursOfWork = 0;
     }
 
     //load data from file
@@ -47,6 +54,10 @@ public class Task {
         task.parent = parent;
         task.timePeriod = timePeriod;
         task.group = timePeriod.getGroupByName(data.get("group").getAsString());
+
+        if(task.lastTaskWorkStartTime != null && !task.lastTaskWorkStartTime.toLocalDate().equals(LocalDate.now())) {
+            task.loggedHoursOfWorkToday = 0;
+        }
 
         return task;
     }
@@ -68,19 +79,60 @@ public class Task {
         isTaskCurrentlyWorkedOn = true;
     }
 
-    public float getTodaysHoursOfWork() {
-        LocalDate now = LocalDate.now();
-        LocalDate date = dueDateTime.toLocalDate();
+    public float getDayHoursOfWorkTotal(LocalDate date) {
+        return getDayHoursOfWorkTotal(date, true);
+    }
 
-        if(date.equals(now) || date.equals(now.plusDays(1))) {
-            return getTotalHoursLeftOfWork();
+    public float getDayHoursOfWorkTotal(LocalDate date, boolean ignoreTodayHours) {
+        LocalDate startDate;
+        if(this.startDate != null) {
+            startDate = this.startDate;
         } else {
-            return (float) Math.ceil(getTotalHoursLeftOfWork() / (ChronoUnit.DAYS.between(now, date) + 1) * 2f) / 2f;
+            startDate = LocalDate.now();
         }
+
+        LocalDate dueDate = dueDateTime.toLocalDate();
+
+        if(date.isBefore(startDate)) {
+            return 0;
+        }
+        if(date.isAfter(dueDate)) {
+            if(isOverdue()) {
+                return getTotalHoursLeftOfWork();
+            } else {
+                return 0;
+            }
+        }
+
+        int daysbeforeDueDate = (int) ChronoUnit.DAYS.between(startDate, dueDate);
+
+        float dailyWorkloadHours = estimatedTotalHoursToCompletion - totalLoggedHoursOfWork;
+
+        if(ignoreTodayHours && date.equals(startDate)) {
+            dailyWorkloadHours += loggedHoursOfWorkToday;
+        }
+
+        dailyWorkloadHours /= daysbeforeDueDate + 1;
+
+        return dailyWorkloadHours;
+    }
+
+    public float getTodaysTaskCompletionPercentage() {
+        float percentage = loggedHoursOfWorkToday / getDayHoursOfWorkTotal(LocalDate.now());
+
+        if (percentage > 1) {
+            percentage = 1;
+        }
+
+        return percentage;
+    }
+
+    public float getTodaysHoursLeft() {
+        return getDayHoursOfWorkTotal(LocalDate.now()) - loggedHoursOfWorkToday;
     }
 
     public float getTaskCompletionPercentage() {
-        return loggedHoursOfWork / estimatedTotalHoursToCompletion;
+        return totalLoggedHoursOfWork / estimatedTotalHoursToCompletion;
     }
 
     public String getName() {
@@ -96,7 +148,7 @@ public class Task {
     }
 
     public float getTotalHoursLeftOfWork() {
-        return estimatedTotalHoursToCompletion - loggedHoursOfWork;
+        return estimatedTotalHoursToCompletion - totalLoggedHoursOfWork;
     }
 
     public float getEstimatedCompletionTime() {
@@ -105,6 +157,10 @@ public class Task {
 
     public boolean isOverdue() {
         return LocalDateTime.now().isAfter(dueDateTime);
+    }
+
+    public int getOverdueDays() {
+        return (int) ChronoUnit.DAYS.between(dueDateTime, LocalDateTime.now());
     }
 
     public float getCurrentWorkedHours() {
@@ -117,31 +173,52 @@ public class Task {
     }
 
     public void incrementTaskHours(float loggedHours, boolean completedTask) {
+        isTaskCurrentlyWorkedOn = false;
+
         lastTaskWorkEndTime = LocalDateTime.now();
-        loggedHoursOfWork += loggedHours;
+        totalLoggedHoursOfWork += loggedHours;
+
+        if(!lastTaskWorkStartTime.toLocalDate().equals(LocalDate.now())) {
+            loggedHoursOfWorkToday = 0;
+        }
+        loggedHoursOfWorkToday += loggedHours;
 
         if(completedTask) {
             isTaskComplete = true;
-            parent.completeTask(this, loggedHoursOfWork);
+            parent.completeTask(this, totalLoggedHoursOfWork);
         }
     }
 
-    //TODO: this should maybe be not put in the task itself?
-    public boolean shouldTaskBeActive(LocalDate date) {
-        if(isTaskComplete) {
-            return false;
-        }
-        if(date.isAfter(dueDateTime.toLocalDate())) {
-            return false;
-        }
-        //don't show up if the user doesn't want to work on it anymore today
-        if(lastTaskWorkEndTime != null && lastTaskWorkEndTime.toLocalDate().equals(LocalDate.now()) && isDoneWithTaskToday) {
-            return false;
-        }
-
-        return true;
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
     }
 
+<<<<<<< Updated upstream
+=======
+    public void setTaskNotes(String notes) {
+        if(parent instanceof RepeatingTask) {
+            ((RepeatingTask) parent).setTaskNotes(notes);
+        } else {
+            taskNotes = notes;
+            parent.saveTaskToFile();
+        }
+    }
+
+    /**
+     * Edit the current task. Does not change any generator information. DOES NOT save data. MUST SAVE afterwards to apply to files.
+     * @param name
+     * @param dueDateTime
+     * @param group
+     * @param estimatedTotalHoursToCompletion
+     */
+    public void editTask(String name, LocalDateTime dueDateTime, Group group, float estimatedTotalHoursToCompletion) {
+        this.name = name;
+        this.dueDateTime = dueDateTime;
+        this.group = group;
+        this.estimatedTotalHoursToCompletion = estimatedTotalHoursToCompletion;
+    }
+
+>>>>>>> Stashed changes
     public boolean isTaskComplete() {
         return isTaskComplete;
     }
@@ -150,11 +227,46 @@ public class Task {
         return isTaskCurrentlyWorkedOn;
     }
 
-    public TimePeriod getTimePeriod() {
-        return timePeriod;
-    }
-
     public Group getGroup() {
         return group;
     }
+<<<<<<< Updated upstream
+=======
+
+    public String getTaskNotes() {
+        if(parent instanceof RepeatingTask) {
+            return ((RepeatingTask) parent).getTaskNotes();
+        } else {
+            return taskNotes;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Task task = (Task) o;
+        return Objects.equals(name, task.name) &&
+                Objects.equals(dueDateTime, task.dueDateTime) &&
+                Objects.equals(group, task.group) &&
+                Objects.equals(timePeriod, task.timePeriod);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, dueDateTime, group, timePeriod);
+    }
+
+    public boolean isRepeatingTask() {
+        return parent instanceof RepeatingTask;
+    }
+
+    public TaskGenerator getParent() {
+        return parent;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+>>>>>>> Stashed changes
 }

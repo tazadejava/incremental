@@ -8,5 +8,6 @@
     <string name="action_settings">Settings</string>
 
     <string name="menu_dashboard">Dashboard</string>
+    <string name="menu_task_groups">Task Groups</string>
     <string name="menu_archive">Archive</string>
 </resources>

@@ -11,14 +11,10 @@ import me.tazadejava.incremental.logic.dashboard.TimePeriod;
 
 public class NonrepeatingTask extends TaskGenerator {
 
-    private LocalDateTime startDateTime;
-
     private boolean hasTaskStarted;
 
-    public NonrepeatingTask(TaskManager taskManager, LocalDateTime startDateTime, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, float estimatedHoursToCompletion) {
-        super(taskManager);
-
-        this.startDateTime = startDateTime;
+    public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, float estimatedHoursToCompletion) {
+        super(taskManager, startDate);
 
         hasTaskStarted = false;
         latestTask = new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedHoursToCompletion);
@@ -41,9 +37,27 @@ public class NonrepeatingTask extends TaskGenerator {
         return data;
     }
 
+<<<<<<< Updated upstream
+=======
+    public void updateAndSaveTask(LocalDate startDate) {
+        //update changes
+        this.startDate = startDate;
+
+        //purge the task from any list
+        hasTaskStarted = false;
+        taskManager.getCurrentTimePeriod().removeTask(latestTask);
+
+        //re-add the task to all lists
+        taskManager.getCurrentTimePeriod().processPendingTasks(this);
+
+        //save changes
+        saveTaskToFile();
+    }
+
+>>>>>>> Stashed changes
     @Override
     public Task[] getPendingTasks() {
-        if(!hasTaskStarted && startDateTime.isBefore(LocalDateTime.now())) {
+        if(!hasTaskStarted && startDate.isBefore(LocalDate.now())) {
             hasTaskStarted = true;
             return new Task[] {latestTask};
         } else {
@@ -55,4 +69,25 @@ public class NonrepeatingTask extends TaskGenerator {
     public boolean hasGeneratorCompletedAllTasks() {
         return hasTaskStarted && latestTask.isTaskComplete();
     }
+<<<<<<< Updated upstream
+=======
+
+    @Override
+    public Task getNextUpcomingTask() {
+        if(!hasTaskStarted) {
+            return latestTask;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public LocalDate getNextUpcomingTaskStartDate() {
+        if(!hasTaskStarted) {
+            return startDate;
+        } else {
+            return null;
+        }
+    }
+>>>>>>> Stashed changes
 }

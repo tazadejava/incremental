@@ -29,7 +29,7 @@
             android:background="@drawable/task_card_gradient">
 
             <TextView
-                android:id="@+id/task_name"
+                android:id="@+id/taskGroupName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -70,7 +70,11 @@
                 android:layout_marginStart="8dp"
                 android:text="~3 hours left"
                 app:layout_constraintStart_toStartOf="parent"
+<<<<<<< Updated upstream
                 app:layout_constraintTop_toBottomOf="@+id/task_subtasks_left" />
+=======
+                app:layout_constraintTop_toBottomOf="@+id/taskGroupName" />
+>>>>>>> Stashed changes
 
             <TextView
                 android:id="@+id/task_due_date"

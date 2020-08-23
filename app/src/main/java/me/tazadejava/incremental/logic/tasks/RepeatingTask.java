@@ -10,8 +10,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 import me.tazadejava.incremental.logic.dashboard.Group;
 import me.tazadejava.incremental.logic.dashboard.TimePeriod;
@@ -31,10 +30,8 @@ public class RepeatingTask extends TaskGenerator {
     private float totalHoursWorked;
     private int totalTasksCompleted;
 
-    private LocalDate lastPendingTaskUpdateDate;
-
-    public RepeatingTask(TaskManager taskManager, String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, TimePeriod timePeriod, float originalEstimatedHoursCompletion) {
-        super(taskManager);
+    public RepeatingTask(TaskManager taskManager, String[] taskNames, LocalDate startDate, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, TimePeriod timePeriod, float originalEstimatedHoursCompletion) {
+        super(taskManager, startDate);
 
         this.taskNames = taskNames;
         this.taskGroup = taskGroup;
@@ -49,8 +46,6 @@ public class RepeatingTask extends TaskGenerator {
 
         totalHoursWorked = 0;
         totalTasksCompleted = 0;
-
-        lastPendingTaskUpdateDate = LocalDate.now().minusDays(1);
     }
 
     public static RepeatingTask createInstance(Gson gson, TaskManager taskManager, TimePeriod timePeriod, JsonObject data) {
@@ -81,11 +76,37 @@ public class RepeatingTask extends TaskGenerator {
             return new Task[0];
         }
 
+<<<<<<< Updated upstream
         List<LocalDateTime> pendingTaskDates = getMissedTaskDays();
         lastPendingTaskUpdateDate = LocalDate.now();
+=======
+        int goalIndex = getGoalTaskIndex();
+>>>>>>> Stashed changes
 
-        List<Task> pendingTasks = new ArrayList<>();
+        if(goalIndex == currentTaskIndex) {
+            return new Task[0];
+        }
 
+<<<<<<< Updated upstream
+=======
+        Task[] pendingTasks = new Task[goalIndex - currentTaskIndex];
+
+        for(int i = currentTaskIndex; i < goalIndex; i++) {
+            Task task = getIndexTask(i);
+
+            if(!task.getName().isEmpty()) {
+                pendingTasks[i - currentTaskIndex] = task;
+                latestTask = task;
+            }
+        }
+
+        currentTaskIndex = goalIndex;
+
+        return pendingTasks;
+    }
+
+    private Task getIndexTask(int index) {
+>>>>>>> Stashed changes
         float calculatedEstimatedTime = originalEstimatedHoursCompletion;
 
         if(totalTasksCompleted > 0) {
@@ -105,6 +126,7 @@ public class RepeatingTask extends TaskGenerator {
             }
         }
 
+<<<<<<< Updated upstream
         for(LocalDateTime dueDate : pendingTaskDates) {
             Task task = new Task(this, taskNames[currentTaskIndex], dueDate, taskGroup, timePeriod, calculatedEstimatedTime);
 
@@ -119,6 +141,9 @@ public class RepeatingTask extends TaskGenerator {
         }
 
         return pendingTasks.toArray(new Task[0]);
+=======
+        return new Task(this, taskNames[index], getIndexDueDate(index), taskGroup, timePeriod, calculatedEstimatedTime);
+>>>>>>> Stashed changes
     }
 
     @Override
@@ -140,6 +165,7 @@ public class RepeatingTask extends TaskGenerator {
         return currentTaskIndex == totalTasksCount && latestTask.isTaskComplete();
     }
 
+<<<<<<< Updated upstream
     //returns a list of tasks that have to be done and is in the backlog
     private List<LocalDateTime> getMissedTaskDays() {
         List<LocalDateTime> missedTaskDueDates = new ArrayList<>();
@@ -148,31 +174,112 @@ public class RepeatingTask extends TaskGenerator {
 
         if(lastPendingTaskUpdateDate.equals(now)) {
             return missedTaskDueDates;
+=======
+//    private List<LocalDateTime> getMissedTaskDayDueDates() {
+//        return getMissedTaskDayDueDates(LocalDate.now());
+//    }
+
+    private int getGoalTaskIndex() {
+        int daysDifference = (int) ChronoUnit.DAYS.between(startDate, LocalDate.now());
+
+        int goalIndex = (daysDifference / 7) + 1;
+
+        if(goalIndex > totalTasksCount) {
+            goalIndex = totalTasksCount;
+>>>>>>> Stashed changes
         }
 
-        LocalDate currentDateTraversal = lastPendingTaskUpdateDate;
+        return goalIndex;
+    }
 
+<<<<<<< Updated upstream
         //update the lastPending to the current start day of the week, and add to the list
         currentDateTraversal.plusDays(getDaysBetweenDaysOfWeek(dayOfWeekTaskBegins, currentDateTraversal.getDayOfWeek()));
 
         if(currentDateTraversal.isAfter(now)) {
             return missedTaskDueDates;
         }
+=======
+    private LocalDateTime getIndexDueDate(int taskIndex) {
+        return startDate.plusDays(getDaysBetweenDaysOfWeek(dayOfWeekTaskBegins, dayOfWeekTaskDue)).plusDays(7 * taskIndex).atTime(timeTaskDue);
+    }
 
-        missedTaskDueDates.add(LocalDateTime.of(currentDateTraversal.plusDays(getDaysBetweenDaysOfWeek(currentDateTraversal.getDayOfWeek(), dayOfWeekTaskDue)), timeTaskDue));
+    public void updateAndSaveTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, float originalEstimatedHoursCompletion) {
+        //update changes
+        this.taskNames = taskNames;
+        this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
+        this.dayOfWeekTaskDue = dayOfWeekTaskDue;
+        this.timeTaskDue = timeTaskDue;
+        this.taskGroup = taskGroup;
+        this.originalEstimatedHoursCompletion = originalEstimatedHoursCompletion;
 
+        //purge the task from any list
+        //TODO: this will not store the hours done in the tasks, and will be forgotten after this operation! if this becomes something that is worthwhile to fix, then do it
+        int removed = taskManager.getCurrentTimePeriod().removeTaskByParent(this);
+>>>>>>> Stashed changes
+
+        int originalIndex = currentTaskIndex;
+
+<<<<<<< Updated upstream
         //traverse the weeks, one at a time, until reach after now. stop there.
         //change now to a day afterwards so that we can check once a week increments, inclusive
         now = now.plusDays(1);
         while((currentDateTraversal = currentDateTraversal.plusDays(7)).isBefore(now)) {
             missedTaskDueDates.add(LocalDateTime.of(currentDateTraversal.plusDays(getDaysBetweenDaysOfWeek(currentDateTraversal.getDayOfWeek(), dayOfWeekTaskDue)), timeTaskDue));
+=======
+        if(removed > 0) {
+            for(int i = 0; i < removed; i++) {
+                currentTaskIndex--;
+
+                while (currentTaskIndex > 0 && taskNames[currentTaskIndex].isEmpty()) {
+                    currentTaskIndex--;
+                }
+            }
+>>>>>>> Stashed changes
         }
 
-        lastPendingTaskUpdateDate = currentDateTraversal;
+        System.out.println("WENT FROM INDEX " + originalIndex + " TO INDEX " + currentTaskIndex + ", SIZE " + totalTasksCount);
 
-        return missedTaskDueDates;
+        //re-add the task to all lists
+        taskManager.getCurrentTimePeriod().processPendingTasks(this);
+
+        //save changes
+        saveTaskToFile();
     }
 
+<<<<<<< Updated upstream
+=======
+    @Override
+    public Task getNextUpcomingTask() {
+        if(currentTaskIndex == totalTasksCount) {
+            return null;
+        }
+        if(taskNames[currentTaskIndex].isEmpty()) {
+            return null;
+        }
+
+        return getIndexTask(currentTaskIndex);
+    }
+
+    @Override
+    public LocalDate getNextUpcomingTaskStartDate() {
+        if(currentTaskIndex == totalTasksCount) {
+            return null;
+        }
+        if(taskNames[currentTaskIndex].isEmpty()) {
+            return null;
+        }
+
+        int daysBetween = getDaysBetweenDaysOfWeek(LocalDate.now().getDayOfWeek(), dayOfWeekTaskBegins);
+
+        if(daysBetween == 0) {
+            daysBetween += 7;
+        }
+
+        return LocalDate.now().plusDays(daysBetween);
+    }
+
+>>>>>>> Stashed changes
     private int getDaysBetweenDaysOfWeek(DayOfWeek start, DayOfWeek end) {
         int dayOfWeekAdjustmentDays = start.getValue() - end.getValue();
         if(dayOfWeekAdjustmentDays < 0) {
@@ -180,4 +287,20 @@ public class RepeatingTask extends TaskGenerator {
         }
         return dayOfWeekAdjustmentDays;
     }
+<<<<<<< Updated upstream
+=======
+
+    public void setTaskNotes(String notes) {
+        this.repeatingTaskNotes = notes;
+        saveTaskToFile();
+    }
+
+    public String getTaskNotes() {
+        return repeatingTaskNotes;
+    }
+
+    public String[] getTaskNames() {
+        return taskNames;
+    }
+>>>>>>> Stashed changes
 }

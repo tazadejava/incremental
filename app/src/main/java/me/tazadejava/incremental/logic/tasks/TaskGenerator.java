@@ -8,12 +8,14 @@ import java.time.LocalDateTime;
 public abstract class TaskGenerator {
 
     protected LocalDateTime creationTime;
+    protected LocalDate startDate;
 
     protected transient TaskManager taskManager;
     protected transient Task latestTask;
 
-    public TaskGenerator(TaskManager taskManager) {
+    public TaskGenerator(TaskManager taskManager, LocalDate startDate) {
         this.taskManager = taskManager;
+        this.startDate = startDate;
 
         creationTime = LocalDateTime.now();
     }
@@ -37,5 +39,9 @@ public abstract class TaskGenerator {
 
     public String getInstanceReference() {
         return creationTime.toString();
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
     }
 }

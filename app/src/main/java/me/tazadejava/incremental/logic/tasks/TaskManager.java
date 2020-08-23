@@ -13,8 +13,10 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import me.tazadejava.incremental.logic.customserializers.LocalDateAdapter;
 import me.tazadejava.incremental.logic.customserializers.LocalDateTimeAdapter;
@@ -36,15 +38,18 @@ public class TaskManager {
     private Task currentlyEditingTask;
 
     public TaskManager() {
-        timePeriods.add(new TimePeriod(this, "", LocalDate.now(), null));
-        currentTimePeriod = timePeriods.get(0);
-
         gson = new GsonBuilder().setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter().nullSafe())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter().nullSafe())
                 .create();
 
         loadData();
+
+        if(timePeriods.isEmpty()) {
+            timePeriods.add(new TimePeriod(this, "", LocalDate.now(), null));
+            currentTimePeriod = timePeriods.get(0);
+        }
+
         currentTimePeriod.checkForPendingTasks();
     }
 
@@ -78,7 +83,15 @@ public class TaskManager {
         return true;
     }
 
+    public boolean doesGroupExistPersistently(String name) {
+        return allPersistentGroups.containsKey(name);
+    }
+
     public void addNewPersistentGroup(String name) {
+        if(allPersistentGroups.containsKey(name)) {
+            return;
+        }
+
         allPersistentGroups.put(name, new Group(name));
 
         saveData(true);
@@ -88,8 +101,12 @@ public class TaskManager {
         return !currentTimePeriod.isInTimePeriod(LocalDate.now());
     }
 
-    public List<String> getAllTaskGroupNames() {
+    public List<String> getAllCurrentGroupNames() {
         List<String> names = new ArrayList<>();
+
+        for(Group group : currentTimePeriod.getAllGroups()) {
+            names.add(group.getGroupName());
+        }
 
         for(Group group : allPersistentGroups.values()) {
             names.add(group.getGroupName());
@@ -98,7 +115,45 @@ public class TaskManager {
         return names;
     }
 
-    public Group getGroupByName(String name) {
+    public Collection<Group> getAllCurrentGroups() {
+        Collection<Group> groups = new ArrayList<>(currentTimePeriod.getAllGroups());
+        groups.addAll(allPersistentGroups.values());
+        return groups;
+    }
+
+    /**
+     * Returns null if global. Time period otherwise.
+     * @param group
+     * @return
+     */
+    public TimePeriod getGroupScope(Group group) {
+        if(currentTimePeriod.doesGroupExist(group.getGroupName())) {
+            return currentTimePeriod;
+        } else {
+            for (TimePeriod period : timePeriods) {
+                if(period == currentTimePeriod) {
+                    continue;
+                }
+
+                if (period.doesGroupExist(group.getGroupName())) {
+                    return period;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * first checks the time period, then checks the persistent
+     * @param name
+     * @return
+     */
+    public Group getCurrentGroupByName(String name) {
+        return currentTimePeriod.getGroupByName(name);
+    }
+
+    public Group getPersistentGroupByName(String name) {
         return allPersistentGroups.getOrDefault(name, null);
     }
 
@@ -168,6 +223,28 @@ public class TaskManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean updateGroupName(Group group, String name) {
+        if(allPersistentGroups.containsKey(name)) {
+            return false;
+        }
+
+        allPersistentGroups.remove(group.getGroupName());
+        group.setGroupName(name);
+        allPersistentGroups.put(name, group);
+
+        saveAllData();
+
+        return true;
+    }
+
+    public List<TimePeriod> getTimePeriods() {
+        return timePeriods;
+    }
+
+    public void saveAllData() {
+        saveData(true, timePeriods.toArray(new TimePeriod[0]));
     }
 
     public void saveData(boolean savePersistentData, TimePeriod... saveTimePeriods) {

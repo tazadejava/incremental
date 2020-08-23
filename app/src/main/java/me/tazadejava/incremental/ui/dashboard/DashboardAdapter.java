@@ -30,7 +30,7 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
             super(itemView);
 
             taskList = itemView.findViewById(R.id.dashboard_tasks_list);
-            taskName = itemView.findViewById(R.id.task_name);
+            taskName = itemView.findViewById(R.id.taskGroupName);
             estimatedTime = itemView.findViewById(R.id.dashoboard_estimated_time);
         }
     }
@@ -104,6 +104,6 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
 
     @Override
     public int getItemCount() {
-        return 7;
+        return TimePeriod.DAILY_LOGS_AHEAD_COUNT;
     }
 }

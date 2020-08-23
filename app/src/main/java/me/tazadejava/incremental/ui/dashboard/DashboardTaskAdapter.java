@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.text.InputType;
@@ -45,7 +46,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
 
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
 
-            taskName = itemView.findViewById(R.id.task_name);
+            taskName = itemView.findViewById(R.id.taskGroupName);
             taskClass = itemView.findViewById(R.id.task_class);
             taskSubtasksLeft = itemView.findViewById(R.id.task_subtasks_left);
             taskHoursRemaining = itemView.findViewById(R.id.task_hours_remaining);
@@ -108,11 +109,43 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
         float hoursLeft = task.getTotalHoursLeftOfWork();
         String hoursLeftFormatted = String.valueOf((hoursLeft == (int) hoursLeft) ? (int) hoursLeft : hoursLeft);
 
+<<<<<<< Updated upstream:app/src/main/java/me/tazadejava/incremental/ui/dashboard/DashboardTaskAdapter.java
         float hoursLeftToday = task.getTodaysHoursOfWork();
         String hoursTodayFormatted = String.valueOf((hoursLeftToday == (int) hoursLeftToday) ? (int) hoursLeftToday : hoursLeftToday);
 
         holder.taskSubtasksLeft.setText("est. " + hoursLeftFormatted + " hour" + (task.getEstimatedCompletionTime() == 1 ? "" : "s") + " remaining" +
                 "\n" + hoursTodayFormatted + " hour" + (task.getTodaysHoursOfWork() == 1 ? "" : "s") + " of work");
+=======
+        if(date.equals(LocalDate.now())) {
+            float hoursLeftToday = task.getTodaysHoursLeft();
+
+            if(hoursLeftToday < 0) {
+                hoursLeftToday = 0;
+            }
+
+            String hoursTodayFormatted = hoursLeftToday % 1 == 0 ? String.valueOf((int) hoursLeftToday) : String.valueOf(hoursLeftToday);
+            holder.dailyHoursRemaining.setText(hoursTodayFormatted + " hour" + (hoursLeftToday == 1 ? "" : "s") + " of work today");
+        } else {
+            float hoursLeft = task.getDayHoursOfWorkTotal(date);
+
+            if(hoursLeft < 0) {
+                hoursLeft = 0;
+            }
+
+            String hoursLeftThisDay = hoursLeft % 1 == 0 ? String.valueOf((int) hoursLeft) : String.valueOf(hoursLeft);
+            holder.dailyHoursRemaining.setText(hoursLeftThisDay + " hour" + (hoursLeft == 1 ? "" : "s") + " of work");
+        }
+
+        if(task.isOverdue()) {
+            int overdueDays = task.getOverdueDays();
+            holder.dailyHoursRemaining.setText(holder.dailyHoursRemaining.getText() + "\nOVERDUE BY " + overdueDays + " DAY" + (overdueDays == 1 ? "" : "S"));
+            holder.actionTaskText.setTextColor(Color.RED);
+        } else {
+            holder.actionTaskText.setTextColor(holder.actionTaskText.getTextColors());
+        }
+
+        holder.totalHoursRemaining.setText(hoursLeftFormatted + " total hour" + (totalHoursLeft == 1 ? "" : "s") + " remaining");
+>>>>>>> Stashed changes:app/src/main/java/me/tazadejava/incremental/ui/dashboard/TaskAdapter.java
 
         LocalDateTime dueDateTime = task.getDueDateTime();
         if(dueDateTime.toLocalDate().equals(LocalDate.now())) {
@@ -157,8 +190,18 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                 darkColor.setColor(task.getGroup().getBeginColor());
                 lightColor.setColor(task.getGroup().getEndColor());
 
+<<<<<<< Updated upstream:app/src/main/java/me/tazadejava/incremental/ui/dashboard/DashboardTaskAdapter.java
                 unwrapped.setLayerSize(1, (int) (taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
                 taskCardConstraintLayout.setBackground(unwrapped);
+=======
+                if(date.equals(LocalDate.now())) {
+                    unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                } else {
+                    unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                }
+
+                viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
+>>>>>>> Stashed changes:app/src/main/java/me/tazadejava/incremental/ui/dashboard/TaskAdapter.java
             }
         });
     }

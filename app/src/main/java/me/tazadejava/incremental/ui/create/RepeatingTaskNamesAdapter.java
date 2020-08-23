@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdapter.RepeatingTaskViewHolder> {
+public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTaskNamesAdapter.RepeatingTaskViewHolder> {
 
     public class RepeatingTaskViewHolder extends RecyclerView.ViewHolder {
 
@@ -41,28 +41,59 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
     private RecyclerView recyclerView;
     private CreateTaskActivity activity;
 
-    private List<String> taskNames;
+    private String[] taskNames;
 
     private HashMap<EditText, TextWatcher> textWatchers = new HashMap<>();
     private int lastSelectedEdit;
 
     private Set<Integer> disabledPositions;
 
-    private LocalDate startDate;
+    private LocalDate startDate, dueDate;
 
-    public RepeatingTaskAdapter(RecyclerView recyclerView, LocalDate startDate, CreateTaskActivity activity) {
+    private int repeatSize = 1;
+
+    public RepeatingTaskNamesAdapter(RecyclerView recyclerView, LocalDate startDate, LocalDate dueDate, CreateTaskActivity activity) {
         this.recyclerView = recyclerView;
         this.startDate = startDate;
+        this.dueDate = dueDate;
         this.activity = activity;
 
-        taskNames = new ArrayList<>();
+        taskNames = new String[1];
+
+        taskNames[0] = "";
+
         disabledPositions = new HashSet<>();
 
         lastSelectedEdit = -1;
     }
 
+    public void setRepeatSize(int amount) {
+        repeatSize = amount;
+
+        String[] newList = new String[amount];
+
+        for(int i = 0; i < amount; i++) {
+            if(i < taskNames.length) {
+                newList[i] = taskNames[i];
+            } else {
+                newList[i] = "";
+            }
+        }
+
+        taskNames = newList;
+    }
+
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public void setTaskNamesAndDisabled(String[] taskNames, Set<Integer> disabled) {
+        this.taskNames = taskNames;
+        this.disabledPositions = disabled;
     }
 
     @NonNull
@@ -74,22 +105,30 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
 
     @Override
     public int getItemCount() {
-        return taskNames.size() + 1;
+        return repeatSize;
     }
 
-    private String getStartDateFormatted(int daysAdded) {
-        LocalDate newDate = startDate.plusDays(daysAdded);
-        return newDate.getMonthValue() + "/" + newDate.getDayOfMonth() + "/" + newDate.getYear();
+    private String getFormattedDate(LocalDate date, int daysAdded) {
+        LocalDate newDate = date.plusDays(daysAdded);
+        return newDate.getMonthValue() + "/" + newDate.getDayOfMonth();
     }
 
     @Override
     public void onBindViewHolder(@NonNull RepeatingTaskViewHolder holder, int position) {
-        holder.fillInBlankIndex.setText((position + 1) + ")");
-        holder.fillInBlankEdit.setText(position < taskNames.size() ? taskNames.get(position) : "");
+        holder.fillInBlankIndex.setText(getFormattedDate(startDate, 7 * position) + "-" + getFormattedDate(dueDate, 7 * position) + ")");
+        holder.fillInBlankEdit.setText(taskNames[position]);
         holder.fillInBlankEdit.setSelection(holder.fillInBlankEdit.getText().length());
-        holder.fillInBlankEdit.setHint("Task, starting " + getStartDateFormatted(7 * position));
 
         holder.enabledWeekSwitch.setChecked(!disabledPositions.contains(position));
+
+        LocalDate adjustedDueDate = dueDate.plusDays(7 * position);
+        if(LocalDate.now().isAfter(adjustedDueDate)) {
+            holder.fillInBlankEdit.setEnabled(false);
+            holder.enabledWeekSwitch.setEnabled(false);
+        } else {
+            holder.fillInBlankEdit.setEnabled(true);
+            holder.enabledWeekSwitch.setEnabled(true);
+        }
 
         if(position == lastSelectedEdit) {
             holder.fillInBlankEdit.requestFocus();
@@ -114,15 +153,8 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
 
             @Override
             public void afterTextChanged(Editable s) {
-                System.out.println("CHANGED " + position);
-                String text = holder.fillInBlankEdit.getText().toString();
-                if (position == taskNames.size()) {
-                    taskNames.add(text);
-                    lastSelectedEdit = position;
-
-                    refreshLayout();
-                } else {
-                    taskNames.set(position, text);
+                if(s.length() > 0 && position < taskNames.length) {
+                    taskNames[position] = s.toString();
                 }
 
                 activity.updateSaveButton();
@@ -131,39 +163,12 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
 
         textWatchers.put(holder.fillInBlankEdit, watcher);
 
-        holder.fillInBlankEdit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                System.out.println(hasFocus + " NEW FOCUS " + position);
-                if (!hasFocus && position == taskNames.size() - 1 && holder.enabledWeekSwitch.isChecked()) {
-                    if (holder.fillInBlankEdit.getText().length() == 0) {
-                        taskNames.remove(position);
-
-                        refreshLayout();
-
-
-                    }
-                }
-
-                activity.updateSaveButton();
-            }
-        });
-
         holder.enabledWeekSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(position == taskNames.size()) {
-                    if(!isChecked) {
-                        taskNames.add("");
-                        lastSelectedEdit = position;
-
-                        disabledPositions.add(position);
-
-                        refreshLayout();
-                    }
-                }
-
                 if(isChecked) {
+                    disabledPositions.add(position);
+                } else {
                     disabledPositions.remove(position);
                 }
 
@@ -172,41 +177,23 @@ public class RepeatingTaskAdapter extends RecyclerView.Adapter<RepeatingTaskAdap
         });
     }
 
-    private void refreshLayout() {
-        recyclerView.post(new Runnable() {
-            @Override
-            public void run() {
-                for(Map.Entry<EditText, TextWatcher> entry : textWatchers.entrySet()) {
-                    entry.getKey().removeTextChangedListener(entry.getValue());
-                }
-                textWatchers.clear();
-
-                recyclerView.getRecycledViewPool().clear();
-                notifyDataSetChanged();
-
-                recyclerView.smoothScrollToPosition(getItemCount() - 1);
-            }
-        });
-    }
-
     public String[] getTaskNames() {
-        List<String> taskNamesRevised = new ArrayList<>();
+        String[] taskNamesWithDisables = new String[taskNames.length];
 
-        int position = 0;
-        for(String str : taskNames) {
-            if(!disabledPositions.contains(position)) {
-                taskNamesRevised.add(str);
+        for(int i = 0; i < taskNames.length; i++) {
+            if(disabledPositions.contains(i)) {
+                taskNamesWithDisables[i] = "";
+            } else {
+                taskNamesWithDisables[i] = taskNames[i];
             }
-
-            position++;
         }
 
-        return taskNamesRevised.toArray(new String[0]);
+        return taskNamesWithDisables;
     }
 
     public boolean areAllTasksNamed() {
-        for(int i = 0; i < taskNames.size(); i++) {
-            if(taskNames.get(i).isEmpty() && !disabledPositions.contains(i)) {
+        for(int i = 0; i < taskNames.length; i++) {
+            if(taskNames[i].isEmpty() && !disabledPositions.contains(i)) {
                 return false;
             }
         }

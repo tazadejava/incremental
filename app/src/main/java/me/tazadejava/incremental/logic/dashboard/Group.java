@@ -6,6 +6,8 @@ import com.chroma.Chroma;
 import com.chroma.ColorSpace;
 import com.google.gson.JsonObject;
 
+import java.util.Objects;
+
 public class Group {
 
     private String name;
@@ -40,6 +42,14 @@ public class Group {
         recomputeColorValues();
     }
 
+    public void setGroupName(String name) {
+        this.name = name;
+    }
+
+    public void randomizeColor() {
+        setColor(Math.random() * 360d);
+    }
+
     private void recomputeColorValues() {
         Chroma originalColor = new Chroma("#1d98cb");
         double[] lch = originalColor.getLCH();
@@ -60,5 +70,19 @@ public class Group {
 
     public int getEndColor() {
         return endColor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Group group = (Group) o;
+        return Double.compare(group.color, color) == 0 &&
+                Objects.equals(name, group.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, color);
     }
 }
