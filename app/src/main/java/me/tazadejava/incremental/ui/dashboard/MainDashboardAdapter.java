@@ -19,7 +19,7 @@ import me.tazadejava.incremental.logic.dashboard.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
-public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.ViewHolder> {
+public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -39,9 +39,9 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
 
     private TimePeriod timePeriod;
 
-    private List<DashboardTaskAdapter> taskAdapters;
+    private List<TaskAdapter> taskAdapters;
 
-    public DashboardAdapter(Context context) {
+    public MainDashboardAdapter(Context context) {
         this.context = context;
 
         taskAdapters = new ArrayList<>();
@@ -61,8 +61,8 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
         LocalDate date = LocalDate.now().plusDays(position);
         List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
-        DashboardTaskAdapter adapter;
-        holder.taskList.setAdapter(adapter = new DashboardTaskAdapter(context, date, dayTasks, this));
+        TaskAdapter adapter;
+        holder.taskList.setAdapter(adapter = new TaskAdapter(context, date, dayTasks, this));
         holder.taskList.setLayoutManager(new LinearLayoutManager(context));
 
         taskAdapters.add(adapter);
@@ -89,13 +89,13 @@ public class DashboardAdapter extends RecyclerView.Adapter<DashboardAdapter.View
     }
 
     public void updateTaskColors(Task task) {
-        for(DashboardTaskAdapter adapter : taskAdapters) {
+        for(TaskAdapter adapter : taskAdapters) {
             adapter.updateTaskColor(task);
         }
     }
 
     public void updateDayLayouts(Task task) {
-        for(DashboardTaskAdapter adapter : taskAdapters) {
+        for(TaskAdapter adapter : taskAdapters) {
             if(adapter.hasTask(task)) {
                 adapter.notifyDataSetChanged();
             }

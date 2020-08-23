@@ -213,6 +213,8 @@ public class CreateTaskActivity extends AppCompatActivity {
                     repeatingEventDateLayout.setVisibility(View.GONE);
                     nameOfTaskEdit.setEnabled(true);
                 }
+
+                updateSaveButton();
             }
         });
 
@@ -353,10 +355,6 @@ public class CreateTaskActivity extends AppCompatActivity {
                 TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
 
                 if(taskManager.getActiveEditTask() != null) {
-<<<<<<< Updated upstream
-                    //TODO: IMPLEMENT
-                    System.out.println("TODO: i need to transfer all data needed to create a new generating task");
-=======
                     Task editTask = taskManager.getActiveEditTask();
                     taskManager.setActiveEditTask(null);
 
@@ -374,7 +372,6 @@ public class CreateTaskActivity extends AppCompatActivity {
                         editTask.editTask(nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
                         ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDateObject);
                     }
->>>>>>> Stashed changes
                 } else {
                     if (repeatingEventSwitch.isChecked()) {
                         taskManager.addNewGeneratedTask(new RepeatingTask(taskManager, repeatingTaskNamesAdapter.getTaskNames(),
@@ -395,8 +392,6 @@ public class CreateTaskActivity extends AppCompatActivity {
 
         if(taskManager.getActiveEditTask() != null) {
             setTaskValues(taskManager.getActiveEditTask());
-<<<<<<< Updated upstream
-=======
 
             if(taskManager.getActiveEditTask().isRepeatingTask()) {
                 setTitle("Edit repeating task...");
@@ -405,7 +400,6 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                 repeatingTaskNamesList.setAdapter(repeatingTaskNamesAdapter = new RepeatingTaskNamesAdapter(repeatingTaskNamesList, startDateObject, dueDateObject, this));
             }
->>>>>>> Stashed changes
         } else {
             setDefaultValues();
 
@@ -422,6 +416,7 @@ public class CreateTaskActivity extends AppCompatActivity {
         saveButton.setEnabled(areRequiredFieldsFilled());
     }
 
+    //editing an existing task
     private void setTaskValues(Task activeTask) {
         dueDateObject = activeTask.getDueDateTime().toLocalDate();
         dueDate.setText(formatLocalDate(dueDateObject));
@@ -436,9 +431,6 @@ public class CreateTaskActivity extends AppCompatActivity {
 
         estimatedHoursEdit.setText(String.valueOf(activeTask.getEstimatedCompletionTime()));
 
-<<<<<<< Updated upstream
-        nameOfTaskEdit.setText(activeTask.getName());
-=======
         if(activeTask.isRepeatingTask()) {
             repeatingTaskNamesList.setAdapter(repeatingTaskNamesAdapter = new RepeatingTaskNamesAdapter(repeatingTaskNamesList, startDateObject, dueDateObject, this));
 
@@ -464,7 +456,6 @@ public class CreateTaskActivity extends AppCompatActivity {
         }
 
         repeatingEventSwitch.setEnabled(false);
->>>>>>> Stashed changes
     }
 
     private void setDefaultValues() {
@@ -479,10 +470,10 @@ public class CreateTaskActivity extends AppCompatActivity {
     }
 
     private String formatLocalDate(LocalDate date) {
-        String dayOfWeek = dueDateObject.getDayOfWeek().toString();
+        String dayOfWeek = date.getDayOfWeek().toString();
 
-        return (dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + dueDateObject.getMonthValue()
-                + "/" + dueDateObject.getDayOfMonth()+ "/" + dueDateObject.getYear();
+        return (dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + date.getMonthValue()
+                + "/" + date.getDayOfMonth()+ "/" + date.getYear();
     }
 
     public boolean areRequiredFieldsFilled() {
@@ -508,5 +499,14 @@ public class CreateTaskActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        if(IncrementalApplication.taskManager.getActiveEditTask() != null) {
+            IncrementalApplication.taskManager.setActiveEditTask(null);
+        }
     }
 }

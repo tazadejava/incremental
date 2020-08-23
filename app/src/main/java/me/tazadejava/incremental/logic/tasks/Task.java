@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 import me.tazadejava.incremental.logic.dashboard.Group;
 import me.tazadejava.incremental.logic.dashboard.TimePeriod;
@@ -15,13 +16,9 @@ public class Task {
 
     private transient TaskGenerator parent;
 
-<<<<<<< Updated upstream
-    private String name;
-=======
     private LocalDate startDate;
 
     private String name, taskNotes;
->>>>>>> Stashed changes
     private LocalDateTime dueDateTime;
     private transient Group group;
     private transient TimePeriod timePeriod;
@@ -187,14 +184,14 @@ public class Task {
             isTaskComplete = true;
             parent.completeTask(this, totalLoggedHoursOfWork);
         }
+
+        parent.saveTaskToFile();
     }
 
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 
-<<<<<<< Updated upstream
-=======
     public void setTaskNotes(String notes) {
         if(parent instanceof RepeatingTask) {
             ((RepeatingTask) parent).setTaskNotes(notes);
@@ -218,7 +215,6 @@ public class Task {
         this.estimatedTotalHoursToCompletion = estimatedTotalHoursToCompletion;
     }
 
->>>>>>> Stashed changes
     public boolean isTaskComplete() {
         return isTaskComplete;
     }
@@ -230,8 +226,6 @@ public class Task {
     public Group getGroup() {
         return group;
     }
-<<<<<<< Updated upstream
-=======
 
     public String getTaskNotes() {
         if(parent instanceof RepeatingTask) {
@@ -268,5 +262,4 @@ public class Task {
     public LocalDate getStartDate() {
         return startDate;
     }
->>>>>>> Stashed changes
 }

@@ -176,7 +176,7 @@ public class TimePeriod {
             if(generatorObject.has("generatorType") && generatorObject.get("generatorType").getAsString().equals("repeating")) {
                 generators.add(RepeatingTask.createInstance(gson, taskManager, this, generatorObject));
             } else {
-                generators.add(NonrepeatingTask.createInstance(gson, taskManager, generatorObject));
+                generators.add(NonrepeatingTask.createInstance(gson, taskManager, this, generatorObject));
             }
         }
 
@@ -261,8 +261,6 @@ public class TimePeriod {
     public void completeTask(Task task) {
         allTasks.remove(task);
         allCompletedTasks.add(task);
-<<<<<<< Updated upstream
-=======
 
         removeTaskFromDailyLists(task);
     }
@@ -286,7 +284,6 @@ public class TimePeriod {
         }
 
         return removed;
->>>>>>> Stashed changes
     }
 
     public float getEstimatedHoursOfWorkForDate(LocalDate date) {
@@ -295,7 +292,7 @@ public class TimePeriod {
         if(deltaDays < 0 || deltaDays > tasksByDay.length) {
             return -1;
         } else {
-            int estimatedHours = 0;
+            float estimatedHours = 0;
 
             for(Task task : tasksByDay[deltaDays]) {
                 estimatedHours += task.getDayHoursOfWorkTotal(date, false);
@@ -305,10 +302,6 @@ public class TimePeriod {
         }
     }
 
-<<<<<<< Updated upstream
-    private void addTaskToDailyLists(Task task, boolean addToAllTasks) {
-        if(addToAllTasks) {
-=======
     private void removeTaskFromDailyLists(Task task) {
         for (int i = 0; i < tasksByDay.length; i++) {
             tasksByDay[i].remove(task);
@@ -321,14 +314,16 @@ public class TimePeriod {
 
     private void addTaskToDailyLists(Task task, boolean addToTasksList, LocalDate taskStartDate, LocalDate taskDueDate) {
         if(addToTasksList) {
->>>>>>> Stashed changes
             allTasks.add(task);
         }
 
         //place respectively in the daily task list
         for (int i = 0; i < tasksByDay.length; i++) {
             LocalDate date = LocalDate.now().plusDays(i);
-            LocalDate taskDueDate = task.getDueDateTime().toLocalDate();
+
+            if(taskStartDate.isAfter(date)) {
+                continue;
+            }
 
             if (date.equals(taskDueDate) || date.isBefore(taskDueDate) || (i == 0 && taskDueDate.isBefore(date))) {
                 tasksByDay[i].add(task);
@@ -344,8 +339,6 @@ public class TimePeriod {
                 addTaskToDailyLists(task, true);
             }
         }
-<<<<<<< Updated upstream
-=======
 
         //add an upcoming task, if applicable, to the weekly commitment list
 
@@ -364,7 +357,6 @@ public class TimePeriod {
 
     public boolean doesGroupExist(String name) {
         return groups.containsKey(name);
->>>>>>> Stashed changes
     }
 
     public Group getGroupByName(String name) {

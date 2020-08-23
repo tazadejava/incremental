@@ -20,11 +20,9 @@ import me.tazadejava.incremental.ui.main.MainActivity;
 public class DashboardFragment extends Fragment {
 
     private RecyclerView dashboardView;
-    private DashboardAdapter adapter;
+    private MainDashboardAdapter adapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-<<<<<<< Updated upstream
-=======
         //change the FAB to create a new task
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
         addTaskButton.setOnClickListener(new View.OnClickListener() {
@@ -35,11 +33,10 @@ public class DashboardFragment extends Fragment {
             }
         });
 
->>>>>>> Stashed changes
         View root = inflater.inflate(R.layout.fragment_home, container, false);
 
         dashboardView = root.findViewById(R.id.dashboard_day_list);
-        dashboardView.setAdapter(adapter = new DashboardAdapter(getContext()));
+        dashboardView.setAdapter(adapter = new MainDashboardAdapter(getContext()));
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return root;

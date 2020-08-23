@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import me.tazadejava.incremental.logic.dashboard.Group;
@@ -20,10 +21,14 @@ public class NonrepeatingTask extends TaskGenerator {
         latestTask = new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedHoursToCompletion);
     }
 
-    public static NonrepeatingTask createInstance(Gson gson, TaskManager taskManager, JsonObject data) {
+    public static NonrepeatingTask createInstance(Gson gson, TaskManager taskManager, TimePeriod timePeriod, JsonObject data) {
         NonrepeatingTask task = gson.fromJson(data.get("serialized"), NonrepeatingTask.class);
 
         task.taskManager = taskManager;
+
+        if(data.has("taskData")) {
+            task.latestTask = Task.createInstance(gson, data.getAsJsonObject("taskData"), task, timePeriod);
+        }
 
         return task;
     }
@@ -34,11 +39,13 @@ public class NonrepeatingTask extends TaskGenerator {
 
         data.add("serialized", JsonParser.parseString(gson.toJson(this)).getAsJsonObject());
 
+        if(!hasTaskStarted) {
+            data.add("taskData", latestTask.save(gson));
+        }
+
         return data;
     }
 
-<<<<<<< Updated upstream
-=======
     public void updateAndSaveTask(LocalDate startDate) {
         //update changes
         this.startDate = startDate;
@@ -54,7 +61,6 @@ public class NonrepeatingTask extends TaskGenerator {
         saveTaskToFile();
     }
 
->>>>>>> Stashed changes
     @Override
     public Task[] getPendingTasks() {
         if(!hasTaskStarted && startDate.isBefore(LocalDate.now())) {
@@ -69,8 +75,6 @@ public class NonrepeatingTask extends TaskGenerator {
     public boolean hasGeneratorCompletedAllTasks() {
         return hasTaskStarted && latestTask.isTaskComplete();
     }
-<<<<<<< Updated upstream
-=======
 
     @Override
     public Task getNextUpcomingTask() {
@@ -89,5 +93,4 @@ public class NonrepeatingTask extends TaskGenerator {
             return null;
         }
     }
->>>>>>> Stashed changes
 }

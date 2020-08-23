@@ -32,12 +32,12 @@ import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
-public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdapter.ViewHolder> {
+public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         private ConstraintLayout taskCardConstraintLayout;
-        private TextView taskName, taskClass, taskSubtasksLeft, taskHoursRemaining, taskDueDate, actionTaskText;
+        private TextView taskName, taskClass, totalHoursRemaining, dailyHoursRemaining, taskDueDate, actionTaskText;
 
         private View horizontalLine;
 
@@ -48,8 +48,8 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
 
             taskName = itemView.findViewById(R.id.taskGroupName);
             taskClass = itemView.findViewById(R.id.task_class);
-            taskSubtasksLeft = itemView.findViewById(R.id.task_subtasks_left);
-            taskHoursRemaining = itemView.findViewById(R.id.task_hours_remaining);
+            totalHoursRemaining = itemView.findViewById(R.id.totalHoursRemaining);
+            dailyHoursRemaining = itemView.findViewById(R.id.dailyHoursRemaining);
             taskDueDate = itemView.findViewById(R.id.task_due_date);
 
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
@@ -61,15 +61,15 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
     private Context context;
     private LocalDate date;
     private List<Task> tasks;
-    private DashboardAdapter dashboardAdapter;
+    private MainDashboardAdapter mainDashboardAdapter;
 
     private HashMap<Task, ConstraintLayout> taskLayout;
 
-    public DashboardTaskAdapter(Context context, LocalDate date, List<Task> tasks, DashboardAdapter dashboardAdapter) {
+    public TaskAdapter(Context context, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
         this.context = context;
         this.date = date;
         this.tasks = tasks;
-        this.dashboardAdapter = dashboardAdapter;
+        this.mainDashboardAdapter = mainDashboardAdapter;
 
         taskLayout = new HashMap<>();
     }
@@ -104,18 +104,11 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
         holder.taskName.setText(task.getName());
         holder.taskClass.setText(task.getGroupName());
 
-        holder.taskHoursRemaining.setText("");
+        holder.dailyHoursRemaining.setText("");
 
-        float hoursLeft = task.getTotalHoursLeftOfWork();
-        String hoursLeftFormatted = String.valueOf((hoursLeft == (int) hoursLeft) ? (int) hoursLeft : hoursLeft);
+        float totalHoursLeft = task.getTotalHoursLeftOfWork();
+        String totalHoursLeftFormatted = String.valueOf((totalHoursLeft == (int) totalHoursLeft) ? (int) totalHoursLeft : totalHoursLeft);
 
-<<<<<<< Updated upstream:app/src/main/java/me/tazadejava/incremental/ui/dashboard/DashboardTaskAdapter.java
-        float hoursLeftToday = task.getTodaysHoursOfWork();
-        String hoursTodayFormatted = String.valueOf((hoursLeftToday == (int) hoursLeftToday) ? (int) hoursLeftToday : hoursLeftToday);
-
-        holder.taskSubtasksLeft.setText("est. " + hoursLeftFormatted + " hour" + (task.getEstimatedCompletionTime() == 1 ? "" : "s") + " remaining" +
-                "\n" + hoursTodayFormatted + " hour" + (task.getTodaysHoursOfWork() == 1 ? "" : "s") + " of work");
-=======
         if(date.equals(LocalDate.now())) {
             float hoursLeftToday = task.getTodaysHoursLeft();
 
@@ -126,14 +119,14 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
             String hoursTodayFormatted = hoursLeftToday % 1 == 0 ? String.valueOf((int) hoursLeftToday) : String.valueOf(hoursLeftToday);
             holder.dailyHoursRemaining.setText(hoursTodayFormatted + " hour" + (hoursLeftToday == 1 ? "" : "s") + " of work today");
         } else {
-            float hoursLeft = task.getDayHoursOfWorkTotal(date);
+            float dailyHoursLeft = task.getDayHoursOfWorkTotal(date);
 
-            if(hoursLeft < 0) {
-                hoursLeft = 0;
+            if(dailyHoursLeft < 0) {
+                dailyHoursLeft = 0;
             }
 
-            String hoursLeftThisDay = hoursLeft % 1 == 0 ? String.valueOf((int) hoursLeft) : String.valueOf(hoursLeft);
-            holder.dailyHoursRemaining.setText(hoursLeftThisDay + " hour" + (hoursLeft == 1 ? "" : "s") + " of work");
+            String hoursLeftThisDay = dailyHoursLeft % 1 == 0 ? String.valueOf((int) dailyHoursLeft) : String.valueOf(dailyHoursLeft);
+            holder.dailyHoursRemaining.setText(hoursLeftThisDay + " hour" + (dailyHoursLeft == 1 ? "" : "s") + " of work");
         }
 
         if(task.isOverdue()) {
@@ -144,8 +137,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
             holder.actionTaskText.setTextColor(holder.actionTaskText.getTextColors());
         }
 
-        holder.totalHoursRemaining.setText(hoursLeftFormatted + " total hour" + (totalHoursLeft == 1 ? "" : "s") + " remaining");
->>>>>>> Stashed changes:app/src/main/java/me/tazadejava/incremental/ui/dashboard/TaskAdapter.java
+        holder.totalHoursRemaining.setText(totalHoursLeftFormatted + " total hour" + (totalHoursLeft == 1 ? "" : "s") + " remaining");
 
         LocalDateTime dueDateTime = task.getDueDateTime();
         if(dueDateTime.toLocalDate().equals(LocalDate.now())) {
@@ -190,18 +182,13 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                 darkColor.setColor(task.getGroup().getBeginColor());
                 lightColor.setColor(task.getGroup().getEndColor());
 
-<<<<<<< Updated upstream:app/src/main/java/me/tazadejava/incremental/ui/dashboard/DashboardTaskAdapter.java
-                unwrapped.setLayerSize(1, (int) (taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
-                taskCardConstraintLayout.setBackground(unwrapped);
-=======
                 if(date.equals(LocalDate.now())) {
-                    unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                    unwrapped.setLayerSize(1, (int) (taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
                 } else {
-                    unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                    unwrapped.setLayerSize(1, (int) (taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
                 }
 
-                viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
->>>>>>> Stashed changes:app/src/main/java/me/tazadejava/incremental/ui/dashboard/TaskAdapter.java
+                taskCardConstraintLayout.setBackground(unwrapped);
             }
         });
     }
@@ -247,7 +234,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
 
                                     task.completeTaskForTheDay();
 
-                                    dashboardAdapter.updateTaskColors(task);
+                                    mainDashboardAdapter.updateTaskColors(task);
                                     updateLayout(task);
 
                                     hideKeyboard(v);
@@ -261,7 +248,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
-                                    dashboardAdapter.updateTaskColors(task);
+                                    mainDashboardAdapter.updateTaskColors(task);
                                     updateLayout(task);
 
                                     hideKeyboard(v);
@@ -275,7 +262,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
-                                    dashboardAdapter.updateTaskColors(task);
+                                    mainDashboardAdapter.updateTaskColors(task);
 
                                     hideKeyboard(v);
                                 }
@@ -323,7 +310,7 @@ public class DashboardTaskAdapter extends RecyclerView.Adapter<DashboardTaskAdap
     }
 
     private void updateLayout(Task task) {
-        dashboardAdapter.updateDayLayouts(task);
+        mainDashboardAdapter.updateDayLayouts(task);
     }
 
     public boolean hasTask(Task task) {

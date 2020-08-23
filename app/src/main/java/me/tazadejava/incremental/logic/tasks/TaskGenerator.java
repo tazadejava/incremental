@@ -3,6 +3,7 @@ package me.tazadejava.incremental.logic.tasks;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public abstract class TaskGenerator {
@@ -28,11 +29,19 @@ public abstract class TaskGenerator {
         this.latestTask = task;
     }
 
+    public void saveTaskToFile() {
+        taskManager.saveData(false, taskManager.getCurrentTimePeriod());
+    }
+
     /**
      * Returns tasks only if not yet active. Empty otherwise.
      * @return
      */
     public abstract Task[] getPendingTasks();
+
+    public abstract Task getNextUpcomingTask();
+    public abstract LocalDate getNextUpcomingTaskStartDate();
+
     public abstract boolean hasGeneratorCompletedAllTasks();
 
     public abstract JsonObject save(Gson gson);
