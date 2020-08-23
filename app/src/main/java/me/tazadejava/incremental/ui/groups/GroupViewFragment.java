@@ -72,6 +72,8 @@ public class GroupViewFragment extends Fragment {
         Spinner groupScopeSpinner = dialogView.findViewById(R.id.groupScopeSpinner);
         groupScopeSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, groupScope));
 
+        groupScopeSpinner.setSelection(groupScope.size() - 1);
+
         EditText input = dialogView.findViewById(R.id.groupNameText);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
 

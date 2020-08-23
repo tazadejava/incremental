@@ -284,6 +284,8 @@ public class CreateTaskActivity extends AppCompatActivity {
                     Spinner groupScopeSpinner = dialogView.findViewById(R.id.groupScopeSpinner);
                     groupScopeSpinner.setAdapter(new ArrayAdapter<>(CreateTaskActivity.this, android.R.layout.simple_spinner_item, groupScope));
 
+                    groupScopeSpinner.setSelection(groupScope.size() - 1);
+
                     EditText input = dialogView.findViewById(R.id.groupNameText);
                     input.setInputType(InputType.TYPE_CLASS_TEXT);
 

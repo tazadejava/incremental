@@ -67,7 +67,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private List<Task> tasks;
     private MainDashboardAdapter mainDashboardAdapter;
 
-    private HashMap<Task, ConstraintLayout> taskLayout;
+    private HashMap<Task, ViewHolder> taskLayout;
 
     public TaskAdapter(Context context, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
         this.context = context;
@@ -90,7 +90,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         final Task task = tasks.get(position);
 
-        updateTaskCards(task, holder.taskCardConstraintLayout);
+        updateTaskCards(task, holder);
 
         holder.secondaryActionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,7 +128,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         updateNotesView(task, holder);
         holder.taskNotes.setOnClickListener(getAddTaskNotesListener(task, holder));
 
-        taskLayout.put(task, holder.taskCardConstraintLayout);
+        taskLayout.put(task, holder);
 
         holder.taskName.setText(task.getName());
         holder.taskClass.setText(task.getGroupName());
@@ -197,10 +197,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
-    private void updateTaskCards(Task task, ConstraintLayout taskCardConstraintLayout) {
-        taskCardConstraintLayout.post(new Runnable() {
+    private void updateTaskCards(Task task, ViewHolder holder) {
+        holder.taskCardConstraintLayout.post(new Runnable() {
             @Override
             public void run() {
+                updateNotesView(task, holder);
+
                 LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
 
                 GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
@@ -210,12 +212,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 lightColor.setColor(task.getGroup().getEndColor());
 
                 if(date.equals(LocalDate.now())) {
-                    unwrapped.setLayerSize(1, (int) (taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                    unwrapped.setLayerSize(1, (int) (holder.taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
                 } else {
-                    unwrapped.setLayerSize(1, (int) (taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                    unwrapped.setLayerSize(1, (int) (holder.taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
                 }
 
-                taskCardConstraintLayout.setBackground(unwrapped);
+                holder.taskCardConstraintLayout.setBackground(unwrapped);
             }
         });
     }
@@ -241,13 +243,15 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     public void onClick(DialogInterface dialog, int which) {
                         task.setTaskNotes(input.getText().toString());
                         mainDashboardAdapter.updateTaskCards(task);
+
+                        hideKeyboard(v);
                     }
                 });
 
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        hideKeyboard(v);
                     }
                 });
 

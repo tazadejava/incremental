@@ -10,10 +10,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -314,7 +316,7 @@ public class TimePeriod {
 
     private void addTaskToDailyLists(Task task, boolean addToTasksList, LocalDate taskStartDate, LocalDate taskDueDate) {
         if(addToTasksList) {
-            allTasks.add(task);
+            addTaskInCreationOrder(allTasks, task);
         }
 
         //place respectively in the daily task list
@@ -326,8 +328,24 @@ public class TimePeriod {
             }
 
             if (date.equals(taskDueDate) || date.isBefore(taskDueDate) || (i == 0 && taskDueDate.isBefore(date))) {
-                tasksByDay[i].add(task);
+                addTaskInCreationOrder(tasksByDay[i], task);
             }
+        }
+    }
+
+    private void addTaskInCreationOrder(List<Task> list, Task task) {
+        boolean added = false;
+        LocalDateTime creationTime = task.getParent().getCreationTime();
+        for(int i = 0; i < list.size(); i++) {
+            if(creationTime.isBefore(list.get(i).getParent().getCreationTime())) {
+                list.add(i, task);
+                added = true;
+                break;
+            }
+        }
+
+        if(!added) {
+            list.add(task);
         }
     }
 

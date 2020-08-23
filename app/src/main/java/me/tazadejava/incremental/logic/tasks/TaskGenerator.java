@@ -53,4 +53,8 @@ public abstract class TaskGenerator {
     public LocalDate getStartDate() {
         return startDate;
     }
+
+    public LocalDateTime getCreationTime() {
+        return creationTime;
+    }
 }
