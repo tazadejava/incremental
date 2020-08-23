@@ -73,7 +73,8 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
             holder.estimatedTime.setText("No tasks here!");
         } else {
             float estimatedHoursOfWork = timePeriod.getEstimatedHoursOfWorkForDate(date);
-            holder.estimatedTime.setText("est. " + estimatedHoursOfWork + " hour" + (estimatedHoursOfWork == 1 ? "" : "s") + " of work remaining");
+            String estimatedHoursOfWorkFormatted = estimatedHoursOfWork % 1 == 0 ? String.valueOf((int) estimatedHoursOfWork) : String.valueOf(estimatedHoursOfWork);
+            holder.estimatedTime.setText("est. " + estimatedHoursOfWorkFormatted + " hour" + (estimatedHoursOfWork == 1 ? "" : "s") + " of work remaining");
         }
     }
 
@@ -88,9 +89,11 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         return dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase() + ", " + date.getMonthValue() + "/" + date.getDayOfMonth();
     }
 
-    public void updateTaskColors(Task task) {
+    public void updateTaskCards(Task task) {
         for(TaskAdapter adapter : taskAdapters) {
-            adapter.updateTaskColor(task);
+            if(adapter.hasTask(task)) {
+                adapter.updateTaskCards(task);
+            }
         }
     }
 

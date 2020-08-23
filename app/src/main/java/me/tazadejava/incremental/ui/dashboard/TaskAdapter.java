@@ -36,8 +36,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        private ConstraintLayout taskCardConstraintLayout;
-        private TextView taskName, taskClass, totalHoursRemaining, dailyHoursRemaining, taskDueDate, actionTaskText;
+        private ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
+        private TextView taskName, taskClass, totalHoursRemaining, dailyHoursRemaining, taskDueDate, actionTaskText, secondaryActionTaskText, taskNotes;
 
         private View horizontalLine;
 
@@ -45,14 +45,18 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             super(itemView);
 
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
+            expandedOptionsLayout = itemView.findViewById(R.id.expandedOptionsLayout);
 
             taskName = itemView.findViewById(R.id.taskGroupName);
             taskClass = itemView.findViewById(R.id.task_class);
-            totalHoursRemaining = itemView.findViewById(R.id.totalHoursRemaining);
-            dailyHoursRemaining = itemView.findViewById(R.id.dailyHoursRemaining);
+            totalHoursRemaining = itemView.findViewById(R.id.estimatedTotalTimeLeft);
+            dailyHoursRemaining = itemView.findViewById(R.id.estimatedDailyHours);
             taskDueDate = itemView.findViewById(R.id.task_due_date);
 
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
+            secondaryActionTaskText = itemView.findViewById(R.id.secondaryActionTaskText);
+
+            taskNotes = itemView.findViewById(R.id.taskNotes);
 
             horizontalLine = itemView.findViewById(R.id.horizontalLine);
         }
@@ -86,7 +90,17 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         final Task task = tasks.get(position);
 
-        updateTaskColor(task, holder.taskCardConstraintLayout);
+        updateTaskCards(task, holder.taskCardConstraintLayout);
+
+        holder.secondaryActionTaskText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                IncrementalApplication.taskManager.setActiveEditTask(task);
+
+                Intent editTask = new Intent(context, CreateTaskActivity.class);
+                context.startActivity(editTask);
+            }
+        });
 
         holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -99,12 +113,25 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
         });
 
+
+        holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(holder.expandedOptionsLayout.getVisibility() == View.VISIBLE) {
+                    holder.expandedOptionsLayout.setVisibility(View.GONE);
+                } else {
+                    holder.expandedOptionsLayout.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        updateNotesView(task, holder);
+        holder.taskNotes.setOnClickListener(getAddTaskNotesListener(task, holder));
+
         taskLayout.put(task, holder.taskCardConstraintLayout);
 
         holder.taskName.setText(task.getName());
         holder.taskClass.setText(task.getGroupName());
-
-        holder.dailyHoursRemaining.setText("");
 
         float totalHoursLeft = task.getTotalHoursLeftOfWork();
         String totalHoursLeftFormatted = String.valueOf((totalHoursLeft == (int) totalHoursLeft) ? (int) totalHoursLeft : totalHoursLeft);
@@ -164,13 +191,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
-    protected void updateTaskColor(Task task) {
+    protected void updateTaskCards(Task task) {
         if(taskLayout.containsKey(task)) {
-            updateTaskColor(task, taskLayout.get(task));
+            updateTaskCards(task, taskLayout.get(task));
         }
     }
 
-    private void updateTaskColor(Task task, ConstraintLayout taskCardConstraintLayout) {
+    private void updateTaskCards(Task task, ConstraintLayout taskCardConstraintLayout) {
         taskCardConstraintLayout.post(new Runnable() {
             @Override
             public void run() {
@@ -191,6 +218,54 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 taskCardConstraintLayout.setBackground(unwrapped);
             }
         });
+    }
+
+    private View.OnClickListener getAddTaskNotesListener(Task task, ViewHolder holder) {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                builder.setTitle("Notes:");
+
+                EditText input = new EditText(v.getContext());
+                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+                input.setSelectAllOnFocus(false);
+                builder.setView(input);
+
+                if(task.getTaskNotes() != null) {
+                    input.setText(task.getTaskNotes());
+                }
+
+                builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        task.setTaskNotes(input.getText().toString());
+                        mainDashboardAdapter.updateTaskCards(task);
+                    }
+                });
+
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+
+                builder.show();
+                input.requestFocus();
+
+                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+            }
+        };
+    }
+
+    private void updateNotesView(Task task, ViewHolder holder) {
+        if(task.getTaskNotes() == null) {
+            holder.taskNotes.setText("Notes:\nTap to add notes");
+        } else {
+            holder.taskNotes.setText("Notes:\n" + task.getTaskNotes());
+        }
     }
 
     private View.OnClickListener getActionTaskListener(Task task, TextView taskText, ConstraintLayout taskCardConstraintLayout, boolean hasTaskStarted) {
@@ -234,7 +309,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
                                     task.completeTaskForTheDay();
 
-                                    mainDashboardAdapter.updateTaskColors(task);
+                                    mainDashboardAdapter.updateTaskCards(task);
                                     updateLayout(task);
 
                                     hideKeyboard(v);
@@ -248,7 +323,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
-                                    mainDashboardAdapter.updateTaskColors(task);
+                                    mainDashboardAdapter.updateTaskCards(task);
                                     updateLayout(task);
 
                                     hideKeyboard(v);
@@ -262,7 +337,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
-                                    mainDashboardAdapter.updateTaskColors(task);
+                                    mainDashboardAdapter.updateTaskCards(task);
 
                                     hideKeyboard(v);
                                 }
