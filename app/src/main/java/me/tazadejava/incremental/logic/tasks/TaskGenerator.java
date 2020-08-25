@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 
 public abstract class TaskGenerator {
 

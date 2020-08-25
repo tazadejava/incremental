@@ -11,11 +11,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
@@ -39,12 +39,12 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
 
     private TimePeriod timePeriod;
 
-    private List<TaskAdapter> taskAdapters;
+    private HashMap<TaskAdapter, ViewHolder> taskAdapters;
 
     public MainDashboardAdapter(Context context) {
         this.context = context;
 
-        taskAdapters = new ArrayList<>();
+        taskAdapters = new HashMap<>();
 
         timePeriod = IncrementalApplication.taskManager.getCurrentTimePeriod();
     }
@@ -62,10 +62,10 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
         TaskAdapter adapter;
-        holder.taskList.setAdapter(adapter = new TaskAdapter(context, date, dayTasks, this));
+        holder.taskList.setAdapter(adapter = new TaskAdapter(context, timePeriod, position, date, dayTasks, this));
         holder.taskList.setLayoutManager(new LinearLayoutManager(context));
 
-        taskAdapters.add(adapter);
+        taskAdapters.put(adapter, holder);
 
         holder.taskName.setText(dayToTitleFormat(date));
 
@@ -73,6 +73,20 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
             holder.estimatedTime.setText("No tasks here!");
         } else {
             float estimatedHoursOfWork = timePeriod.getEstimatedHoursOfWorkForDate(date);
+            String estimatedHoursOfWorkFormatted = estimatedHoursOfWork % 1 == 0 ? String.valueOf((int) estimatedHoursOfWork) : String.valueOf(estimatedHoursOfWork);
+            holder.estimatedTime.setText("est. " + estimatedHoursOfWorkFormatted + " hour" + (estimatedHoursOfWork == 1 ? "" : "s") + " of work remaining");
+        }
+    }
+
+    private void refreshEstimatedTime(TaskAdapter adapter) {
+        ViewHolder holder = taskAdapters.get(adapter);
+
+        List<Task> dayTasks = adapter.getUpdatedTasks();
+
+        if(dayTasks.isEmpty()) {
+            holder.estimatedTime.setText("No tasks here!");
+        } else {
+            float estimatedHoursOfWork = timePeriod.getEstimatedHoursOfWorkForDate(adapter.getDate());
             String estimatedHoursOfWorkFormatted = estimatedHoursOfWork % 1 == 0 ? String.valueOf((int) estimatedHoursOfWork) : String.valueOf(estimatedHoursOfWork);
             holder.estimatedTime.setText("est. " + estimatedHoursOfWorkFormatted + " hour" + (estimatedHoursOfWork == 1 ? "" : "s") + " of work remaining");
         }
@@ -90,7 +104,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
     }
 
     public void updateTaskCards(Task task) {
-        for(TaskAdapter adapter : taskAdapters) {
+        for(TaskAdapter adapter : taskAdapters.keySet()) {
             if(adapter.hasTask(task)) {
                 adapter.updateTaskCards(task);
             }
@@ -98,9 +112,11 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
     }
 
     public void updateDayLayouts(Task task) {
-        for(TaskAdapter adapter : taskAdapters) {
+        for(TaskAdapter adapter : taskAdapters.keySet()) {
             if(adapter.hasTask(task)) {
-                adapter.notifyDataSetChanged();
+                adapter.refreshLayout();
+
+                refreshEstimatedTime(adapter);
             }
         }
     }

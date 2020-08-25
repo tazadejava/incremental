@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-import me.tazadejava.incremental.logic.dashboard.Group;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 
 public class Task {
 

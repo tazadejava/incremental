@@ -1,4 +1,4 @@
-package me.tazadejava.incremental.logic.dashboard;
+package me.tazadejava.incremental.logic.taskmodifiers;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -37,13 +37,13 @@ public class TimePeriod {
     private String timePeriodName, timePeriodID;
     private LocalDate beginDate, endDate;
 
+    private GlobalTaskWorkPreference workPreferences;
+
     private List<TaskGenerator> allTaskGenerators = new ArrayList<>();
     private List<TaskGenerator> allCompletedTaskGenerators = new ArrayList<>();
 
     //tasks that are to do today; represents all tasks (as well as overdue ones)
     private List<Task> allActiveTasks = new ArrayList<>();
-    private List<Task> allCompletedTasks = new ArrayList<>();
-
     private HashMap<String, Group> groups = new HashMap<>();
 
     //representing index in allTasks for each day; INDEX 0 IS TOMORROW; does not save and is recreated each time
@@ -64,6 +64,8 @@ public class TimePeriod {
         this.timePeriodName = name;
         this.beginDate = beginDate;
         this.endDate = endDate;
+
+        workPreferences = new GlobalTaskWorkPreference();
 
         timePeriodID = UUID.randomUUID().toString().replace("-", "") + beginDate.format(DateTimeFormatter.BASIC_ISO_DATE);
     }
@@ -93,6 +95,12 @@ public class TimePeriod {
             }
         }
 
+        if(data.has("workPreferences")) {
+            workPreferences = new GlobalTaskWorkPreference(gson, data.get("workPreferences").getAsJsonObject());
+        } else {
+            workPreferences = new GlobalTaskWorkPreference();
+        }
+
         loadTaskData(taskManager, gson, dataFolder);
     }
 
@@ -116,14 +124,14 @@ public class TimePeriod {
                 }
 
                 File completedTasksFile = new File(timePeriodFolder + "/completedTasks.json");
-                loadTasksFromFile(taskManager, gson, completedTasksFile, allCompletedTaskGenerators, allCompletedTasks);
+                loadTasksFromFile(taskManager, gson, completedTasksFile, allCompletedTaskGenerators, null);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public JsonObject saveTimePeriodInfo() {
+    public JsonObject saveTimePeriodInfo(Gson gson) {
         JsonObject data = new JsonObject();
 
         data.addProperty("timePeriodName", timePeriodName);
@@ -146,6 +154,8 @@ public class TimePeriod {
             data.add("groupData", groupData);
         }
 
+        data.add("workPreferences", workPreferences.saveData(gson));
+
         return data;
     }
 
@@ -161,7 +171,7 @@ public class TimePeriod {
             saveTasksToFile(gson, currentTasksFile, allTaskGenerators, allActiveTasks);
 
             File completedTasksFile = new File(timePeriodFolder + "/completedTasks.json");
-            saveTasksToFile(gson, completedTasksFile, allCompletedTaskGenerators, allCompletedTasks);
+            saveTasksToFile(gson, completedTasksFile, allCompletedTaskGenerators, null);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -195,11 +205,13 @@ public class TimePeriod {
             generatedTask.assignTasksToLoadingHashMap(tasksList);
         }
 
-        JsonArray tasksObject = data.getAsJsonArray("activeTasks");
+        if(tasks != null) {
+            JsonArray tasksObject = data.getAsJsonArray("activeTasks");
 
-        for(JsonElement taskID : tasksObject) {
-            //assert: this call will never fail if implemented correctly
-            tasks.add(tasksList.get(taskID.getAsString()));
+            for (JsonElement taskID : tasksObject) {
+                //assert: this call will never fail if implemented correctly
+                tasks.add(tasksList.get(taskID.getAsString()));
+            }
         }
     }
 
@@ -218,13 +230,15 @@ public class TimePeriod {
 
         data.add("generators", generatorsObject);
 
-        JsonArray tasksObject = new JsonArray();
+        if(tasks != null) {
+            JsonArray tasksObject = new JsonArray();
 
-        for(Task task : tasks) {
-            tasksObject.add(task.getTaskID());
+            for (Task task : tasks) {
+                tasksObject.add(task.getTaskID());
+            }
+
+            data.add("activeTasks", tasksObject);
         }
-
-        data.add("activeTasks", tasksObject);
 
         FileWriter writer = new FileWriter(file);
         gson.toJson(data, writer);
@@ -261,7 +275,11 @@ public class TimePeriod {
 
     public void completeTask(Task task) {
         allActiveTasks.remove(task);
-        allCompletedTasks.add(task);
+
+        if(task.getParent().hasGeneratorCompletedAllTasks()) {
+            allTaskGenerators.remove(task.getParent());
+            allCompletedTaskGenerators.add(task.getParent());
+        }
 
         removeTaskFromDailyLists(task);
     }
@@ -479,22 +497,18 @@ public class TimePeriod {
         }
 
         if(index == 0) {
-            return removeCompletedTasksToday(allActiveTasks);
-        } else {
-            return removeCompletedTasksToday(tasksByDay[index - 1]);
-        }
-    }
+            List<Task> filtered = new ArrayList<>();
 
-    private List<Task> removeCompletedTasksToday(List<Task> tasks) {
-        List<Task> filtered = new ArrayList<>();
-
-        for(Task task : tasks) {
-            if(!task.isDoneWithTaskToday()) {
-                filtered.add(task);
+            for(Task task : allActiveTasks) {
+                if(!task.isDoneWithTaskToday()) {
+                    filtered.add(task);
+                }
             }
-        }
 
-        return filtered;
+            return filtered;
+        } else {
+            return tasksByDay[index - 1];
+        }
     }
 
     public int getTasksCountThisWeekByGroup(Group group) {

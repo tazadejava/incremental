@@ -1,4 +1,4 @@
-package me.tazadejava.incremental.ui.timeperiods;
+package me.tazadejava.incremental.ui.archive;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -21,7 +21,7 @@ import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
-public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsListAdapter.ViewHolder> {
+public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -34,10 +34,8 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
 
             timePeriodName = itemView.findViewById(R.id.timePeriodName);
-
-            timePeriodDatesText = itemView.findViewById(R.id.estimatedDailyHours);
-            timePeriodActiveText = itemView.findViewById(R.id.task_due_date);
-
+            timePeriodDatesText = itemView.findViewById(R.id.timePeriodDatesText);
+            timePeriodActiveText = itemView.findViewById(R.id.timePeriodActiveText);
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
         }
     }
@@ -48,7 +46,7 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
 
     private List<TimePeriod> timePeriods;
 
-    public TimePeriodsListAdapter(Context context) {
+    public PastTasksListAdapter(Context context) {
         this.context = context;
 
         taskManager = IncrementalApplication.taskManager;
@@ -66,14 +64,12 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dashboard_task, parent, false);
-        return new TimePeriodsListAdapter.ViewHolder(view);
+        return new PastTasksListAdapter.ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         TimePeriod timePeriod = timePeriods.get(position);
-
-        holder.actionTaskText.setText("Edit Start/End Dates");
 
 //        updateCardColor(group, holder);
 

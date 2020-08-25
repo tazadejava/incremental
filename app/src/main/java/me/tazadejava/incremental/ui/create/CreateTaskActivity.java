@@ -44,7 +44,7 @@ import me.tazadejava.incremental.logic.tasks.NonrepeatingTask;
 import me.tazadejava.incremental.logic.tasks.RepeatingTask;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 
@@ -60,7 +60,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
     private Button saveButton;
 
-    private Switch repeatingEventSwitch;
+    private Switch repeatingEventSwitch, useAverageRepeatingSwitch;
     private ConstraintLayout repeatingEventDateLayout;
     private EditText repeatingEventNumber;
 
@@ -220,6 +220,8 @@ public class CreateTaskActivity extends AppCompatActivity {
             }
         });
 
+        useAverageRepeatingSwitch = findViewById(R.id.useAverageRepeatingSwitch);
+
         repeatingTaskNamesList = findViewById(R.id.repeatingTaskNamesList);
         repeatingTaskNamesList.setLayoutManager(new LinearLayoutManager(this));
 
@@ -366,14 +368,14 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                     if(editTask.isRepeatingTask()) {
                         ((RepeatingTask) editTask.getParent()).updateAndSaveTask(repeatingTaskNamesAdapter.getTaskNames(),
-                                startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
+                                startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), estimatedHours, useAverageRepeatingSwitch.isChecked());
                     } else {
                         ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDateObject, nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
                     }
                 } else {
                     if (repeatingEventSwitch.isChecked()) {
                         taskManager.addNewGeneratedTask(new RepeatingTask(taskManager, repeatingTaskNamesAdapter.getTaskNames(),
-                                startDateObject, startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), timePeriod, estimatedHours));
+                                startDateObject, startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), timePeriod, estimatedHours, useAverageRepeatingSwitch.isChecked()));
                     } else {
                         //TODO: change to local date time
                         taskManager.addNewGeneratedTask(new NonrepeatingTask(taskManager, startDateObject, timePeriod, nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours));

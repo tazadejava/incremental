@@ -1,4 +1,4 @@
-package me.tazadejava.incremental.logic.dashboard;
+package me.tazadejava.incremental.logic.taskmodifiers;
 
 import android.graphics.Color;
 

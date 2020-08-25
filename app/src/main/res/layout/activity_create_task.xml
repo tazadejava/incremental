@@ -157,12 +157,23 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/repeatingEventDateLayout"
         android:layout_width="0dp"
-        android:layout_height="180dp"
-        android:visibility="gone"
+        android:layout_height="200dp"
+        android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@+id/horizontalLine"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/repeatingEventSwitch">
+
+        <Switch
+            android:id="@+id/useAverageRepeatingSwitch"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Calculate hourly week estimates using average work hours from previous weeks?"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:checked="true" />
 
         <EditText
             android:id="@+id/repeatingEventNumber"
@@ -172,7 +183,7 @@
             android:inputType="number"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/useAverageRepeatingSwitch" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/repeatingTaskNamesList"

@@ -12,8 +12,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.tazadejava.incremental.logic.dashboard.Group;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 
 public class RepeatingTask extends TaskGenerator {
 
@@ -28,10 +28,11 @@ public class RepeatingTask extends TaskGenerator {
     protected transient Group taskGroup;
     private float originalEstimatedHoursCompletion;
 
+    private boolean useAverageInHourEstimate;
     private float totalHoursWorked;
     private int totalTasksCompleted;
 
-    public RepeatingTask(TaskManager taskManager, String[] taskNames, LocalDate startDate, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, TimePeriod timePeriod, float originalEstimatedHoursCompletion) {
+    public RepeatingTask(TaskManager taskManager, String[] taskNames, LocalDate startDate, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, TimePeriod timePeriod, float originalEstimatedHoursCompletion, boolean useAverage) {
         super(taskManager, startDate);
 
         this.taskNames = taskNames;
@@ -39,6 +40,7 @@ public class RepeatingTask extends TaskGenerator {
         this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
         this.timePeriod = timePeriod;
         this.originalEstimatedHoursCompletion = originalEstimatedHoursCompletion;
+        this.useAverageInHourEstimate = useAverage;
 
         currentTaskIndex = 0;
         totalTasksCount = taskNames.length;
@@ -122,18 +124,22 @@ public class RepeatingTask extends TaskGenerator {
         return allTasks[index];
     }
 
+    public void setUseAverageInHourlyCalculation(boolean useAverage) {
+        useAverageInHourEstimate = useAverage;
+    }
+
     private float calculateRevisedAverageCompletionTime() {
         float calculatedEstimatedTime = originalEstimatedHoursCompletion;
 
-        if(totalTasksCompleted > 0) {
+        if(useAverageInHourEstimate && totalTasksCompleted > 0) {
             //gradually incorporate the originalEstimatedTime with the new calculated average
 
             float estimatedAverageHours = totalHoursWorked / totalTasksCompleted;
 
-            if(totalTasksCompleted < 3) {
+            if(totalTasksCompleted < 2) {
                 //50 50
                 calculatedEstimatedTime = (0.5f * originalEstimatedHoursCompletion) + (0.5f * estimatedAverageHours);
-            } else if(totalTasksCompleted < 5) {
+            } else if(totalTasksCompleted < 4) {
                 //25 75
                 calculatedEstimatedTime = (0.25f * originalEstimatedHoursCompletion) + (0.75f * estimatedAverageHours);
             } else {
@@ -179,11 +185,12 @@ public class RepeatingTask extends TaskGenerator {
         return goalIndex;
     }
 
-    public void updateAndSaveTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, float originalEstimatedHoursCompletion) {
+    public void updateAndSaveTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, float originalEstimatedHoursCompletion, boolean useAverage) {
         //update changes
         this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
         this.taskGroup = taskGroup;
         this.originalEstimatedHoursCompletion = originalEstimatedHoursCompletion;
+        this.useAverageInHourEstimate = useAverage;
 
         //removed tasks from the list, so shorten the list
         if(taskNames.length < this.taskNames.length) {

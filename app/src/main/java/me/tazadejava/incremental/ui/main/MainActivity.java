@@ -1,9 +1,12 @@
 package me.tazadejava.incremental.ui.main;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
+import android.view.MenuItem;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 
@@ -22,6 +25,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -57,6 +61,14 @@ public class MainActivity extends AppCompatActivity {
         if(IncrementalApplication.taskManager.hasTimePeriodExpired()) {
             showRenewalTimePeriodDialog();
         }
+
+        currentTimePeriod.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(currentTimePeriod.getWindowToken(), 0);
+            }
+        }, 50);
     }
 
     @Override
@@ -64,6 +76,20 @@ public class MainActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch(id) {
+            case R.id.action_settings:
+                Intent settings = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(settings);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -106,6 +132,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        
+
     }
 }

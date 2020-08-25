@@ -16,12 +16,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import me.tazadejava.incremental.logic.customserializers.LocalDateAdapter;
 import me.tazadejava.incremental.logic.customserializers.LocalDateTimeAdapter;
-import me.tazadejava.incremental.logic.dashboard.Group;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class TaskManager {
@@ -273,7 +272,7 @@ public class TaskManager {
                 JsonArray timePeriodData = new JsonArray();
 
                 for(TimePeriod period : timePeriods) {
-                    JsonObject data = period.saveTimePeriodInfo();
+                    JsonObject data = period.saveTimePeriodInfo(gson);
 
                     if(period == currentTimePeriod) {
                         data.addProperty("current", true);

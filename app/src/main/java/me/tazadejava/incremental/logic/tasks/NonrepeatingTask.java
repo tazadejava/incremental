@@ -7,8 +7,8 @@ import com.google.gson.JsonParser;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import me.tazadejava.incremental.logic.dashboard.Group;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 
 public class NonrepeatingTask extends TaskGenerator {
 

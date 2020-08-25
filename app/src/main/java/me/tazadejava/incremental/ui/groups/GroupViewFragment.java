@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.dashboard.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
