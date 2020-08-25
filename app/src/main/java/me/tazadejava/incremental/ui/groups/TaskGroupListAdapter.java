@@ -18,11 +18,13 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
@@ -139,8 +141,15 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         int tasksCount = taskManager.getCurrentTimePeriod().getTasksCountThisWeekByGroup(group);
         holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s"));
 
-        //TODO: need better infrastructure to be able to calculate hours worked in a week
-        holder.weeklyHoursCount.setText("- hours worked this week");
+        float hoursWorked = 0;
+
+        for(LocalDate date : LogicalUtils.getWorkWeekDates()) {
+            hoursWorked += taskManager.getCurrentTimePeriod().getStatsManager().getHoursWorkedByGroup(group, date);
+        }
+
+        String hoursWorkedFormatted = hoursWorked % 1 == 0 ? String.valueOf((int) hoursWorked) : String.valueOf(hoursWorked);
+
+        holder.weeklyHoursCount.setText(hoursWorkedFormatted + " hour" + (hoursWorked == 1 ? "" : "s") + " worked this week");
 
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override

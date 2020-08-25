@@ -190,6 +190,8 @@ public class Task {
     }
 
     public void incrementTaskHours(float loggedHours, boolean completedTask) {
+        timePeriod.getStatsManager().appendHours(group, lastTaskWorkStartTime.toLocalDate(), loggedHours, completedTask);
+
         isTaskCurrentlyWorkedOn = false;
 
         lastTaskWorkEndTime = LocalDateTime.now();

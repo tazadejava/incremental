@@ -35,13 +35,15 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         }
     }
 
+    private DashboardFragment fragment;
     private Context context;
 
     private TimePeriod timePeriod;
 
     private HashMap<TaskAdapter, ViewHolder> taskAdapters;
 
-    public MainDashboardAdapter(Context context) {
+    public MainDashboardAdapter(DashboardFragment fragment, Context context) {
+        this.fragment = fragment;
         this.context = context;
 
         taskAdapters = new HashMap<>();
@@ -70,7 +72,11 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         holder.taskName.setText(dayToTitleFormat(date));
 
         if(dayTasks.isEmpty()) {
-            holder.estimatedTime.setText("No tasks here!");
+            if(timePeriod.getWorkPreferences().isBlackedOutDay(date)) {
+                holder.estimatedTime.setText("No tasks here; it's your day off!");
+            } else {
+                holder.estimatedTime.setText("No tasks here!");
+            }
         } else {
             float estimatedHoursOfWork = timePeriod.getEstimatedHoursOfWorkForDate(date);
             String estimatedHoursOfWorkFormatted = estimatedHoursOfWork % 1 == 0 ? String.valueOf((int) estimatedHoursOfWork) : String.valueOf(estimatedHoursOfWork);
@@ -109,6 +115,9 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
                 adapter.updateTaskCards(task);
             }
         }
+
+        //also refresh the graph
+        fragment.refreshChartData();
     }
 
     public void updateDayLayouts(Task task) {

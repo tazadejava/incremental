@@ -22,7 +22,7 @@ public class TimePeriodsFragment extends Fragment implements BackPressedInterfac
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
-        View root = inflater.inflate(R.layout.fragment_home, container, false);
+        View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);
 
         groupView = root.findViewById(R.id.dashboard_day_list);
         groupView.setAdapter(adapter = new TimePeriodsListAdapter(getContext()));

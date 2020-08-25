@@ -25,18 +25,8 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        public ConstraintLayout taskCardConstraintLayout;
-        public TextView timePeriodName, timePeriodDatesText, timePeriodActiveText, actionTaskText;
-
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-
-            taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
-
-            timePeriodName = itemView.findViewById(R.id.timePeriodName);
-            timePeriodDatesText = itemView.findViewById(R.id.timePeriodDatesText);
-            timePeriodActiveText = itemView.findViewById(R.id.timePeriodActiveText);
-            actionTaskText = itemView.findViewById(R.id.actionTaskText);
         }
     }
 
@@ -69,28 +59,28 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        TimePeriod timePeriod = timePeriods.get(position);
-
-//        updateCardColor(group, holder);
-
-        holder.timePeriodName.setText(timePeriod.getName());
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        LocalDate beginDate = timePeriod.getBeginDate();
-        LocalDate endDate = timePeriod.getEndDate();
-
-        holder.timePeriodDatesText.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
-
-        holder.timePeriodActiveText.setText(IncrementalApplication.taskManager.getCurrentTimePeriod() == timePeriod ? "Active" : "");
-
-        holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //TODO: implement. needs a lot of rules to make sure other time periods are not being intruded on
-                Toast.makeText(context, "Coming soon...", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
+//        TimePeriod timePeriod = timePeriods.get(position);
+//
+////        updateCardColor(group, holder);
+//
+//        holder.timePeriodName.setText(timePeriod.getName());
+//
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+//        LocalDate beginDate = timePeriod.getBeginDate();
+//        LocalDate endDate = timePeriod.getEndDate();
+//
+//        holder.timePeriodDatesText.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
+//
+//        holder.timePeriodActiveText.setText(IncrementalApplication.taskManager.getCurrentTimePeriod() == timePeriod ? "Active" : "");
+//
+//        holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                //TODO: implement. needs a lot of rules to make sure other time periods are not being intruded on
+//                Toast.makeText(context, "Coming soon...", Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//    }
 
 //    private void updateCardColor(Group group, ViewHolder viewHolder) {
 //        viewHolder.taskCardConstraintLayout.post(new Runnable() {
@@ -109,10 +99,11 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 //                viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
 //            }
 //        });
-//    }
+    }
 
     @Override
     public int getItemCount() {
-        return timePeriods.size();
+        return 0;
+        //        return timePeriods.size();
     }
 }

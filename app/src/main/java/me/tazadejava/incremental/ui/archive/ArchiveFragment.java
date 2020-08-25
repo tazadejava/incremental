@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.MainActivity;
-import me.tazadejava.incremental.ui.timeperiods.TimePeriodsListAdapter;
 
 public class ArchiveFragment extends Fragment implements BackPressedInterface {
 
@@ -23,7 +22,7 @@ public class ArchiveFragment extends Fragment implements BackPressedInterface {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
-        View root = inflater.inflate(R.layout.fragment_home, container, false);
+        View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);
 
         groupView = root.findViewById(R.id.dashboard_day_list);
         groupView.setAdapter(adapter = new PastTasksListAdapter(getContext()));

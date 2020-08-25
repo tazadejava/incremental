@@ -1,17 +1,23 @@
 package me.tazadejava.incremental.ui.dashboard;
 
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.TransitionDrawable;
+import android.os.Handler;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -72,6 +78,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private int dayPosition;
 
     private HashMap<Task, ViewHolder> taskLayout;
+
+    private boolean animateCardChanges = true;
 
     public TaskAdapter(Context context, TimePeriod timePeriod, int dayPosition, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
         this.context = context;
@@ -140,7 +148,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskName.setText(task.getName());
         holder.taskClass.setText(task.getGroupName());
 
-        float totalHoursLeft = task.getTotalHoursLeftOfWork();
+        float totalHoursLeft = Math.round(task.getTotalHoursLeftOfWork() * 2.0f) / 2.0f;
 
         if(totalHoursLeft < 0) {
             totalHoursLeft = 0;
@@ -158,7 +166,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
 
             String hoursTodayFormatted = hoursLeftToday % 1 == 0 ? String.valueOf((int) hoursLeftToday) : String.valueOf(Math.round(hoursLeftToday * 2.0f) / 2.0f);
-            holder.dailyHoursRemaining.setText(hoursTodayFormatted + " hour" + (hoursLeftToday == 1 ? "" : "s") + " of work today");
+            holder.dailyHoursRemaining.setText(hoursTodayFormatted + " hour" + (hoursLeftToday == 1 ? "" : "s") + " of work left today");
         } else {
             float hoursLeftThisDay = task.getDayHoursOfWorkTotal(date);
 
@@ -167,7 +175,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
 
             String hoursLeftThisDayFormatted = hoursLeftThisDay % 1 == 0 ? String.valueOf((int) hoursLeftThisDay) : String.valueOf(Math.round(hoursLeftThisDay * 2.0f) / 2.0f);
-            holder.dailyHoursRemaining.setText(hoursLeftThisDayFormatted + " hour" + (hoursLeftThisDay == 1 ? "" : "s") + " of work");
+            holder.dailyHoursRemaining.setText(hoursLeftThisDayFormatted + " hour" + (hoursLeftThisDay == 1 ? "" : "s") + " of work left");
         }
 
         if(task.isOverdue()) {
@@ -210,28 +218,33 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     }
 
     private void updateTaskCards(Task task, ViewHolder holder) {
-//        holder.taskCardConstraintLayout.post(new Runnable() {
-//            @Override
-//            public void run() {
-                updateNotesView(task, holder);
+        updateNotesView(task, holder);
 
-                LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
+        LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
+        GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
+        GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
+        darkColor.setColor(task.getGroup().getBeginColor());
+        lightColor.setColor(task.getGroup().getEndColor());
 
-                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
-                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
+        holder.taskCardConstraintLayout.setBackground(lightColor);
 
-                darkColor.setColor(task.getGroup().getBeginColor());
-                lightColor.setColor(task.getGroup().getEndColor());
+        //the width needs to be set, so we have to wait until the constraint layout is set
+        holder.taskCardConstraintLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                unwrapped.setLayerSize(1, (int) (date.equals(LocalDate.now()) ? (double) holder.taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()
+                        : (double) holder.taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
 
-                if(date.equals(LocalDate.now())) {
-                    unwrapped.setLayerSize(1, (int) (holder.taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                if(animateCardChanges) {
+                    TransitionDrawable transitionDrawable = new TransitionDrawable(new Drawable[]{lightColor, unwrapped});
+                    holder.taskCardConstraintLayout.setBackground(transitionDrawable);
+
+                    transitionDrawable.startTransition(300);
                 } else {
-                    unwrapped.setLayerSize(1, (int) (holder.taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                    holder.taskCardConstraintLayout.setBackground(unwrapped);
                 }
-
-                holder.taskCardConstraintLayout.setBackground(unwrapped);
-//            }
-//        });
+            }
+        });
     }
 
     private View.OnClickListener getAddTaskNotesListener(Task task, ViewHolder holder) {
@@ -312,6 +325,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             AlertDialog.Builder finishedTaskBuilder = new AlertDialog.Builder(v.getContext());
+                            finishedTaskBuilder.setCancelable(false);
                             finishedTaskBuilder.setTitle("Did you finish the task?");
 
                             float hoursWorked = Float.parseFloat(input.getText().toString());

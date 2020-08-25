@@ -1,5 +1,7 @@
 package me.tazadejava.incremental.logic.tasks;
 
+import android.os.Handler;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -27,6 +29,8 @@ public class TaskManager {
 
     //if the day changes while on this app, maybe do something?
 
+    private Thread backgroundThread = new Thread();
+
     private Gson gson;
 
     private List<TimePeriod> timePeriods = new ArrayList<>();
@@ -45,7 +49,7 @@ public class TaskManager {
         loadData();
 
         if(timePeriods.isEmpty()) {
-            timePeriods.add(new TimePeriod(this, "", LocalDate.now(), null));
+            timePeriods.add(new TimePeriod(this, gson, "", LocalDate.now(), null));
             currentTimePeriod = timePeriods.get(0);
         }
     }
@@ -72,7 +76,7 @@ public class TaskManager {
             }
         }
 
-        TimePeriod newTimePeriod = new TimePeriod(this, timePeriod, startDate, endDate);
+        TimePeriod newTimePeriod = new TimePeriod(this, gson, timePeriod, startDate, endDate);
         timePeriods.add(newTimePeriod);
         currentTimePeriod = newTimePeriod;
 
@@ -113,8 +117,15 @@ public class TaskManager {
     }
 
     public Collection<Group> getAllCurrentGroups() {
-        Collection<Group> groups = new ArrayList<>(currentTimePeriod.getAllGroups());
-        groups.addAll(allPersistentGroups.values());
+        return getAllCurrentGroupsHashed().values();
+    }
+
+    public HashMap<String, Group> getAllCurrentGroupsHashed() {
+        HashMap<String, Group> groups = new HashMap<>();
+
+        groups.putAll(currentTimePeriod.getAllGroupsHashed());
+        groups.putAll(allPersistentGroups);
+
         return groups;
     }
 
@@ -215,6 +226,10 @@ public class TaskManager {
                     }
 
                     timePeriods.add(period);
+                }
+
+                for(TimePeriod timePeriod : timePeriods) {
+                    timePeriod.initializeStatsManager(gson);
                 }
 
                 if(currentTimePeriod.getWorkPreferences().checkForWeekChanges()) {

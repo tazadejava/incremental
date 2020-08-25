@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.tasks.NonrepeatingTask;
 import me.tazadejava.incremental.logic.tasks.RepeatingTask;
 import me.tazadejava.incremental.logic.tasks.Task;
@@ -33,6 +34,8 @@ public class TimePeriod {
     public static final int DAILY_LOGS_AHEAD_COUNT = 6;
 
     private TaskManager taskManager;
+
+    private StatsManager statsManager;
 
     private String timePeriodName, timePeriodID;
     private LocalDate beginDate, endDate;
@@ -59,11 +62,13 @@ public class TimePeriod {
         }
     }
 
-    public TimePeriod(TaskManager taskManager, String name, LocalDate beginDate, LocalDate endDate) {
+    public TimePeriod(TaskManager taskManager, Gson gson, String name, LocalDate beginDate, LocalDate endDate) {
         this(taskManager);
         this.timePeriodName = name;
         this.beginDate = beginDate;
         this.endDate = endDate;
+
+        statsManager = new StatsManager(gson, this);
 
         workPreferences = new GlobalTaskWorkPreference();
 
@@ -102,6 +107,14 @@ public class TimePeriod {
         }
 
         loadTaskData(taskManager, gson, dataFolder);
+    }
+
+    /**
+     * Run after all time periods have been defined
+     * @param gson
+     */
+    public void initializeStatsManager(Gson gson) {
+        statsManager = new StatsManager(gson, this, taskManager.getAllCurrentGroupsHashed());
     }
 
     //TODO: DON"T ALWAYS LOAD THE OLD TASKS
@@ -463,6 +476,10 @@ public class TimePeriod {
         return groups.values();
     }
 
+    public HashMap<String, Group> getAllGroupsHashed() {
+        return groups;
+    }
+
     public String getName() {
         return timePeriodName;
     }
@@ -572,6 +589,14 @@ public class TimePeriod {
         }
 
         return count;
+    }
+
+    public String getTimePeriodID() {
+        return timePeriodID;
+    }
+
+    public StatsManager getStatsManager() {
+        return statsManager;
     }
 
     public GlobalTaskWorkPreference getWorkPreferences() {
