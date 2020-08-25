@@ -24,11 +24,14 @@ public class GlobalTaskWorkPreference {
         return ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
     }
 
-    public void checkForWeekChanges() {
+    public boolean checkForWeekChanges() {
         if(getWeekNumber(Instant.now()) != currentWeekNumber) {
             currentWeekNumber = getWeekNumber(Instant.now());
             blackedOutDaysOfWeek.clear();
+            return true;
         }
+
+        return false;
     }
 
     public int countBlackedOutDaysBetween(LocalDate begin, LocalDate end) {

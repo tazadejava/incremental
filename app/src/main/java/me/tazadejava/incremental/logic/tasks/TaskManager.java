@@ -216,6 +216,10 @@ public class TaskManager {
 
                     timePeriods.add(period);
                 }
+
+                if(currentTimePeriod.getWorkPreferences().checkForWeekChanges()) {
+                    saveData(true);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

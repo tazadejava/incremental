@@ -173,7 +173,7 @@ public class Task {
     }
 
     public int getOverdueDays() {
-        return (int) ChronoUnit.DAYS.between(dueDateTime, LocalDateTime.now());
+        return (int) ChronoUnit.DAYS.between(dueDateTime.toLocalDate(), LocalDate.now());
     }
 
     public float getCurrentWorkedHours() {

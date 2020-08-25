@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.ui.daysoff;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,7 +55,14 @@ public class DaysOffFragment extends Fragment implements BackPressedInterface {
 
             daysOff[i].setText(daysOff[i].getText().toString() + " (" + monday.plusDays(i).format(formatter) + ")");
 
+            if(monday.plusDays(i).equals(LocalDate.now())) {
+                daysOff[i].setTypeface(daysOff[i].getTypeface(), Typeface.BOLD);
+            } else {
+                daysOff[i].setTypeface(daysOff[i].getTypeface());
+            }
+
             daysOff[i].setChecked(workPreferences.isBlackedOutDayOfWeek(correspondingDaysOfWeek[i]));
+
             daysOff[i].setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {

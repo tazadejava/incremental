@@ -97,7 +97,6 @@ public class TimePeriod {
 
         if(data.has("workPreferences")) {
             workPreferences = gson.fromJson(data.get("workPreferences"), GlobalTaskWorkPreference.class);
-            workPreferences.checkForWeekChanges();
         } else {
             workPreferences = new GlobalTaskWorkPreference();
         }
