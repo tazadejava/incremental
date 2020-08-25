@@ -10,6 +10,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -34,6 +35,10 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView currentTimePeriod;
 
+    private BackPressedInterface backPressedInterface;
+
+    private NavController navController;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,11 +50,11 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navigationView = findViewById(R.id.nav_view);
 
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_dashboard, R.id.nav_time_periods, R.id.nav_task_groups, R.id.nav_archive)
+                R.id.nav_dashboard, R.id.nav_days_off, R.id.nav_time_periods, R.id.nav_task_groups, R.id.nav_archive)
                 .setDrawerLayout(drawer)
                 .build();
 
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment);
 
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
@@ -130,8 +135,18 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
+    public NavController getNavController() {
+        return navController;
+    }
+
+    public void setBackPressedInterface(BackPressedInterface backPressedInterface) {
+        this.backPressedInterface = backPressedInterface;
+    }
+
     @Override
     public void onBackPressed() {
-
+        if(backPressedInterface != null) {
+            backPressedInterface.onBackPressed();
+        }
     }
 }

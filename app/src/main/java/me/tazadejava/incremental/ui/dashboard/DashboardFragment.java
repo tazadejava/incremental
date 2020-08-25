@@ -15,9 +15,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
+import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.MainActivity;
 
-public class DashboardFragment extends Fragment {
+public class DashboardFragment extends Fragment implements BackPressedInterface {
 
     private RecyclerView dashboardView;
     private MainDashboardAdapter adapter;
@@ -32,6 +33,8 @@ public class DashboardFragment extends Fragment {
                 startActivity(createTask);
             }
         });
+
+        ((MainActivity) getActivity()).setBackPressedInterface(this);
 
         View root = inflater.inflate(R.layout.fragment_home, container, false);
 
@@ -48,5 +51,10 @@ public class DashboardFragment extends Fragment {
 
         //refresh contents
         dashboardView.setAdapter(adapter);
+    }
+
+    @Override
+    public void onBackPressed() {
+
     }
 }

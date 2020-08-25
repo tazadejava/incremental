@@ -210,9 +210,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     }
 
     private void updateTaskCards(Task task, ViewHolder holder) {
-        holder.taskCardConstraintLayout.post(new Runnable() {
-            @Override
-            public void run() {
+//        holder.taskCardConstraintLayout.post(new Runnable() {
+//            @Override
+//            public void run() {
                 updateNotesView(task, holder);
 
                 LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
@@ -230,8 +230,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 }
 
                 holder.taskCardConstraintLayout.setBackground(unwrapped);
-            }
-        });
+//            }
+//        });
     }
 
     private View.OnClickListener getAddTaskNotesListener(Task task, ViewHolder holder) {

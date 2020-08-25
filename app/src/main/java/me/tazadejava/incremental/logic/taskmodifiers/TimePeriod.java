@@ -96,7 +96,8 @@ public class TimePeriod {
         }
 
         if(data.has("workPreferences")) {
-            workPreferences = new GlobalTaskWorkPreference(gson, data.get("workPreferences").getAsJsonObject());
+            workPreferences = gson.fromJson(data.get("workPreferences"), GlobalTaskWorkPreference.class);
+            workPreferences.checkForWeekChanges();
         } else {
             workPreferences = new GlobalTaskWorkPreference();
         }
@@ -154,7 +155,7 @@ public class TimePeriod {
             data.add("groupData", groupData);
         }
 
-        data.add("workPreferences", workPreferences.saveData(gson));
+        data.add("workPreferences", gson.toJsonTree(workPreferences));
 
         return data;
     }
@@ -500,14 +501,48 @@ public class TimePeriod {
             List<Task> filtered = new ArrayList<>();
 
             for(Task task : allActiveTasks) {
-                if(!task.isDoneWithTaskToday()) {
-                    filtered.add(task);
+                if(task.isDoneWithTaskToday()) {
+                    continue;
                 }
+                if(workPreferences.isBlackedOutDay(LocalDate.now())) {
+                    //check if there exists at least one day before the due date where the user can work on this task
+                    boolean isPossibleToComplete = false;
+
+                    if(ChronoUnit.DAYS.between(LocalDate.now(), task.getDueDateTime().toLocalDate()) > 7) {
+                        isPossibleToComplete = true;
+                    } else {
+                        LocalDate date = LocalDate.now();
+                        for (int i = 0; i < ChronoUnit.DAYS.between(date, task.getDueDateTime().toLocalDate()); i++) {
+                            date = date.plusDays(1);
+
+                            if (!workPreferences.isBlackedOutDay(date)) {
+                                isPossibleToComplete = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(isPossibleToComplete) {
+                        continue;
+                    }
+                }
+
+                filtered.add(task);
             }
 
             return filtered;
         } else {
-            return tasksByDay[index - 1];
+            List<Task> filtered = new ArrayList<>();
+
+            for(Task task : tasksByDay[index - 1]) {
+                if(workPreferences.isBlackedOutDay(LocalDate.now().plusDays(index))) {
+                    continue;
+                }
+
+                filtered.add(task);
+            }
+
+            return filtered;
         }
     }
 
@@ -538,5 +573,9 @@ public class TimePeriod {
         }
 
         return count;
+    }
+
+    public GlobalTaskWorkPreference getWorkPreferences() {
+        return workPreferences;
     }
 }

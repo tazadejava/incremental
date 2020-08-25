@@ -26,9 +26,11 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.MainActivity;
 
-public class GroupViewFragment extends Fragment {
+public class GroupViewFragment extends Fragment implements BackPressedInterface {
 
     private RecyclerView groupView;
     private TaskGroupListAdapter adapter;
@@ -42,6 +44,8 @@ public class GroupViewFragment extends Fragment {
                 openCreateGroupDialog();
             }
         });
+
+        ((MainActivity) getActivity()).setBackPressedInterface(this);
 
         View root = inflater.inflate(R.layout.fragment_home, container, false);
 
@@ -122,5 +126,10 @@ public class GroupViewFragment extends Fragment {
 
         //refresh contents
         groupView.setAdapter(adapter);
+    }
+
+    @Override
+    public void onBackPressed() {
+        ((MainActivity) getActivity()).getNavController().popBackStack();
     }
 }

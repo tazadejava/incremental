@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
+import me.tazadejava.incremental.logic.taskmodifiers.GlobalTaskWorkPreference;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 
@@ -101,7 +102,22 @@ public class Task {
             }
         }
 
-        int daysbeforeDueDate = (int) ChronoUnit.DAYS.between(startDate, dueDate);
+        int daysBetweenStartAndDueDate = (int) ChronoUnit.DAYS.between(startDate, dueDate);
+
+        //we've already finished working for today, so this day is no more
+        if(isDoneWithTaskToday) {
+            daysBetweenStartAndDueDate--;
+        }
+
+        //if there are work constraints, we will subtract them here
+        int blackedOutDaysCount = timePeriod.getWorkPreferences().countBlackedOutDaysBetween(startDate, dueDate);
+        //less than is impossible temporal constraint
+        if(daysBetweenStartAndDueDate - blackedOutDaysCount >= 0) {
+            daysBetweenStartAndDueDate -= blackedOutDaysCount;
+        } else {
+            //if impossible, assume the worst
+            daysBetweenStartAndDueDate = 0;
+        }
 
         float dailyWorkloadHours = estimatedTotalHoursToCompletion - totalLoggedHoursOfWork;
 
@@ -109,7 +125,7 @@ public class Task {
             dailyWorkloadHours += loggedHoursOfWorkToday;
         }
 
-        dailyWorkloadHours /= daysbeforeDueDate + 1;
+        dailyWorkloadHours /= daysBetweenStartAndDueDate + 1;
 
         return dailyWorkloadHours;
     }
@@ -268,6 +284,11 @@ public class Task {
     }
 
     public boolean isDoneWithTaskToday() {
+        if(isDoneWithTaskToday && lastTaskWorkStartTime.toLocalDate().isBefore(LocalDate.now())) {
+            isDoneWithTaskToday = false;
+            parent.saveTaskToFile();
+        }
+
         return isDoneWithTaskToday;
     }
 

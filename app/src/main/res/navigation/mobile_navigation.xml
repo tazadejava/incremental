@@ -18,6 +18,12 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
+        android:id="@+id/nav_days_off"
+        android:name="me.tazadejava.incremental.ui.daysoff.DaysOffFragment"
+        android:label="@string/menu_days_off"
+        tools:layout="@layout/fragment_days_off" />
+
+    <fragment
         android:id="@+id/nav_time_periods"
         android:name="me.tazadejava.incremental.ui.timeperiods.TimePeriodsFragment"
         android:label="@string/menu_time_periods"
