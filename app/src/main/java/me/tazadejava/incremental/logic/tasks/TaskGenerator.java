@@ -1,10 +1,16 @@
 package me.tazadejava.incremental.logic.tasks;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+
+import me.tazadejava.incremental.logic.dashboard.TimePeriod;
 
 public abstract class TaskGenerator {
 
@@ -12,7 +18,7 @@ public abstract class TaskGenerator {
     protected LocalDate startDate;
 
     protected transient TaskManager taskManager;
-    protected transient Task latestTask;
+    protected transient Task[] allTasks;
 
     public TaskGenerator(TaskManager taskManager, LocalDate startDate) {
         this.taskManager = taskManager;
@@ -25,12 +31,36 @@ public abstract class TaskGenerator {
         taskManager.completeTask(task);
     }
 
-    public void loadLatestTaskFromFile(Task task) {
-        this.latestTask = task;
-    }
-
     public void saveTaskToFile() {
         taskManager.saveData(false, taskManager.getCurrentTimePeriod());
+    }
+
+    protected JsonArray saveAllTasks(Gson gson) {
+        JsonArray tasksArray = new JsonArray();
+
+        for(Task task : allTasks) {
+            if(task == null) {
+                tasksArray.add(JsonNull.INSTANCE);
+            } else {
+                tasksArray.add(task.save(gson));
+            }
+        }
+
+        return tasksArray;
+    }
+
+    protected void loadAllTasks(Gson gson, TimePeriod timePeriod, JsonArray tasksArray) {
+        allTasks = new Task[tasksArray.size()];
+
+        int index = 0;
+        for(JsonElement task : tasksArray) {
+            if(task.isJsonNull()) {
+                allTasks[index] = null;
+            } else {
+                allTasks[index] = Task.createInstance(gson, task.getAsJsonObject(), this, timePeriod);
+            }
+            index++;
+        }
     }
 
     /**
@@ -40,13 +70,13 @@ public abstract class TaskGenerator {
     public abstract Task[] getPendingTasks();
 
     public abstract Task getNextUpcomingTask();
-    public abstract LocalDate getNextUpcomingTaskStartDate();
+    protected abstract LocalDate getNextUpcomingTaskStartDate();
 
     public abstract boolean hasGeneratorCompletedAllTasks();
 
     public abstract JsonObject save(Gson gson);
 
-    public String getInstanceReference() {
+    public String getGeneratorID() {
         return creationTime.toString();
     }
 
@@ -56,5 +86,11 @@ public abstract class TaskGenerator {
 
     public LocalDateTime getCreationTime() {
         return creationTime;
+    }
+
+    public void assignTasksToLoadingHashMap(HashMap<String, Task> tasksList) {
+        for(Task task : allTasks) {
+            tasksList.put(task.getTaskID(), task);
+        }
     }
 }

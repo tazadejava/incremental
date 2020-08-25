@@ -30,7 +30,7 @@ import me.tazadejava.incremental.logic.tasks.TaskManager;
 
 public class TimePeriod {
 
-    public static final int DAILY_LOGS_AHEAD_COUNT = 7;
+    public static final int DAILY_LOGS_AHEAD_COUNT = 6;
 
     private TaskManager taskManager;
 
@@ -40,13 +40,13 @@ public class TimePeriod {
     private List<TaskGenerator> allTaskGenerators = new ArrayList<>();
     private List<TaskGenerator> allCompletedTaskGenerators = new ArrayList<>();
 
-    //tasks that are to do today
+    //tasks that are to do today; represents all tasks (as well as overdue ones)
     private List<Task> allActiveTasks = new ArrayList<>();
     private List<Task> allCompletedTasks = new ArrayList<>();
 
     private HashMap<String, Group> groups = new HashMap<>();
 
-    //size of 7, representing index in allTasks for each day; value of -1 means the day is nonexistent
+    //representing index in allTasks for each day; INDEX 0 IS TOMORROW; does not save and is recreated each time
     private List<Task>[] tasksByDay;
 
     private TimePeriod(TaskManager taskManager) {
@@ -105,8 +105,14 @@ public class TimePeriod {
                 File currentTasksFile = new File(timePeriodFolder + "/currentTasks.json");
                 loadTasksFromFile(taskManager, gson, currentTasksFile, allTaskGenerators, allActiveTasks);
 
+                //load preview tasks from the generator and add any new pending tasks
+                for(TaskGenerator generator : allTaskGenerators) {
+                    processPendingTasks(generator);
+                }
+
+                //add active tasks to the daily lists
                 for(Task task : allActiveTasks) {
-                    addTaskToDailyLists(task, false);
+                    addTaskToDailyLists(task);
                 }
 
                 File completedTasksFile = new File(timePeriodFolder + "/completedTasks.json");
@@ -170,8 +176,10 @@ public class TimePeriod {
         JsonObject data = gson.fromJson(reader, JsonObject.class);
         reader.close();
 
-        JsonArray generatorsObject = data.getAsJsonArray("generators");
+        HashMap<String, Task> tasksList = new HashMap<>();
 
+        //load generators, then store tasks in a list
+        JsonArray generatorsObject = data.getAsJsonArray("generators");
         for(JsonElement generator : generatorsObject) {
             JsonObject generatorObject = generator.getAsJsonObject();
 
@@ -183,28 +191,15 @@ public class TimePeriod {
             }
 
             generators.add(generatedTask);
+
+            generatedTask.assignTasksToLoadingHashMap(tasksList);
         }
 
-        JsonArray tasksObject = data.getAsJsonArray("tasks");
+        JsonArray tasksObject = data.getAsJsonArray("activeTasks");
 
-        for(JsonElement task : tasksObject) {
-            JsonObject taskObject = task.getAsJsonObject();
-            TaskGenerator parent = null;
-
-            String id = taskObject.get("parent").getAsString();
-            for(TaskGenerator generator : generators) {
-                if(generator.getInstanceReference().equals(id)) {
-                    parent = generator;
-                    break;
-                }
-            }
-
-            if(parent != null) {
-                Task loadedTask = Task.createInstance(gson, taskObject, parent, this);
-
-                tasks.add(loadedTask);
-                parent.loadLatestTaskFromFile(loadedTask);
-            }
+        for(JsonElement taskID : tasksObject) {
+            //assert: this call will never fail if implemented correctly
+            tasks.add(tasksList.get(taskID.getAsString()));
         }
     }
 
@@ -226,10 +221,10 @@ public class TimePeriod {
         JsonArray tasksObject = new JsonArray();
 
         for(Task task : tasks) {
-            tasksObject.add(task.save(gson));
+            tasksObject.add(task.getTaskID());
         }
 
-        data.add("tasks", tasksObject);
+        data.add("activeTasks", tasksObject);
 
         FileWriter writer = new FileWriter(file);
         gson.toJson(data, writer);
@@ -271,25 +266,35 @@ public class TimePeriod {
         removeTaskFromDailyLists(task);
     }
 
-    public void removeTask(Task task) {
+    /**
+     * Removes and readds the task according to generator rules. used for nonrepeating task
+     * @param task
+     * @param generator
+     */
+    public void resetTask(Task task, TaskGenerator generator) {
         allActiveTasks.remove(task);
         removeTaskFromDailyLists(task);
+
+        processPendingTasks(generator);
     }
 
     public void deleteTaskCompletely(Task task, TaskGenerator generator) {
-        removeTask(task);
+        allActiveTasks.remove(task);
+        removeTaskFromDailyLists(task);
+
         removeTaskByParent(generator);
         allTaskGenerators.remove(generator);
     }
 
-    public int removeTaskByParent(TaskGenerator parent) {
-        int removed = 0;
+    public List<Task> removeTaskByParent(TaskGenerator parent) {
+        List<Task> removed = new ArrayList<>();
+
         Iterator<Task> allTasksIterator = allActiveTasks.iterator();
         while(allTasksIterator.hasNext()) {
             Task task = allTasksIterator.next();
 
             if(task.getParent() == parent) {
-                removed++;
+                removed.add(task);
                 allTasksIterator.remove();
                 removeTaskFromDailyLists(task);
             }
@@ -301,12 +306,19 @@ public class TimePeriod {
     public float getEstimatedHoursOfWorkForDate(LocalDate date) {
         int deltaDays = (int) ChronoUnit.DAYS.between(LocalDate.now(), date);
 
-        if(deltaDays < 0 || deltaDays > tasksByDay.length) {
+        if(deltaDays < 0 || deltaDays > tasksByDay.length + 1) {
             return -1;
         } else {
             float estimatedHours = 0;
 
-            for(Task task : tasksByDay[deltaDays]) {
+            List<Task> dayList;
+            if(deltaDays == 0) {
+                dayList = allActiveTasks;
+            } else {
+                dayList = tasksByDay[deltaDays - 1];
+            }
+
+            for(Task task : dayList) {
                 estimatedHours += task.getDayHoursOfWorkTotal(date, false);
             }
 
@@ -320,51 +332,68 @@ public class TimePeriod {
         }
     }
 
-    private void addTaskToDailyLists(Task task, boolean addToTasksList) {
-        addTaskToDailyLists(task, addToTasksList, LocalDate.now(), task.getDueDateTime().toLocalDate());
+    private void addTaskToDailyLists(Task task) {
+        addTaskToDailyLists(task, LocalDate.now(), task.getDueDateTime().toLocalDate());
     }
 
-    private void addTaskToDailyLists(Task task, boolean addToTasksList, LocalDate taskStartDate, LocalDate taskDueDate) {
-        if(addToTasksList) {
-            addTaskInCreationOrder(allActiveTasks, task);
-        }
-
+    private void addTaskToDailyLists(Task task, LocalDate taskStartDate, LocalDate taskDueDate) {
         //place respectively in the daily task list
         for (int i = 0; i < tasksByDay.length; i++) {
-            LocalDate date = LocalDate.now().plusDays(i);
+            LocalDate date = LocalDate.now().plusDays(1 + i);
 
             if(taskStartDate.isAfter(date)) {
                 continue;
             }
 
-            if (date.equals(taskDueDate) || date.isBefore(taskDueDate) || (i == 0 && taskDueDate.isBefore(date))) {
-                addTaskInCreationOrder(tasksByDay[i], task);
+            if (date.equals(taskDueDate) || date.isBefore(taskDueDate)) {
+                if(!tasksByDay[i].contains(task)) {
+                    addTaskInOrder(tasksByDay[i], task);
+                }
             }
         }
     }
 
-    private void addTaskInCreationOrder(List<Task> list, Task task) {
+    private void addTaskInOrder(List<Task> list, Task task) {
         boolean added = false;
-        LocalDateTime creationTime = task.getParent().getCreationTime();
+        //add by due date order first
         for(int i = 0; i < list.size(); i++) {
-            if(creationTime.isBefore(list.get(i).getParent().getCreationTime())) {
+            if(task.getDueDateTime().isBefore(list.get(i).getDueDateTime())) {
                 list.add(i, task);
                 added = true;
                 break;
             }
         }
 
+        //then, add by creation order
+        if(!added) {
+            LocalDateTime creationTime = task.getParent().getCreationTime();
+            for (int i = 0; i < list.size(); i++) {
+                if (creationTime.isBefore(list.get(i).getParent().getCreationTime())) {
+                    list.add(i, task);
+                    added = true;
+                    break;
+                }
+            }
+        }
+
+        //if all are equal, then just add at the end
         if(!added) {
             list.add(task);
         }
     }
 
+    /**
+     * Adds tasks that are needed to the allTasks list, and also adds preview classes for a generator
+     * @param generator
+     * @return
+     */
     public boolean processPendingTasks(TaskGenerator generator) {
         Task[] generatedTasks = generator.getPendingTasks();
 
         if(generatedTasks.length > 0) {
             for(Task task : generatedTasks) {
-                addTaskToDailyLists(task, true);
+                addTaskInOrder(allActiveTasks, task);
+                addTaskToDailyLists(task);
             }
         }
 
@@ -372,12 +401,9 @@ public class TimePeriod {
 
         Task upcomingTask = generator.getNextUpcomingTask();
         if(upcomingTask != null) {
-            LocalDate upcomingTaskStartDate = generator.getNextUpcomingTaskStartDate();
             LocalDate upcomingTaskDueDate = upcomingTask.getDueDateTime().toLocalDate();
 
-            upcomingTask.setStartDate(upcomingTaskStartDate);
-
-            addTaskToDailyLists(upcomingTask, false, upcomingTaskStartDate, upcomingTaskDueDate);
+            addTaskToDailyLists(upcomingTask, upcomingTask.getStartDate(), upcomingTaskDueDate);
         }
 
         return generatedTasks.length > 0;
@@ -452,7 +478,23 @@ public class TimePeriod {
             return null;
         }
 
-        return tasksByDay[index];
+        if(index == 0) {
+            return removeCompletedTasksToday(allActiveTasks);
+        } else {
+            return removeCompletedTasksToday(tasksByDay[index - 1]);
+        }
+    }
+
+    private List<Task> removeCompletedTasksToday(List<Task> tasks) {
+        List<Task> filtered = new ArrayList<>();
+
+        for(Task task : tasks) {
+            if(!task.isDoneWithTaskToday()) {
+                filtered.add(task);
+            }
+        }
+
+        return filtered;
     }
 
     public int getTasksCountThisWeekByGroup(Group group) {
@@ -467,6 +509,16 @@ public class TimePeriod {
                     if(task.getGroup().equals(group)) {
                         count++;
                     }
+                }
+            }
+        }
+
+        for(Task task : allActiveTasks) {
+            if(!countedTasks.contains(task)) {
+                countedTasks.add(task);
+
+                if(task.getGroup().equals(group)) {
+                    count++;
                 }
             }
         }

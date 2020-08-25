@@ -18,17 +18,14 @@ public class NonrepeatingTask extends TaskGenerator {
         super(taskManager, startDate);
 
         hasTaskStarted = false;
-        latestTask = new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedHoursToCompletion);
+        allTasks = new Task[] {new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedHoursToCompletion)};
     }
 
     public static NonrepeatingTask createInstance(Gson gson, TaskManager taskManager, TimePeriod timePeriod, JsonObject data) {
         NonrepeatingTask task = gson.fromJson(data.get("serialized"), NonrepeatingTask.class);
 
         task.taskManager = taskManager;
-
-        if(data.has("taskData")) {
-            task.latestTask = Task.createInstance(gson, data.getAsJsonObject("taskData"), task, timePeriod);
-        }
+        task.loadAllTasks(gson, timePeriod, data.getAsJsonArray("tasks"));
 
         return task;
     }
@@ -39,23 +36,20 @@ public class NonrepeatingTask extends TaskGenerator {
 
         data.add("serialized", JsonParser.parseString(gson.toJson(this)).getAsJsonObject());
 
-        if(!hasTaskStarted) {
-            data.add("taskData", latestTask.save(gson));
-        }
+        data.add("tasks", saveAllTasks(gson));
 
         return data;
     }
 
-    public void updateAndSaveTask(LocalDate startDate) {
+    public void updateAndSaveTask(LocalDate startDate, String name, LocalDateTime dueDateTime, Group group, float estimatedTotalHoursToCompletion) {
         //update changes
+        allTasks[0].editTask(name, dueDateTime, group, estimatedTotalHoursToCompletion);
+
         this.startDate = startDate;
 
-        //purge the task from any list
+        //purge the task from any list and re-add it to all lists
         hasTaskStarted = false;
-        taskManager.getCurrentTimePeriod().removeTask(latestTask);
-
-        //re-add the task to all lists
-        taskManager.getCurrentTimePeriod().processPendingTasks(this);
+        taskManager.getCurrentTimePeriod().resetTask(allTasks[0], this);
 
         //save changes
         saveTaskToFile();
@@ -65,7 +59,7 @@ public class NonrepeatingTask extends TaskGenerator {
     public Task[] getPendingTasks() {
         if(!hasTaskStarted && (startDate.isEqual(LocalDate.now()) || startDate.isBefore(LocalDate.now()))) {
             hasTaskStarted = true;
-            return new Task[] {latestTask};
+            return new Task[] {allTasks[0]};
         } else {
             return new Task[0];
         }
@@ -73,20 +67,21 @@ public class NonrepeatingTask extends TaskGenerator {
 
     @Override
     public boolean hasGeneratorCompletedAllTasks() {
-        return hasTaskStarted && latestTask.isTaskComplete();
+        return hasTaskStarted && allTasks[0].isTaskComplete();
     }
 
     @Override
     public Task getNextUpcomingTask() {
         if(!hasTaskStarted) {
-            return latestTask;
+            allTasks[0].setStartDate(startDate);
+            return allTasks[0];
         } else {
             return null;
         }
     }
 
     @Override
-    public LocalDate getNextUpcomingTaskStartDate() {
+    protected LocalDate getNextUpcomingTaskStartDate() {
         if(!hasTaskStarted) {
             return startDate;
         } else {

@@ -66,7 +66,7 @@ public class Task {
         data.add("serialized", serialized);
 
         data.addProperty("group", group.getGroupName());
-        data.addProperty("parent", parent.getInstanceReference());
+        data.addProperty("parent", parent.getGeneratorID());
 
         return data;
     }
@@ -165,6 +165,10 @@ public class Task {
         return (float) Math.ceil(hoursSpent * 10f) / 10f;
     }
 
+    public void setEstimatedTotalHoursToCompletion(float estimatedTotalHoursToCompletion) {
+        this.estimatedTotalHoursToCompletion = estimatedTotalHoursToCompletion;
+    }
+
     public void completeTaskForTheDay() {
         isDoneWithTaskToday = true;
     }
@@ -261,5 +265,13 @@ public class Task {
 
     public LocalDate getStartDate() {
         return startDate;
+    }
+
+    public boolean isDoneWithTaskToday() {
+        return isDoneWithTaskToday;
+    }
+
+    public String getTaskID() {
+        return parent.getGeneratorID() + " " + name + " " + dueDateTime.toString();
     }
 }

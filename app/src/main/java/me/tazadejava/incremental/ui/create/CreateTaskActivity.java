@@ -315,6 +315,8 @@ public class CreateTaskActivity extends AppCompatActivity {
                                 }
 
                                 updateSaveButton();
+
+                                hideKeyboard(input);
                             }
                         }
                     });
@@ -363,18 +365,10 @@ public class CreateTaskActivity extends AppCompatActivity {
                     taskManager.setActiveEditTask(null);
 
                     if(editTask.isRepeatingTask()) {
-                        //if did not yet start the first repeating task, no need to adjust the current task(s)
-                        if(editTask.getParent().getStartDate().isAfter(LocalDate.now())) {
-                            ((RepeatingTask) editTask.getParent()).updateAndSaveTask(repeatingTaskNamesAdapter.getTaskNames(),
-                                    startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
-                        } else {
-                            editTask.editTask(nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
-                            ((RepeatingTask) editTask.getParent()).updateAndSaveTask(repeatingTaskNamesAdapter.getTaskNames(),
-                                    startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
-                        }
+                        ((RepeatingTask) editTask.getParent()).updateAndSaveTask(repeatingTaskNamesAdapter.getTaskNames(),
+                                startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
                     } else {
-                        editTask.editTask(nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
-                        ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDateObject);
+                        ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDateObject, nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
                     }
                 } else {
                     if (repeatingEventSwitch.isChecked()) {
@@ -389,8 +383,7 @@ public class CreateTaskActivity extends AppCompatActivity {
                 Intent returnToMain = new Intent(CreateTaskActivity.this, MainActivity.class);
                 startActivity(returnToMain);
 
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(saveButton.getWindowToken(), 0);
+                hideKeyboard(v);
             }
         });
 
@@ -478,7 +471,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
         groupSpinner.setSelection(groupSpinnerAdapter.getPosition(activeTask.getGroupName()));
 
-        estimatedHoursEdit.setText(String.valueOf(activeTask.getEstimatedCompletionTime()));
+        estimatedHoursEdit.setText(activeTask.getEstimatedCompletionTime() % 1 == 0 ? String.valueOf((int) activeTask.getEstimatedCompletionTime()) : String.valueOf(activeTask.getEstimatedCompletionTime()));
 
         if(activeTask.isRepeatingTask()) {
             repeatingTaskNamesList.setAdapter(repeatingTaskNamesAdapter = new RepeatingTaskNamesAdapter(repeatingTaskNamesList, startDateObject, dueDateObject, this));
@@ -548,6 +541,16 @@ public class CreateTaskActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    private void hideKeyboard(View v) {
+        v.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            }
+        }, 50);
     }
 
     @Override

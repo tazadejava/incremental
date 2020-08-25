@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import me.tazadejava.incremental.R;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -109,8 +110,9 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
     }
 
     private String getFormattedDate(LocalDate date, int daysAdded) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd");
         LocalDate newDate = date.plusDays(daysAdded);
-        return newDate.getMonthValue() + "/" + newDate.getDayOfMonth();
+        return newDate.format(formatter);
     }
 
     @Override
@@ -119,14 +121,24 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
         holder.fillInBlankEdit.setText(taskNames[position]);
         holder.fillInBlankEdit.setSelection(holder.fillInBlankEdit.getText().length());
 
-        holder.enabledWeekSwitch.setChecked(!disabledPositions.contains(position));
-
         LocalDate adjustedDueDate = dueDate.plusDays(7 * position);
         if(LocalDate.now().isAfter(adjustedDueDate)) {
             holder.fillInBlankEdit.setEnabled(false);
             holder.enabledWeekSwitch.setEnabled(false);
         } else {
             holder.fillInBlankEdit.setEnabled(true);
+            holder.enabledWeekSwitch.setEnabled(true);
+        }
+
+        if(position == getItemCount() - 1) {
+            holder.enabledWeekSwitch.setChecked(true);
+            holder.enabledWeekSwitch.setEnabled(false);
+
+            if(disabledPositions.contains(position)) {
+                disabledPositions.remove(position);
+            }
+        } else {
+            holder.enabledWeekSwitch.setChecked(!disabledPositions.contains(position));
             holder.enabledWeekSwitch.setEnabled(true);
         }
 

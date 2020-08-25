@@ -49,8 +49,6 @@ public class TaskManager {
             timePeriods.add(new TimePeriod(this, "", LocalDate.now(), null));
             currentTimePeriod = timePeriods.get(0);
         }
-
-        currentTimePeriod.checkForPendingTasks();
     }
 
     public void addNewGeneratedTask(TaskGenerator taskGenerator) {

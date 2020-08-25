@@ -314,7 +314,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     task.completeTaskForTheDay();
 
                                     mainDashboardAdapter.updateTaskCards(task);
-                                    updateLayout(task);
+                                    refreshLayout(task);
 
                                     hideKeyboard(v);
                                 }
@@ -328,7 +328,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
                                     mainDashboardAdapter.updateTaskCards(task);
-                                    updateLayout(task);
+                                    refreshLayout(task);
 
                                     hideKeyboard(v);
                                 }
@@ -388,7 +388,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }, 50);
     }
 
-    private void updateLayout(Task task) {
+    private void refreshLayout(Task task) {
         mainDashboardAdapter.updateDayLayouts(task);
     }
 
