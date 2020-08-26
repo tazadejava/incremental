@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import me.tazadejava.incremental.R;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -39,8 +40,8 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
         }
     }
 
-    private RecyclerView recyclerView;
-    private CreateTaskActivity activity;
+    private CreateTaskActivity act;
+    private CreateTaskRepeatingNameDateFragment fragment;
 
     private String[] taskNames;
 
@@ -53,11 +54,12 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
 
     private int repeatSize = 1;
 
-    public RepeatingTaskNamesAdapter(RecyclerView recyclerView, LocalDate startDate, LocalDate dueDate, CreateTaskActivity activity) {
-        this.recyclerView = recyclerView;
+    public RepeatingTaskNamesAdapter(CreateTaskActivity act, CreateTaskRepeatingNameDateFragment fragment, LocalDate startDate, DayOfWeek dueDayOfWeek) {
+        this.act = act;
+        this.fragment = fragment;
         this.startDate = startDate;
-        this.dueDate = dueDate;
-        this.activity = activity;
+
+        dueDate = startDate.plusDays(daysBetween(startDate.getDayOfWeek(), dueDayOfWeek));
 
         taskNames = new String[1];
 
@@ -88,8 +90,12 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
         this.startDate = startDate;
     }
 
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
+    public void setDueDayOfWeek(DayOfWeek dueDayOfWeek) {
+        dueDate = startDate.plusDays(daysBetween(startDate.getDayOfWeek(), dueDayOfWeek));
+    }
+
+    private int daysBetween(DayOfWeek begin, DayOfWeek end) {
+        return end.getValue() - begin.getValue();
     }
 
     public void setTaskNamesAndDisabled(String[] taskNames, Set<Integer> disabled) {
@@ -167,9 +173,10 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
             public void afterTextChanged(Editable s) {
                 if(s.length() > 0 && position < taskNames.length) {
                     taskNames[position] = s.toString();
-                }
 
-                activity.updateSaveButton();
+                    act.setTaskNames(getTaskNames());
+                    fragment.updateNextButton(RepeatingTaskNamesAdapter.this, act);
+                }
             }
         });
 
@@ -184,7 +191,8 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
                     disabledPositions.remove(position);
                 }
 
-                activity.updateSaveButton();
+                act.setDisabledTasks(disabledPositions);
+                fragment.updateNextButton(RepeatingTaskNamesAdapter.this, act);
             }
         });
     }

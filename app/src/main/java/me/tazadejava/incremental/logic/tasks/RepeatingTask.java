@@ -322,4 +322,8 @@ public class RepeatingTask extends TaskGenerator {
     public String[] getTaskNames() {
         return taskNames;
     }
+
+    public boolean getUseAverageInWorktimeEstimate() {
+        return useAverageInWorktimeEstimate;
+    }
 }

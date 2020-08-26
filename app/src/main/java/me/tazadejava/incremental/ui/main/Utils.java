@@ -1,5 +1,9 @@
 package me.tazadejava.incremental.ui.main;
 
+import android.content.Context;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -39,5 +43,15 @@ public class Utils {
                 return hours + " hr " + minutes + " min";
             }
         }
+    }
+
+    public static void hideKeyboard(View v) {
+        v.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            }
+        }, 50);
     }
 }

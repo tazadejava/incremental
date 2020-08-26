@@ -299,6 +299,10 @@ public class Task {
         return isDoneWithTaskToday;
     }
 
+    private int getEstimatedTotalMinutesToCompletion() {
+        return estimatedTotalMinutesToCompletion;
+    }
+
     public String getTaskID() {
         return parent.getGeneratorID() + " " + name + " " + dueDateTime.toString();
     }
