@@ -1,8 +1,15 @@
 package me.tazadejava.incremental.ui.main;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class Utils {
+
+    public static String formatLocalDateWithDayOfWeek(LocalDate date) {
+        String dayOfWeek = date.getDayOfWeek().toString();
+        return (dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + date.getMonthValue()
+                + "/" + date.getDayOfMonth() + "/" + date.getYear();
+    }
 
     public static String formatLocalTime(LocalTime time) {
         return formatLocalTime(time.getHour(), time.getMinute());

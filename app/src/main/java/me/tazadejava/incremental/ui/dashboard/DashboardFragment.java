@@ -57,6 +57,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
     private int currentDateOffset;
     private LocalDate[] currentDates;
 
+    private LocalDate lastRefreshDate;
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new task
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
@@ -79,6 +81,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         dashboardView = root.findViewById(R.id.dashboard_day_list);
         dashboardView.setAdapter(adapter = new MainDashboardAdapter(this, getContext()));
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        lastRefreshDate = LocalDate.now();
 
         return root;
     }
@@ -239,6 +243,11 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         super.onResume();
 
         //refresh contents
+
+        if(!lastRefreshDate.equals(LocalDate.now())) {
+            lastRefreshDate = LocalDate.now();
+            IncrementalApplication.taskManager.getCurrentTimePeriod().checkForPendingTasks();
+        }
         dashboardView.setAdapter(adapter);
     }
 

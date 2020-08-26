@@ -313,11 +313,11 @@ public class TimePeriod {
         allActiveTasks.remove(task);
         removeTaskFromDailyLists(task);
 
-        removeTaskByParent(generator);
+        removeActiveTasksByParent(generator);
         allTaskGenerators.remove(generator);
     }
 
-    public List<Task> removeTaskByParent(TaskGenerator parent) {
+    public List<Task> removeActiveTasksByParent(TaskGenerator parent) {
         List<Task> removed = new ArrayList<>();
 
         Iterator<Task> allTasksIterator = allActiveTasks.iterator();
@@ -442,14 +442,16 @@ public class TimePeriod {
         return groups.getOrDefault(name, taskManager.getPersistentGroupByName(name));
     }
 
-    public void addNewGroup(String name) {
+    public boolean addNewGroup(String name) {
         if(groups.containsKey(name)) {
-            return;
+            return false;
         }
 
         groups.put(name, new Group(name));
 
         taskManager.saveData(true, this);
+
+        return true;
     }
 
     public boolean updateGroupName(Group group, String name) {

@@ -185,15 +185,27 @@ public class RepeatingTask extends TaskGenerator {
     }
 
     public void updateAndSaveTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, int originalEstimatedMinutesCompletion, boolean useAverage) {
-        //update changes
+        //update changes; notice that the start date cannot change
         this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
         this.taskGroup = taskGroup;
         this.originalEstimatedMinutesCompletion = originalEstimatedMinutesCompletion;
         this.useAverageInWorktimeEstimate = useAverage;
 
+        int currentTaskIndexIncludingActive;
+        if(currentTaskIndex == 0) {
+            currentTaskIndexIncludingActive = 0;
+        } else {
+            if(allTasks[currentTaskIndex].isTaskComplete()) {
+                currentTaskIndexIncludingActive = currentTaskIndex;
+            } else {
+                currentTaskIndexIncludingActive = currentTaskIndex - 1;
+            }
+        }
+
         //removed tasks from the list, so shorten the list
         if(taskNames.length < this.taskNames.length) {
-            Task[] newAllTasks = new Task[taskNames.length];
+            //cannot shorten to less than the active task
+            Task[] newAllTasks = new Task[Math.max(taskNames.length, currentTaskIndexIncludingActive)];
 
             for(int i = 0; i < newAllTasks.length; i++) {
                 newAllTasks[i] = allTasks[i];
@@ -202,8 +214,8 @@ public class RepeatingTask extends TaskGenerator {
             allTasks = newAllTasks;
         }
 
-        //update the existing tasks
-        for(int i = 0; i < allTasks.length; i++) {
+        //update the existing tasks; excluding the ones that have been finished
+        for(int i = currentTaskIndexIncludingActive; i < allTasks.length; i++) {
             allTasks[i].editTask(taskNames[i], getIndexDueDate(i, startDate, dayOfWeekTaskBegins, dayOfWeekTaskDue, timeTaskDue), taskGroup, calculateRevisedAverageCompletionTime());
         }
 
@@ -225,7 +237,7 @@ public class RepeatingTask extends TaskGenerator {
         this.taskNames = taskNames;
 
         //purge the task from any list
-        List<Task> removedTasks = taskManager.getCurrentTimePeriod().removeTaskByParent(this);
+        List<Task> removedTasks = taskManager.getCurrentTimePeriod().removeActiveTasksByParent(this);
 
         //if any tasks were removed in the process
         //invariant; the removed items are actually in this repeating task generator. if not, that's quite strange

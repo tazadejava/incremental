@@ -152,18 +152,20 @@ public class TaskManager {
         return true;
     }
 
-    public boolean doesGroupExistPersistently(String name) {
+    public boolean doesPersistentGroupExist(String name) {
         return allPersistentGroups.containsKey(name);
     }
 
-    public void addNewPersistentGroup(String name) {
+    public boolean addNewPersistentGroup(String name) {
         if(allPersistentGroups.containsKey(name)) {
-            return;
+            return false;
         }
 
         allPersistentGroups.put(name, new Group(name));
 
         saveData(true);
+
+        return true;
     }
 
     public boolean hasTimePeriodExpired() {
@@ -223,7 +225,7 @@ public class TaskManager {
     /**
      * first checks the time period, then checks the persistent
      * @param name
-     * @return
+     * @return null if not exists
      */
     public Group getCurrentGroupByName(String name) {
         return currentTimePeriod.getGroupByName(name);

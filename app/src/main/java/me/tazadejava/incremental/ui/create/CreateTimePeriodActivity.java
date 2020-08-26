@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.ui.create;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.widget.DatePicker;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 
@@ -111,10 +113,29 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                IncrementalApplication.taskManager.addNewTimePeriod(nameOfTimePeriod.getText().toString(), startDateFormatted, endDateFormatted);
+                if(IncrementalApplication.taskManager.addNewTimePeriod(nameOfTimePeriod.getText().toString(), startDateFormatted, endDateFormatted)) {
+                    Intent returnToMain = new Intent(CreateTimePeriodActivity.this, MainActivity.class);
+                    startActivity(returnToMain);
+                } else {
+                    AlertDialog.Builder failedToCreateGroup = new AlertDialog.Builder(CreateTimePeriodActivity.this);
+                    failedToCreateGroup.setTitle("Failed to create time period!");
 
-                Intent returnToMain = new Intent(CreateTimePeriodActivity.this, MainActivity.class);
-                startActivity(returnToMain);
+                    boolean foundReason = false;
+
+                    for(TimePeriod timePeriod : IncrementalApplication.taskManager.getTimePeriods()) {
+                        if(timePeriod.getName().equals(nameOfTimePeriod.getText().toString())) {
+                            failedToCreateGroup.setMessage("A time period with that name already exists!");
+                            foundReason = true;
+                            break;
+                        }
+                    }
+
+                    if(!foundReason) {
+                        failedToCreateGroup.setMessage("Your time period conflicts with another time period's dates!");
+                    }
+
+                    failedToCreateGroup.show();
+                }
             }
         });
 

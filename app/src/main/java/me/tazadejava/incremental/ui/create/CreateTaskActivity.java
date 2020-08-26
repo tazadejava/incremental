@@ -119,7 +119,12 @@ public class CreateTaskActivity extends AppCompatActivity {
             public void onClick(View v) {
                 DatePickerDialog datePicker = new DatePickerDialog(CreateTaskActivity.this);
 
-                datePicker.getDatePicker().setMinDate(System.currentTimeMillis());
+                if(startDateObject.isAfter(LocalDate.now())) {
+                    //convert days to milliseconds to set the min date
+                    datePicker.getDatePicker().setMinDate((startDateObject.toEpochDay() + 1) * 24 * 60 * 60 * 1000);
+                } else {
+                    datePicker.getDatePicker().setMinDate(System.currentTimeMillis());
+                }
 
                 if(dueDateObject != null) {
                     datePicker.updateDate(dueDateObject.getYear(), dueDateObject.getMonthValue() - 1, dueDateObject.getDayOfMonth());
@@ -129,11 +134,7 @@ public class CreateTaskActivity extends AppCompatActivity {
                     @Override
                     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
                         dueDateObject = LocalDate.of(year, month + 1, dayOfMonth);
-
-                        String dayOfWeek = dueDateObject.getDayOfWeek().toString();
-
-                        dueDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + dueDateObject.getMonthValue()
-                                + "/" + dueDateObject.getDayOfMonth() + "/" + dueDateObject.getYear());
+                        dueDate.setText(Utils.formatLocalDateWithDayOfWeek(dueDateObject));
 
                         if(repeatingEventSwitch.isChecked()) {
                             repeatingTaskNamesAdapter.setDueDate(dueDateObject);
@@ -182,13 +183,13 @@ public class CreateTaskActivity extends AppCompatActivity {
                 datePicker.setOnDateSetListener(new DatePickerDialog.OnDateSetListener() {
                     @Override
                     public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                        month++;
-                        startDateObject = LocalDate.of(year, month, dayOfMonth);
+                        startDateObject = LocalDate.of(year, month + 1, dayOfMonth);
+                        startDate.setText(Utils.formatLocalDateWithDayOfWeek(startDateObject));
 
-                        String dayOfWeek = startDateObject.getDayOfWeek().toString();
-
-                        startDate.setText((dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + startDateObject.getMonthValue()
-                                + "/" + startDateObject.getDayOfMonth() + "/" + startDateObject.getYear());
+                        if(dueDateObject.isBefore(startDateObject)) {
+                            dueDateObject = startDateObject;
+                            dueDate.setText(Utils.formatLocalDateWithDayOfWeek(dueDateObject));
+                        }
 
                         if(repeatingEventSwitch.isChecked()) {
                             repeatingTaskNamesAdapter.setStartDate(startDateObject);
@@ -221,6 +222,7 @@ public class CreateTaskActivity extends AppCompatActivity {
         });
 
         useAverageRepeatingSwitch = findViewById(R.id.useAverageRepeatingSwitch);
+        useAverageRepeatingSwitch.setChecked(true);
 
         repeatingTaskNamesList = findViewById(R.id.repeatingTaskNamesList);
         repeatingTaskNamesList.setLayoutManager(new LinearLayoutManager(this));
@@ -314,6 +316,11 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                                     groupSpinner.setSelection(items.size() - 2);
                                     groupSpinnerAdapter.notifyDataSetChanged();
+                                } else {
+                                    AlertDialog.Builder failedToCreateGroup = new AlertDialog.Builder(CreateTaskActivity.this);
+                                    failedToCreateGroup.setTitle("Failed to create group!");
+                                    failedToCreateGroup.setMessage("A group with that name already exists!");
+                                    failedToCreateGroup.show();
                                 }
 
                                 updateSaveButton();
@@ -403,12 +410,11 @@ public class CreateTaskActivity extends AppCompatActivity {
             setDefaultValues();
 
             repeatingTaskNamesList.setAdapter(repeatingTaskNamesAdapter = new RepeatingTaskNamesAdapter(repeatingTaskNamesList, startDateObject, dueDateObject, this));
+
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+            nameOfTaskEdit.requestFocus();
         }
-
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-
-        nameOfTaskEdit.requestFocus();
     }
 
     @Override

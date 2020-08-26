@@ -88,7 +88,7 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
             public void onClick(DialogInterface dialog, int which) {
                 if(!input.getText().toString().isEmpty()) {
                     String groupName = input.getText().toString();
-                    if(taskManager.doesGroupExistPersistently(groupName) || taskManager.getCurrentTimePeriod().doesGroupExist(groupName)) {
+                    if(taskManager.doesPersistentGroupExist(groupName) || taskManager.getCurrentTimePeriod().doesGroupExist(groupName)) {
                         AlertDialog.Builder error = new AlertDialog.Builder(getContext());
                         error.setTitle("A group under that name already exists!");
                         error.show();
