@@ -255,6 +255,13 @@ public class Task {
         }
     }
 
+    /**
+     * Override the user saying that they are done with the task. Only use if scheduling conflicts makes it so that the user HAS to do the task today!
+     */
+    public void overrideDoneWithTaskMarker() {
+        isDoneWithTaskToday = false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

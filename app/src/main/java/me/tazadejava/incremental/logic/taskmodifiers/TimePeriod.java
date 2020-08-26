@@ -511,28 +511,33 @@ public class TimePeriod {
             List<Task> filtered = new ArrayList<>();
 
             for(Task task : allActiveTasks) {
-                if(task.isDoneWithTaskToday()) {
-                    continue;
-                }
-                if(workPreferences.isBlackedOutDay(LocalDate.now())) {
-                    //check if there exists at least one day before the due date where the user can work on this task
-                    boolean isPossibleToComplete = false;
+                //check if there exists at least one day before the due date where the user can work on this task
+                boolean isPossibleToComplete = false;
 
-                    if(ChronoUnit.DAYS.between(LocalDate.now(), task.getDueDateTime().toLocalDate()) > 7) {
-                        isPossibleToComplete = true;
-                    } else {
-                        LocalDate date = LocalDate.now();
-                        for (int i = 0; i < ChronoUnit.DAYS.between(date, task.getDueDateTime().toLocalDate()); i++) {
-                            date = date.plusDays(1);
+                if(ChronoUnit.DAYS.between(LocalDate.now(), task.getDueDateTime().toLocalDate()) > 7) {
+                    isPossibleToComplete = true;
+                } else {
+                    LocalDate date = LocalDate.now();
+                    for (int i = 0; i < ChronoUnit.DAYS.between(date, task.getDueDateTime().toLocalDate()); i++) {
+                        date = date.plusDays(1);
 
-                            if (!workPreferences.isBlackedOutDay(date)) {
-                                isPossibleToComplete = true;
-                                break;
-                            }
+                        if (!workPreferences.isBlackedOutDay(date)) {
+                            isPossibleToComplete = true;
+                            break;
                         }
                     }
+                }
 
+                if(workPreferences.isBlackedOutDay(LocalDate.now())) {
                     if(isPossibleToComplete) {
+                        continue;
+                    }
+                }
+                if(task.isDoneWithTaskToday()) {
+                    if(!isPossibleToComplete) {
+                        task.overrideDoneWithTaskMarker();
+                        taskManager.saveData(true, this);
+                    } else {
                         continue;
                     }
                 }
