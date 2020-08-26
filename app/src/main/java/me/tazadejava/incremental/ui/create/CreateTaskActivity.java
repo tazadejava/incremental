@@ -50,7 +50,7 @@ import me.tazadejava.incremental.ui.main.MainActivity;
 
 public class CreateTaskActivity extends AppCompatActivity {
 
-    private EditText nameOfTaskEdit, estimatedHoursEdit;
+    private EditText nameOfTaskEdit, estimatedMinutesEdit;
     private TextView dueDate, dueTime, startDate;
     private LocalDate dueDateObject, startDateObject;
     private LocalTime dueTimeObject;
@@ -74,7 +74,7 @@ public class CreateTaskActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_task);
 
-        estimatedHoursEdit = findViewById(R.id.estimatedCompletionTime);
+        estimatedMinutesEdit = findViewById(R.id.estimatedCompletionTime);
 
         nameOfTaskEdit = findViewById(R.id.nameOfTask);
 
@@ -95,7 +95,7 @@ public class CreateTaskActivity extends AppCompatActivity {
             }
         });
 
-        estimatedHoursEdit.addTextChangedListener(new TextWatcher() {
+        estimatedMinutesEdit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -359,7 +359,7 @@ public class CreateTaskActivity extends AppCompatActivity {
             public void onClick(View v) {
                 LocalDateTime dueDateAndTime = dueDateObject.atStartOfDay().withHour(dueTimeObject.getHour()).withMinute(dueTimeObject.getMinute());
                 String taskClass = groupSpinner.getSelectedItem().toString();
-                float estimatedHours = Float.parseFloat(estimatedHoursEdit.getText().toString());
+                int estimatedMinutes = Integer.parseInt(estimatedMinutesEdit.getText().toString());
                 TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
 
                 if(taskManager.getActiveEditTask() != null) {
@@ -368,17 +368,17 @@ public class CreateTaskActivity extends AppCompatActivity {
 
                     if(editTask.isRepeatingTask()) {
                         ((RepeatingTask) editTask.getParent()).updateAndSaveTask(repeatingTaskNamesAdapter.getTaskNames(),
-                                startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), estimatedHours, useAverageRepeatingSwitch.isChecked());
+                                startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), estimatedMinutes, useAverageRepeatingSwitch.isChecked());
                     } else {
-                        ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDateObject, nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours);
+                        ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDateObject, nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedMinutes);
                     }
                 } else {
                     if (repeatingEventSwitch.isChecked()) {
                         taskManager.addNewGeneratedTask(new RepeatingTask(taskManager, repeatingTaskNamesAdapter.getTaskNames(),
-                                startDateObject, startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), timePeriod, estimatedHours, useAverageRepeatingSwitch.isChecked()));
+                                startDateObject, startDateObject.getDayOfWeek(), dueDateAndTime.getDayOfWeek(), dueTimeObject, taskManager.getCurrentGroupByName(taskClass), timePeriod, estimatedMinutes, useAverageRepeatingSwitch.isChecked()));
                     } else {
                         //TODO: change to local date time
-                        taskManager.addNewGeneratedTask(new NonrepeatingTask(taskManager, startDateObject, timePeriod, nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedHours));
+                        taskManager.addNewGeneratedTask(new NonrepeatingTask(taskManager, startDateObject, timePeriod, nameOfTaskEdit.getText().toString(), dueDateAndTime, taskManager.getCurrentGroupByName(taskClass), estimatedMinutes));
                     }
                 }
 
@@ -473,7 +473,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
         groupSpinner.setSelection(groupSpinnerAdapter.getPosition(activeTask.getGroupName()));
 
-        estimatedHoursEdit.setText(activeTask.getEstimatedCompletionTime() % 1 == 0 ? String.valueOf((int) activeTask.getEstimatedCompletionTime()) : String.valueOf(activeTask.getEstimatedCompletionTime()));
+        estimatedMinutesEdit.setText(activeTask.getEstimatedCompletionTime() % 1 == 0 ? String.valueOf((int) activeTask.getEstimatedCompletionTime()) : String.valueOf(activeTask.getEstimatedCompletionTime()));
 
         if(activeTask.isRepeatingTask()) {
             repeatingTaskNamesList.setAdapter(repeatingTaskNamesAdapter = new RepeatingTaskNamesAdapter(repeatingTaskNamesList, startDateObject, dueDateObject, this));
@@ -534,7 +534,7 @@ public class CreateTaskActivity extends AppCompatActivity {
             }
         }
 
-        if(estimatedHoursEdit.getText().length() == 0) {
+        if(estimatedMinutesEdit.getText().length() == 0) {
             return false;
         }
 

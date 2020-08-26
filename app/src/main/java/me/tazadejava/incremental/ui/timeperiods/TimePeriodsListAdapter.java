@@ -35,7 +35,7 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
 
             timePeriodName = itemView.findViewById(R.id.timePeriodName);
 
-            timePeriodDatesText = itemView.findViewById(R.id.estimatedDailyHours);
+            timePeriodDatesText = itemView.findViewById(R.id.estimatedDailyTime);
             timePeriodActiveText = itemView.findViewById(R.id.task_due_date);
 
             actionTaskText = itemView.findViewById(R.id.actionTaskText);

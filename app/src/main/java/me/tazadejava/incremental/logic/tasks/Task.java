@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-import me.tazadejava.incremental.logic.taskmodifiers.GlobalTaskWorkPreference;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 
@@ -23,26 +22,26 @@ public class Task {
     private LocalDateTime dueDateTime;
     private transient Group group;
     private transient TimePeriod timePeriod;
-    private float estimatedTotalHoursToCompletion;
+    private int estimatedTotalMinutesToCompletion;
 
     private boolean isTaskComplete, isTaskCurrentlyWorkedOn, isDoneWithTaskToday;
 
-    private float totalLoggedHoursOfWork, loggedHoursOfWorkToday;
+    private int totalLoggedMinutesOfWork, loggedMinutesOfWorkToday;
     private LocalDateTime lastTaskWorkEndTime, lastTaskWorkStartTime;
 
-    public Task(TaskGenerator parent, String name, LocalDateTime dueDateTime, Group group, TimePeriod timePeriod, float estimatedTotalHoursToCompletion) {
+    public Task(TaskGenerator parent, String name, LocalDateTime dueDateTime, Group group, TimePeriod timePeriod, int estimatedTotalMinutesToCompletion) {
         this.parent = parent;
         this.name = name;
         this.dueDateTime = dueDateTime;
         this.group = group;
         this.timePeriod = timePeriod;
-        this.estimatedTotalHoursToCompletion = estimatedTotalHoursToCompletion;
+        this.estimatedTotalMinutesToCompletion = estimatedTotalMinutesToCompletion;
 
         isTaskComplete = false;
         isTaskCurrentlyWorkedOn = false;
         isDoneWithTaskToday = false;
 
-        totalLoggedHoursOfWork = 0;
+        totalLoggedMinutesOfWork = 0;
     }
 
     //load data from file
@@ -54,7 +53,7 @@ public class Task {
         task.group = timePeriod.getGroupByName(data.get("group").getAsString());
 
         if(task.lastTaskWorkStartTime != null && !task.lastTaskWorkStartTime.toLocalDate().equals(LocalDate.now())) {
-            task.loggedHoursOfWorkToday = 0;
+            task.loggedMinutesOfWorkToday = 0;
         }
 
         return task;
@@ -77,11 +76,11 @@ public class Task {
         isTaskCurrentlyWorkedOn = true;
     }
 
-    public float getDayHoursOfWorkTotal(LocalDate date) {
-        return getDayHoursOfWorkTotal(date, true);
+    public int getDayMinutesOfWorkTotal(LocalDate date) {
+        return getDayMinutesOfWorkTotal(date, true);
     }
 
-    public float getDayHoursOfWorkTotal(LocalDate date, boolean ignoreTodayHours) {
+    public int getDayMinutesOfWorkTotal(LocalDate date, boolean ignoreTodayWorkTime) {
         LocalDate startDate;
         if(this.startDate != null) {
             startDate = this.startDate;
@@ -96,7 +95,7 @@ public class Task {
         }
         if(date.isAfter(dueDate)) {
             if(isOverdue()) {
-                return getTotalHoursLeftOfWork();
+                return getTotalMinutesLeftOfWork();
             } else {
                 return 0;
             }
@@ -119,19 +118,19 @@ public class Task {
             daysBetweenStartAndDueDate = 0;
         }
 
-        float dailyWorkloadHours = estimatedTotalHoursToCompletion - totalLoggedHoursOfWork;
+        double dailyWorkloadMinutes = estimatedTotalMinutesToCompletion - totalLoggedMinutesOfWork;
 
-        if(ignoreTodayHours && date.equals(startDate)) {
-            dailyWorkloadHours += loggedHoursOfWorkToday;
+        if(ignoreTodayWorkTime && date.equals(startDate)) {
+            dailyWorkloadMinutes += loggedMinutesOfWorkToday;
         }
 
-        dailyWorkloadHours /= daysBetweenStartAndDueDate + 1;
+        dailyWorkloadMinutes /= daysBetweenStartAndDueDate + 1;
 
-        return dailyWorkloadHours;
+        return (int) dailyWorkloadMinutes;
     }
 
     public float getTodaysTaskCompletionPercentage() {
-        float percentage = loggedHoursOfWorkToday / getDayHoursOfWorkTotal(LocalDate.now());
+        float percentage = (float) loggedMinutesOfWorkToday / getDayMinutesOfWorkTotal(LocalDate.now());
 
         if (percentage > 1) {
             percentage = 1;
@@ -140,12 +139,12 @@ public class Task {
         return percentage;
     }
 
-    public float getTodaysHoursLeft() {
-        return getDayHoursOfWorkTotal(LocalDate.now()) - loggedHoursOfWorkToday;
+    public float getTaskCompletionPercentage() {
+        return (float) totalLoggedMinutesOfWork / estimatedTotalMinutesToCompletion;
     }
 
-    public float getTaskCompletionPercentage() {
-        return totalLoggedHoursOfWork / estimatedTotalHoursToCompletion;
+    public int getTodaysMinutesLeft() {
+        return getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday;
     }
 
     public String getName() {
@@ -160,12 +159,12 @@ public class Task {
         return dueDateTime;
     }
 
-    public float getTotalHoursLeftOfWork() {
-        return estimatedTotalHoursToCompletion - totalLoggedHoursOfWork;
+    public int getTotalMinutesLeftOfWork() {
+        return estimatedTotalMinutesToCompletion - totalLoggedMinutesOfWork;
     }
 
-    public float getEstimatedCompletionTime() {
-        return estimatedTotalHoursToCompletion;
+    public int getEstimatedCompletionTime() {
+        return estimatedTotalMinutesToCompletion;
     }
 
     public boolean isOverdue() {
@@ -176,35 +175,34 @@ public class Task {
         return (int) ChronoUnit.DAYS.between(dueDateTime.toLocalDate(), LocalDate.now());
     }
 
-    public float getCurrentWorkedHours() {
-        float hoursSpent = lastTaskWorkStartTime.until(LocalDateTime.now(), ChronoUnit.MINUTES) / 60f;
-        return (float) Math.ceil(hoursSpent * 10f) / 10f;
+    public int getCurrentWorkedMinutes() {
+        return (int) lastTaskWorkStartTime.until(LocalDateTime.now(), ChronoUnit.MINUTES);
     }
 
-    public void setEstimatedTotalHoursToCompletion(float estimatedTotalHoursToCompletion) {
-        this.estimatedTotalHoursToCompletion = estimatedTotalHoursToCompletion;
+    public void setEstimatedTotalMinutesToCompletion(int estimatedTotalMinutesToCompletion) {
+        this.estimatedTotalMinutesToCompletion = estimatedTotalMinutesToCompletion;
     }
 
     public void completeTaskForTheDay() {
         isDoneWithTaskToday = true;
     }
 
-    public void incrementTaskHours(float loggedHours, boolean completedTask) {
-        timePeriod.getStatsManager().appendHours(group, lastTaskWorkStartTime.toLocalDate(), loggedHours, completedTask);
+    public void incrementTaskMinutes(int loggedMinutes, boolean completedTask) {
+        timePeriod.getStatsManager().appendMinutes(group, lastTaskWorkStartTime.toLocalDate(), loggedMinutes, completedTask);
 
         isTaskCurrentlyWorkedOn = false;
 
         lastTaskWorkEndTime = LocalDateTime.now();
-        totalLoggedHoursOfWork += loggedHours;
+        totalLoggedMinutesOfWork += loggedMinutes;
 
         if(!lastTaskWorkStartTime.toLocalDate().equals(LocalDate.now())) {
-            loggedHoursOfWorkToday = 0;
+            loggedMinutesOfWorkToday = 0;
         }
-        loggedHoursOfWorkToday += loggedHours;
+        loggedMinutesOfWorkToday += loggedMinutes;
 
         if(completedTask) {
             isTaskComplete = true;
-            parent.completeTask(this, totalLoggedHoursOfWork);
+            parent.completeTask(this, totalLoggedMinutesOfWork);
         }
 
         parent.saveTaskToFile();
@@ -228,13 +226,13 @@ public class Task {
      * @param name
      * @param dueDateTime
      * @param group
-     * @param estimatedTotalHoursToCompletion
+     * @param estimatedTotalMinutesToCompletion
      */
-    public void editTask(String name, LocalDateTime dueDateTime, Group group, float estimatedTotalHoursToCompletion) {
+    public void editTask(String name, LocalDateTime dueDateTime, Group group, int estimatedTotalMinutesToCompletion) {
         this.name = name;
         this.dueDateTime = dueDateTime;
         this.group = group;
-        this.estimatedTotalHoursToCompletion = estimatedTotalHoursToCompletion;
+        this.estimatedTotalMinutesToCompletion = estimatedTotalMinutesToCompletion;
     }
 
     public boolean isTaskComplete() {

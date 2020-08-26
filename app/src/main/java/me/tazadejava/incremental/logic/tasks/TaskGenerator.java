@@ -27,7 +27,7 @@ public abstract class TaskGenerator {
         creationTime = LocalDateTime.now();
     }
 
-    public void completeTask(Task task, float totalHoursWorked) {
+    public void completeTask(Task task, int totalMinutesWorked) {
         taskManager.completeTask(task);
     }
 

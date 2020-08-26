@@ -26,26 +26,25 @@ public class RepeatingTask extends TaskGenerator {
 
     private transient TimePeriod timePeriod;
     protected transient Group taskGroup;
-    private float originalEstimatedHoursCompletion;
+    private int originalEstimatedMinutesCompletion;
 
-    private boolean useAverageInHourEstimate;
-    private float totalHoursWorked;
-    private int totalTasksCompleted;
+    private boolean useAverageInWorktimeEstimate;
+    private int totalMinutesWorked, totalTasksCompleted;
 
-    public RepeatingTask(TaskManager taskManager, String[] taskNames, LocalDate startDate, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, TimePeriod timePeriod, float originalEstimatedHoursCompletion, boolean useAverage) {
+    public RepeatingTask(TaskManager taskManager, String[] taskNames, LocalDate startDate, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, TimePeriod timePeriod, int estimatedMinutesToCompletion, boolean useAverage) {
         super(taskManager, startDate);
 
         this.taskNames = taskNames;
         this.taskGroup = taskGroup;
         this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
         this.timePeriod = timePeriod;
-        this.originalEstimatedHoursCompletion = originalEstimatedHoursCompletion;
-        this.useAverageInHourEstimate = useAverage;
+        this.originalEstimatedMinutesCompletion = estimatedMinutesToCompletion;
+        this.useAverageInWorktimeEstimate = useAverage;
 
         currentTaskIndex = 0;
         totalTasksCount = taskNames.length;
 
-        totalHoursWorked = 0;
+        totalMinutesWorked = 0;
         totalTasksCompleted = 0;
 
         //INVARIANT: the FINAL task will NOT BE EMPTY. THIS MUST BE HELD UP BY THE UI
@@ -55,7 +54,7 @@ public class RepeatingTask extends TaskGenerator {
             if(taskNames[i].isEmpty()) {
                 allTasks[i] = null;
             } else {
-                allTasks[i] = new Task(this, taskNames[i], getIndexDueDate(i, startDate, dayOfWeekTaskBegins, dayOfWeekTaskDue, timeTaskDue), taskGroup, timePeriod, originalEstimatedHoursCompletion);
+                allTasks[i] = new Task(this, taskNames[i], getIndexDueDate(i, startDate, dayOfWeekTaskBegins, dayOfWeekTaskDue, timeTaskDue), taskGroup, timePeriod, originalEstimatedMinutesCompletion);
             }
         }
     }
@@ -119,43 +118,43 @@ public class RepeatingTask extends TaskGenerator {
 
     private Task getIndexTask(int index) {
         //update the task based on previous runs to determine how many hours will be needed to complete this task
-        allTasks[index].setEstimatedTotalHoursToCompletion(calculateRevisedAverageCompletionTime());
+        allTasks[index].setEstimatedTotalMinutesToCompletion(calculateRevisedAverageCompletionTime());
 
         return allTasks[index];
     }
 
-    public void setUseAverageInHourlyCalculation(boolean useAverage) {
-        useAverageInHourEstimate = useAverage;
+    public void setUseAverageInWorktimeEstimate(boolean useAverage) {
+        useAverageInWorktimeEstimate = useAverage;
     }
 
-    private float calculateRevisedAverageCompletionTime() {
-        float calculatedEstimatedTime = originalEstimatedHoursCompletion;
+    private int calculateRevisedAverageCompletionTime() {
+        double calculatedEstimatedTime = originalEstimatedMinutesCompletion;
 
-        if(useAverageInHourEstimate && totalTasksCompleted > 0) {
+        if(useAverageInWorktimeEstimate && totalTasksCompleted > 0) {
             //gradually incorporate the originalEstimatedTime with the new calculated average
 
-            float estimatedAverageHours = totalHoursWorked / totalTasksCompleted;
+            double estimatedAverageMinutes = totalMinutesWorked / totalTasksCompleted;
 
             if(totalTasksCompleted < 2) {
                 //50 50
-                calculatedEstimatedTime = (0.5f * originalEstimatedHoursCompletion) + (0.5f * estimatedAverageHours);
+                calculatedEstimatedTime = (0.5 * originalEstimatedMinutesCompletion) + (0.5 * estimatedAverageMinutes);
             } else if(totalTasksCompleted < 4) {
                 //25 75
-                calculatedEstimatedTime = (0.25f * originalEstimatedHoursCompletion) + (0.75f * estimatedAverageHours);
+                calculatedEstimatedTime = (0.25 * originalEstimatedMinutesCompletion) + (0.75 * estimatedAverageMinutes);
             } else {
                 //0 100
-                calculatedEstimatedTime = estimatedAverageHours;
+                calculatedEstimatedTime = estimatedAverageMinutes;
             }
         }
 
-        return calculatedEstimatedTime;
+        return (int) calculatedEstimatedTime;
     }
 
     @Override
-    public void completeTask(Task task, float totalHoursWorked) {
-        super.completeTask(task, totalHoursWorked);
+    public void completeTask(Task task, int totalMinutesWorked) {
+        super.completeTask(task, totalMinutesWorked);
 
-        this.totalHoursWorked += totalHoursWorked;
+        this.totalMinutesWorked += totalMinutesWorked;
         totalTasksCompleted++;
     }
 
@@ -185,12 +184,12 @@ public class RepeatingTask extends TaskGenerator {
         return goalIndex;
     }
 
-    public void updateAndSaveTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, float originalEstimatedHoursCompletion, boolean useAverage) {
+    public void updateAndSaveTask(String[] taskNames, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, int originalEstimatedMinutesCompletion, boolean useAverage) {
         //update changes
         this.dayOfWeekTaskBegins = dayOfWeekTaskBegins;
         this.taskGroup = taskGroup;
-        this.originalEstimatedHoursCompletion = originalEstimatedHoursCompletion;
-        this.useAverageInHourEstimate = useAverage;
+        this.originalEstimatedMinutesCompletion = originalEstimatedMinutesCompletion;
+        this.useAverageInWorktimeEstimate = useAverage;
 
         //removed tasks from the list, so shorten the list
         if(taskNames.length < this.taskNames.length) {

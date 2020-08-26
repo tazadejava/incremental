@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.logic.tasks;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 
 import com.google.gson.Gson;
@@ -29,7 +30,74 @@ public class TaskManager {
 
     //if the day changes while on this app, maybe do something?
 
-    private Thread backgroundThread = new Thread();
+    private static class TaskManagerSaveFileTask extends AsyncTask<Void, Void, Void> {
+
+        private TaskManager taskManager;
+        private boolean savePersistentData;
+        private TimePeriod[] saveTimePeriods;
+
+        public TaskManagerSaveFileTask(TaskManager taskManager, boolean savePersistentData, TimePeriod[] saveTimePeriods) {
+            this.taskManager = taskManager;
+            this.savePersistentData = savePersistentData;
+            this.saveTimePeriods = saveTimePeriods;
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+                File dataFolder = new File(IncrementalApplication.filesDir + "/data/");
+
+                if(!dataFolder.exists()) {
+                    dataFolder.mkdirs();
+                }
+
+                if(savePersistentData) {
+                    File file = new File(dataFolder.getAbsolutePath() + "/" + "persistentData.json");
+
+                    if(!file.exists()) {
+                        file.createNewFile();
+                    }
+
+                    FileWriter writer = new FileWriter(file);
+
+                    JsonObject main = new JsonObject();
+
+                    JsonArray groupData = new JsonArray();
+                    for(Group group : taskManager.allPersistentGroups.values()) {
+                        groupData.add(group.save());
+                    }
+                    main.add("groupData", groupData);
+
+                    JsonArray timePeriodData = new JsonArray();
+
+                    for(TimePeriod period : taskManager.timePeriods) {
+                        JsonObject data = period.saveTimePeriodInfo(taskManager.gson);
+
+                        if(period == taskManager.currentTimePeriod) {
+                            data.addProperty("current", true);
+                        }
+
+                        timePeriodData.add(data);
+                    }
+
+                    main.add("timePeriodData", timePeriodData);
+
+                    taskManager.gson.toJson(main, writer);
+
+                    writer.close();
+                }
+
+                for(TimePeriod saveTimePeriod : saveTimePeriods) {
+                    saveTimePeriod.saveTaskData(taskManager.gson, dataFolder);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    private TaskManagerSaveFileTask saveTasksAsync;
 
     private Gson gson;
 
@@ -264,54 +332,11 @@ public class TaskManager {
     }
 
     public void saveData(boolean savePersistentData, TimePeriod... saveTimePeriods) {
-        try {
-            File dataFolder = new File(IncrementalApplication.filesDir + "/data/");
-
-            if(!dataFolder.exists()) {
-                dataFolder.mkdirs();
-            }
-
-            if(savePersistentData) {
-                File file = new File(dataFolder.getAbsolutePath() + "/" + "persistentData.json");
-
-                if(!file.exists()) {
-                    file.createNewFile();
-                }
-
-                FileWriter writer = new FileWriter(file);
-
-                JsonObject main = new JsonObject();
-
-                JsonArray groupData = new JsonArray();
-                for(Group group : allPersistentGroups.values()) {
-                    groupData.add(group.save());
-                }
-                main.add("groupData", groupData);
-
-                JsonArray timePeriodData = new JsonArray();
-
-                for(TimePeriod period : timePeriods) {
-                    JsonObject data = period.saveTimePeriodInfo(gson);
-
-                    if(period == currentTimePeriod) {
-                        data.addProperty("current", true);
-                    }
-
-                    timePeriodData.add(data);
-                }
-
-                main.add("timePeriodData", timePeriodData);
-
-                gson.toJson(main, writer);
-
-                writer.close();
-            }
-
-            for(TimePeriod saveTimePeriod : saveTimePeriods) {
-                saveTimePeriod.saveTaskData(gson, dataFolder);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(saveTasksAsync != null) {
+            saveTasksAsync.cancel(true);
         }
+
+        saveTasksAsync = new TaskManagerSaveFileTask(this, savePersistentData, saveTimePeriods);
+        saveTasksAsync.execute();
     }
 }

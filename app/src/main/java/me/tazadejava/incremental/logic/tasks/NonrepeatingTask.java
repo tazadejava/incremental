@@ -14,11 +14,11 @@ public class NonrepeatingTask extends TaskGenerator {
 
     private boolean hasTaskStarted;
 
-    public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, float estimatedHoursToCompletion) {
+    public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, int estimatedMinutesToCompletion) {
         super(taskManager, startDate);
 
         hasTaskStarted = false;
-        allTasks = new Task[] {new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedHoursToCompletion)};
+        allTasks = new Task[] {new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedMinutesToCompletion)};
     }
 
     public static NonrepeatingTask createInstance(Gson gson, TaskManager taskManager, TimePeriod timePeriod, JsonObject data) {
@@ -41,9 +41,9 @@ public class NonrepeatingTask extends TaskGenerator {
         return data;
     }
 
-    public void updateAndSaveTask(LocalDate startDate, String name, LocalDateTime dueDateTime, Group group, float estimatedTotalHoursToCompletion) {
+    public void updateAndSaveTask(LocalDate startDate, String name, LocalDateTime dueDateTime, Group group, int estimatedMinutesToCompletion) {
         //update changes
-        allTasks[0].editTask(name, dueDateTime, group, estimatedTotalHoursToCompletion);
+        allTasks[0].editTask(name, dueDateTime, group, estimatedMinutesToCompletion);
 
         this.startDate = startDate;
 

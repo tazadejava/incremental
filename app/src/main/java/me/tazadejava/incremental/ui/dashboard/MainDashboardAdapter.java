@@ -18,6 +18,7 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdapter.ViewHolder> {
 
@@ -78,9 +79,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
                 holder.estimatedTime.setText("No tasks here!");
             }
         } else {
-            float estimatedHoursOfWork = timePeriod.getEstimatedHoursOfWorkForDate(date);
-            String estimatedHoursOfWorkFormatted = estimatedHoursOfWork % 1 == 0 ? String.valueOf((int) estimatedHoursOfWork) : String.valueOf(estimatedHoursOfWork);
-            holder.estimatedTime.setText("est. " + estimatedHoursOfWorkFormatted + " hour" + (estimatedHoursOfWork == 1 ? "" : "s") + " of work remaining");
+            holder.estimatedTime.setText("est. " + Utils.formatHourMinuteTime(timePeriod.getEstimatedMinutesOfWorkForDate(date)) + " of work remaining");
         }
     }
 
@@ -90,11 +89,9 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         List<Task> dayTasks = adapter.getUpdatedTasks();
 
         if(dayTasks.isEmpty()) {
-            holder.estimatedTime.setText("No tasks here!");
+            holder.estimatedTime.setText("No tasks here; it's your day off!");
         } else {
-            float estimatedHoursOfWork = timePeriod.getEstimatedHoursOfWorkForDate(adapter.getDate());
-            String estimatedHoursOfWorkFormatted = estimatedHoursOfWork % 1 == 0 ? String.valueOf((int) estimatedHoursOfWork) : String.valueOf(estimatedHoursOfWork);
-            holder.estimatedTime.setText("est. " + estimatedHoursOfWorkFormatted + " hour" + (estimatedHoursOfWork == 1 ? "" : "s") + " of work remaining");
+            holder.estimatedTime.setText("est. " + Utils.formatHourMinuteTime(timePeriod.getEstimatedMinutesOfWorkForDate(adapter.getDate())) + " of work remaining");
         }
     }
 

@@ -18,4 +18,19 @@ public class Utils {
 
         return hour + ":" + (minute < 10 ? "0" + minute : minute) + " " + demon;
     }
+
+    public static String formatHourMinuteTime(int minutes) {
+        if(minutes < 60) {
+            return minutes + " min";
+        } else {
+            int hours = minutes / 60;
+            minutes %= 60;
+
+            if(minutes == 0) {
+                return hours + " hr";
+            } else {
+                return hours + " hr " + minutes + " min";
+            }
+        }
+    }
 }

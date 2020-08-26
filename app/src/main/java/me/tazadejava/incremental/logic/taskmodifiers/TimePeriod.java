@@ -334,26 +334,20 @@ public class TimePeriod {
         return removed;
     }
 
-    public float getEstimatedHoursOfWorkForDate(LocalDate date) {
+    public int getEstimatedMinutesOfWorkForDate(LocalDate date) {
         int deltaDays = (int) ChronoUnit.DAYS.between(LocalDate.now(), date);
 
         if(deltaDays < 0 || deltaDays > tasksByDay.length + 1) {
             return -1;
         } else {
-            float estimatedHours = 0;
+            int estimatedMinutes = 0;
 
-            List<Task> dayList;
-            if(deltaDays == 0) {
-                dayList = allActiveTasks;
-            } else {
-                dayList = tasksByDay[deltaDays - 1];
-            }
-
+            List<Task> dayList = getTasksByDay(deltaDays);
             for(Task task : dayList) {
-                estimatedHours += task.getDayHoursOfWorkTotal(date, false);
+                estimatedMinutes += task.getTodaysMinutesLeft();
             }
 
-            return Math.round(estimatedHours * 2.0f) / 2.0f;
+            return estimatedMinutes;
         }
     }
 

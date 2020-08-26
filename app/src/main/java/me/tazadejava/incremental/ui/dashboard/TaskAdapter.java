@@ -1,6 +1,5 @@
 package me.tazadejava.incremental.ui.dashboard;
 
-import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -11,13 +10,10 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.TransitionDrawable;
-import android.os.Handler;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -44,7 +40,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         private ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
-        private TextView taskName, taskClass, totalHoursRemaining, dailyHoursRemaining, taskDueDate, actionTaskText, secondaryActionTaskText, taskNotes;
+        private TextView taskName, taskClass, totalTimeRemaining, dailyTimeRemaining, taskDueDate, actionTaskText, secondaryActionTaskText, taskNotes;
 
         private View horizontalLine;
 
@@ -56,8 +52,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
             taskName = itemView.findViewById(R.id.timePeriodName);
             taskClass = itemView.findViewById(R.id.task_class);
-            totalHoursRemaining = itemView.findViewById(R.id.estimatedTotalTimeLeft);
-            dailyHoursRemaining = itemView.findViewById(R.id.estimatedDailyHours);
+            totalTimeRemaining = itemView.findViewById(R.id.estimatedTotalTimeLeft);
+            dailyTimeRemaining = itemView.findViewById(R.id.estimatedDailyTime);
             taskDueDate = itemView.findViewById(R.id.task_due_date);
 
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
@@ -148,39 +144,36 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskName.setText(task.getName());
         holder.taskClass.setText(task.getGroupName());
 
-        float totalHoursLeft = Math.round(task.getTotalHoursLeftOfWork() * 2.0f) / 2.0f;
+        int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
 
-        if(totalHoursLeft < 0) {
-            totalHoursLeft = 0;
+        if(totalMinutesLeft < 0) {
+            totalMinutesLeft = 0;
         }
 
-        String totalHoursLeftFormatted = totalHoursLeft % 1 == 0 ? String.valueOf((int) totalHoursLeft) : String.valueOf(totalHoursLeft);
-        holder.totalHoursRemaining.setText(totalHoursLeftFormatted + " total hour" + (totalHoursLeft == 1 ? "" : "s") + " remaining");
+        holder.totalTimeRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
 
 
         if(date.equals(LocalDate.now())) {
-            float hoursLeftToday = task.getTodaysHoursLeft();
+            int minutesLeftToday = task.getTodaysMinutesLeft();
 
-            if(hoursLeftToday < 0) {
-                hoursLeftToday = 0;
+            if(minutesLeftToday < 0) {
+                minutesLeftToday = 0;
             }
 
-            String hoursTodayFormatted = hoursLeftToday % 1 == 0 ? String.valueOf((int) hoursLeftToday) : String.valueOf(Math.round(hoursLeftToday * 2.0f) / 2.0f);
-            holder.dailyHoursRemaining.setText(hoursTodayFormatted + " hour" + (hoursLeftToday == 1 ? "" : "s") + " of work left today");
+            holder.dailyTimeRemaining.setText(Utils.formatHourMinuteTime(minutesLeftToday) + " of work left today");
         } else {
-            float hoursLeftThisDay = task.getDayHoursOfWorkTotal(date);
+            int minutesLeft = task.getDayMinutesOfWorkTotal(date);
 
-            if(hoursLeftThisDay < 0) {
-                hoursLeftThisDay = 0;
+            if(minutesLeft < 0) {
+                minutesLeft = 0;
             }
 
-            String hoursLeftThisDayFormatted = hoursLeftThisDay % 1 == 0 ? String.valueOf((int) hoursLeftThisDay) : String.valueOf(Math.round(hoursLeftThisDay * 2.0f) / 2.0f);
-            holder.dailyHoursRemaining.setText(hoursLeftThisDayFormatted + " hour" + (hoursLeftThisDay == 1 ? "" : "s") + " of work left");
+            holder.dailyTimeRemaining.setText(Utils.formatHourMinuteTime(minutesLeft) + " of work left");
         }
 
         if(task.isOverdue()) {
             int overdueDays = task.getOverdueDays();
-            holder.dailyHoursRemaining.setText(holder.dailyHoursRemaining.getText() + "\nOVERDUE BY " + overdueDays + " DAY" + (overdueDays == 1 ? "" : "S"));
+            holder.dailyTimeRemaining.setText(holder.dailyTimeRemaining.getText() + "\nOVERDUE BY " + overdueDays + " DAY" + (overdueDays == 1 ? "" : "S"));
             holder.actionTaskText.setTextColor(Color.RED);
         } else {
             holder.actionTaskText.setTextColor(holder.actionTaskText.getTextColors());
@@ -197,7 +190,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.actionTaskText.setVisibility(View.VISIBLE);
             holder.horizontalLine.setVisibility(View.VISIBLE);
             if(task.isTaskCurrentlyWorkedOn()) {
-                holder.actionTaskText.setText("Log Hours");
+                holder.actionTaskText.setText("Log Work");
 
                 holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, true));
             } else {
@@ -303,21 +296,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 @Override
                 public void onClick(View v) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                    builder.setTitle("For how many hours did you work on this task?");
+                    builder.setTitle("For how many minutes did you work on this task?");
 
                     EditText input = new EditText(v.getContext());
-                    input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                    input.setInputType(InputType.TYPE_CLASS_NUMBER);
 
-                    String estimatedHours;
-                    float hours = task.getCurrentWorkedHours();
-
-                    if(hours == (int) hours) {
-                        estimatedHours = "" + (int) hours;
-                    } else {
-                        estimatedHours = "" + hours;
-                    }
-
-                    input.setText(estimatedHours);
+                    input.setText(String.valueOf(task.getCurrentWorkedMinutes()));
                     input.setSelectAllOnFocus(true);
                     builder.setView(input);
 
@@ -328,14 +312,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setCancelable(false);
                             finishedTaskBuilder.setTitle("Did you finish the task?");
 
-                            float hoursWorked = Float.parseFloat(input.getText().toString());
+                            int minutesWorked = Integer.parseInt(input.getText().toString());
 
                             if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate())) {
                                 finishedTaskBuilder.setPositiveButton("Finished for today!", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         task.completeTaskForTheDay();
-                                        task.incrementTaskHours(hoursWorked, false);
+                                        task.incrementTaskMinutes(minutesWorked, false);
 
                                         taskText.setText("Start Task");
                                         taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
@@ -350,7 +334,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setNeutralButton("Finished the task!", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    task.incrementTaskHours(hoursWorked, true);
+                                    task.incrementTaskMinutes(minutesWorked, true);
 
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
@@ -364,11 +348,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setNegativeButton("Not done yet!", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    task.incrementTaskHours(hoursWorked, false);
+                                    task.incrementTaskMinutes(minutesWorked, false);
 
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
                                     mainDashboardAdapter.updateTaskCards(task);
+                                    mainDashboardAdapter.updateDayLayouts(task);
 
                                     hideKeyboard(v);
                                 }
@@ -398,8 +383,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 public void onClick(View v) {
                     task.startWorkingOnTask();
 
-                    taskText.setText("Log Hours");
+                    taskText.setText("Log Work");
                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, true));
+
+                    task.getParent().saveTaskToFile();
                 }
             };
         }

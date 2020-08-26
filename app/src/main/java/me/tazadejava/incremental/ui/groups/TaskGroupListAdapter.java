@@ -29,13 +29,14 @@ import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public ConstraintLayout taskCardConstraintLayout;
-        public TextView taskGroupName, tasksCount, weeklyHoursCount, actionTaskText, timePeriodText;
+        public TextView taskGroupName, tasksCount, weeklyWorkTime, actionTaskText, timePeriodText;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -44,7 +45,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
             taskGroupName = itemView.findViewById(R.id.timePeriodName);
             tasksCount = itemView.findViewById(R.id.tasksCount);
-            weeklyHoursCount = itemView.findViewById(R.id.timePeriodDatesText);
+            weeklyWorkTime = itemView.findViewById(R.id.timePeriodDatesText);
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
 
             timePeriodText = itemView.findViewById(R.id.timePeriodActiveText);
@@ -141,15 +142,13 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         int tasksCount = taskManager.getCurrentTimePeriod().getTasksCountThisWeekByGroup(group);
         holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s"));
 
-        float hoursWorked = 0;
+        int minutesWorked = 0;
 
         for(LocalDate date : LogicalUtils.getWorkWeekDates()) {
-            hoursWorked += taskManager.getCurrentTimePeriod().getStatsManager().getHoursWorkedByGroup(group, date);
+            minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
         }
 
-        String hoursWorkedFormatted = hoursWorked % 1 == 0 ? String.valueOf((int) hoursWorked) : String.valueOf(hoursWorked);
-
-        holder.weeklyHoursCount.setText(hoursWorkedFormatted + " hour" + (hoursWorked == 1 ? "" : "s") + " worked this week");
+        holder.weeklyWorkTime.setText(Utils.formatHourMinuteTime(minutesWorked) + " worked this week");
 
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override

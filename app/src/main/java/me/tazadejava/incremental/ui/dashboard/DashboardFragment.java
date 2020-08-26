@@ -2,7 +2,6 @@ package me.tazadejava.incremental.ui.dashboard;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,12 +9,13 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -25,13 +25,11 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.formatter.DefaultValueFormatter;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.formatter.StackedValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -44,6 +42,7 @@ import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class DashboardFragment extends Fragment implements BackPressedInterface {
 
@@ -51,6 +50,12 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
     private RecyclerView dashboardView;
     private MainDashboardAdapter adapter;
+
+    private Description description;
+    private boolean isShowingHours;
+
+    private int currentDateOffset;
+    private LocalDate[] currentDates;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new task
@@ -78,13 +83,13 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         return root;
     }
 
-    private String[] formatWorkDates(LocalDate[] dates) {
-        String[] datesFormatted = new String[dates.length];
+    private String[] formatWorkDates() {
+        String[] datesFormatted = new String[currentDates.length];
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd");
 
-        LocalDate firstDate = dates[0];
+        LocalDate firstDate = currentDates[0];
 
-        for(int i = 0; i < dates.length; i++) {
+        for(int i = 0; i < currentDates.length; i++) {
             datesFormatted[i] = firstDate.format(formatter);
             firstDate = firstDate.plusDays(1);
         }
@@ -98,33 +103,42 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         workBarChart.setAutoScaleMinMaxEnabled(true);
         workBarChart.setScaleEnabled(false);
         workBarChart.setHighlightFullBarEnabled(false);
+        workBarChart.setHighlightPerTapEnabled(false);
+        workBarChart.setHighlightPerDragEnabled(false);
 
-        workBarChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+        workBarChart.setOnTouchListener(new OnSwipeTouchListener(getContext()) {
             @Override
-            public void onValueSelected(Entry e, Highlight h) {
-                if(e.getY() > 0) {
-                    Toast.makeText(getContext(), e.getY() + " hours worked", Toast.LENGTH_SHORT).show();
+            public void onSwipeLeft() {
+                for(int i = 0; i < currentDates.length; i++) {
+                    currentDates[i] = currentDates[i].plusDays(7);
                 }
+
+                currentDateOffset++;
+                refreshChartData();
             }
 
             @Override
-            public void onNothingSelected() {
+            public void onSwipeRight() {
+                for(int i = 0; i < currentDates.length; i++) {
+                    currentDates[i] = currentDates[i].minusDays(7);
+                }
 
+                currentDateOffset--;
+                refreshChartData();
             }
         });
 
         LocalDate[] dates = LogicalUtils.getWorkWeekDates();
+        currentDates = dates;
 
         //format the graph
 
-        Description description = new Description();
-
+        description = new Description();
         description.setTextSize(12f);
-        description.setText("Hours worked this week");
-
+        description.setTextColor(Color.LTGRAY);
         workBarChart.setDescription(description);
 
-        ValueFormatter xAxisFormatter = new IndexAxisValueFormatter(formatWorkDates(dates));
+        ValueFormatter xAxisFormatter = new IndexAxisValueFormatter(formatWorkDates());
 
         XAxis xAxis = workBarChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -132,7 +146,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         xAxis.setValueFormatter(xAxisFormatter);
 
-        ValueFormatter yAxisFormatter = new DefaultValueFormatter(0);
+        ValueFormatter yAxisFormatter = new DefaultValueFormatter(1);
 
         YAxis yAxis = workBarChart.getAxisLeft();
         yAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
@@ -142,6 +156,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         yAxis.setAxisMinimum(0);
         yAxis.setValueFormatter(yAxisFormatter);
         yAxis.setDrawGridLines(true);
+        yAxis.setMinWidth(20);
+        yAxis.setMaxWidth(20);
 
         int zeroLineColor = yAxis.getZeroLineColor();
         yAxis.setGridColor(Color.LTGRAY);
@@ -156,32 +172,66 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         //set data
 
-        refreshChartData(dates);
+        refreshChartData();
     }
 
     public void refreshChartData() {
-        refreshChartData(LogicalUtils.getWorkWeekDates());
-    }
+        //refresh axes
 
-    private void refreshChartData(LocalDate[] dates) {
-        List<BarEntry> values = new ArrayList<>();
+        ((IndexAxisValueFormatter) workBarChart.getXAxis().getValueFormatter()).setValues(formatWorkDates());
+
+        if(currentDateOffset == 0) {
+            workBarChart.getXAxis().setTextColor(Color.DKGRAY);
+        } else {
+            workBarChart.getXAxis().setTextColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
+        }
+
+        //refresh data
 
         StatsManager stats = IncrementalApplication.taskManager.getCurrentTimePeriod().getStatsManager();
 
-        int index = 0;
-        for(LocalDate date : dates) {
-            float hours = stats.getHoursWorked(date);
-            values.add(new BarEntry(index, hours));
-            index++;
+        int totalMinutes = 0;
+        int totalNonzeroDays = 0;
+        for(LocalDate date : currentDates) {
+            int minutes = stats.getMinutesWorked(date);
+
+            if(minutes > 0) {
+                totalMinutes += minutes;
+                totalNonzeroDays++;
+            }
         }
 
-        BarDataSet barDataSet = new BarDataSet(values, "Hours worked this week");
+        List<BarEntry> values = new ArrayList<>();
+        if(totalNonzeroDays != 0 && totalMinutes / totalNonzeroDays > 60) {
+            isShowingHours = true;
+            description.setText("Hours worked weekly");
+            ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(1);
 
+            int index = 0;
+            for(LocalDate date : currentDates) {
+                float hours = stats.getMinutesWorked(date) / 60f;
+                values.add(new BarEntry(index, hours));
+                index++;
+            }
+        } else {
+            isShowingHours = false;
+            description.setText("Minutes worked weekly");
+            ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(0);
+
+            int index = 0;
+            for(LocalDate date : currentDates) {
+                int minutes = stats.getMinutesWorked(date);
+                values.add(new BarEntry(index, minutes));
+                index++;
+            }
+        }
+
+        BarDataSet barDataSet = new BarDataSet(values, "");
         barDataSet.setDrawValues(false);
-
         BarData data = new BarData(barDataSet);
 
         workBarChart.setData(data);
+        workBarChart.animateY(500, Easing.EaseOutCubic);
     }
 
     @Override

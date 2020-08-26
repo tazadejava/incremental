@@ -11,11 +11,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
@@ -56,19 +53,19 @@ public class StatsManager {
 
                 JsonObject data = new JsonObject();
 
-                JsonObject totalHoursByGroup = new JsonObject();
+                JsonObject totalMinutesByGroup = new JsonObject();
 
-                for(LocalDate key : statsManager.totalHoursWorkedByGroup.keySet()) {
-                    JsonObject groupHours = new JsonObject();
+                for(LocalDate key : statsManager.totalMinutesWorkedByGroup.keySet()) {
+                    JsonObject groupMinutes = new JsonObject();
 
-                    for(Group group : statsManager.totalHoursWorkedByGroup.get(key).keySet()) {
-                        groupHours.addProperty(group.getGroupName(), statsManager.totalHoursWorkedByGroup.get(key).get(group));
+                    for(Group group : statsManager.totalMinutesWorkedByGroup.get(key).keySet()) {
+                        groupMinutes.addProperty(group.getGroupName(), statsManager.totalMinutesWorkedByGroup.get(key).get(group));
                     }
 
-                    totalHoursByGroup.add(key.toString(), groupHours);
+                    totalMinutesByGroup.add(key.toString(), groupMinutes);
                 }
 
-                data.add("totalHoursWorkedByGroup", totalHoursByGroup);
+                data.add("totalMinutesWorkedByGroup", totalMinutesByGroup);
 
                 JsonObject totalTasksByGroup = new JsonObject();
 
@@ -100,7 +97,7 @@ public class StatsManager {
 
     private SaveDataAsyncTask asyncTask;
 
-    private HashMap<LocalDate, HashMap<Group, Float>> totalHoursWorkedByGroup = new HashMap<>();
+    private HashMap<LocalDate, HashMap<Group, Integer>> totalMinutesWorkedByGroup = new HashMap<>();
     private HashMap<LocalDate, HashMap<Group, Integer>> totalTasksCompletedByGroup = new HashMap<>();
 
     public StatsManager(Gson gson, TimePeriod timePeriod) {
@@ -121,17 +118,17 @@ public class StatsManager {
                 JsonObject data = gson.fromJson(reader, JsonObject.class);
                 reader.close();
 
-                JsonObject totalHoursByGroup = data.getAsJsonObject("totalHoursWorkedByGroup");
+                JsonObject totalMinutesByGroup = data.getAsJsonObject("totalMinutesWorkedByGroup");
 
-                for(Map.Entry<String, JsonElement> dates : totalHoursByGroup.entrySet()) {
-                    HashMap<Group, Float> map = new HashMap<>();
+                for(Map.Entry<String, JsonElement> dates : totalMinutesByGroup.entrySet()) {
+                    HashMap<Group, Integer> map = new HashMap<>();
 
                     JsonObject groupInfo = dates.getValue().getAsJsonObject();
-                    for(Map.Entry<String, JsonElement> groupHours : groupInfo.entrySet()) {
-                        map.put(groups.get(groupHours.getKey()), groupHours.getValue().getAsFloat());
+                    for(Map.Entry<String, JsonElement> groupMinutes : groupInfo.entrySet()) {
+                        map.put(groups.get(groupMinutes.getKey()), groupMinutes.getValue().getAsInt());
                     }
 
-                    totalHoursWorkedByGroup.put(LocalDate.parse(dates.getKey()), map);
+                    totalMinutesWorkedByGroup.put(LocalDate.parse(dates.getKey()), map);
                 }
 
                 JsonObject totalTasksByGroup = data.getAsJsonObject("totalTasksCompletedByGroup");
@@ -164,16 +161,16 @@ public class StatsManager {
         asyncTask.execute();
     }
 
-    public void appendHours(Group group, LocalDate date, float hours, boolean finishedTask) {
-        if(!totalHoursWorkedByGroup.containsKey(date)) {
-            totalHoursWorkedByGroup.put(date, new HashMap<>());
+    public void appendMinutes(Group group, LocalDate date, int minutes, boolean finishedTask) {
+        if(!totalMinutesWorkedByGroup.containsKey(date)) {
+            totalMinutesWorkedByGroup.put(date, new HashMap<>());
         }
 
-        if(!totalHoursWorkedByGroup.get(date).containsKey(group)) {
-            totalHoursWorkedByGroup.get(date).put(group, 0F);
+        if(!totalMinutesWorkedByGroup.get(date).containsKey(group)) {
+            totalMinutesWorkedByGroup.get(date).put(group, 0);
         }
 
-        totalHoursWorkedByGroup.get(date).put(group, totalHoursWorkedByGroup.get(date).get(group) + hours);
+        totalMinutesWorkedByGroup.get(date).put(group, totalMinutesWorkedByGroup.get(date).get(group) + minutes);
 
         if(finishedTask) {
             if(!totalTasksCompletedByGroup.containsKey(date)) {
@@ -190,22 +187,22 @@ public class StatsManager {
         saveData();
     }
 
-    public float getHoursWorked(LocalDate date) {
-        float hours = 0;
+    public int getMinutesWorked(LocalDate date) {
+        int minutes = 0;
 
-        if(totalHoursWorkedByGroup.containsKey(date)) {
-            for(Group group : totalHoursWorkedByGroup.get(date).keySet()) {
-                hours += totalHoursWorkedByGroup.get(date).get(group);
+        if(totalMinutesWorkedByGroup.containsKey(date)) {
+            for(Group group : totalMinutesWorkedByGroup.get(date).keySet()) {
+                minutes += totalMinutesWorkedByGroup.get(date).get(group);
             }
         }
 
-        return hours;
+        return minutes;
     }
 
-    public float getHoursWorkedByGroup(Group group, LocalDate date) {
-        if(totalHoursWorkedByGroup.containsKey(date)) {
-            if(totalHoursWorkedByGroup.get(date).containsKey(group)) {
-                return totalHoursWorkedByGroup.get(date).get(group);
+    public int getMinutesWorkedByGroup(Group group, LocalDate date) {
+        if(totalMinutesWorkedByGroup.containsKey(date)) {
+            if(totalMinutesWorkedByGroup.get(date).containsKey(group)) {
+                return totalMinutesWorkedByGroup.get(date).get(group);
             }
         }
 
