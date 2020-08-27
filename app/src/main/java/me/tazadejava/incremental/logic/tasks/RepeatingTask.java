@@ -14,6 +14,7 @@ import java.util.List;
 
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class RepeatingTask extends TaskGenerator {
 
@@ -86,7 +87,7 @@ public class RepeatingTask extends TaskGenerator {
     }
 
     private LocalDateTime getIndexDueDate(int taskIndex, LocalDate startDate, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue) {
-        return startDate.plusDays(getDaysBetweenDaysOfWeek(dayOfWeekTaskBegins, dayOfWeekTaskDue)).plusDays(7 * taskIndex).atTime(timeTaskDue);
+        return startDate.plusDays(Utils.getDaysBetweenDaysOfWeek(startDate.getDayOfWeek(), dayOfWeekTaskBegins) + Utils.getDaysBetweenDaysOfWeek(dayOfWeekTaskBegins, dayOfWeekTaskDue)).plusDays(7 * taskIndex).atTime(timeTaskDue);
     }
 
     //release pending tasks, and empty the task list
@@ -97,7 +98,7 @@ public class RepeatingTask extends TaskGenerator {
 
         int goalIndex = getGoalTaskIndex();
 
-        if(goalIndex == currentTaskIndex) {
+        if(goalIndex <= currentTaskIndex) {
             return new Task[0];
         }
 
@@ -173,7 +174,7 @@ public class RepeatingTask extends TaskGenerator {
     }
 
     private int getGoalTaskIndex() {
-        int daysDifference = (int) ChronoUnit.DAYS.between(startDate, LocalDate.now());
+        int daysDifference = (int) ChronoUnit.DAYS.between(startDate.plusDays(Utils.getDaysBetweenDaysOfWeek(startDate.getDayOfWeek(), dayOfWeekTaskBegins)), LocalDate.now());
 
         if(daysDifference < 0) {
             return 0;
@@ -199,10 +200,14 @@ public class RepeatingTask extends TaskGenerator {
         if(currentTaskIndex == 0) {
             currentTaskIndexIncludingActive = 0;
         } else {
-            if(allTasks[currentTaskIndex].isTaskComplete()) {
-                currentTaskIndexIncludingActive = currentTaskIndex;
+            if(currentTaskIndex >= allTasks.length) {
+                currentTaskIndexIncludingActive = allTasks.length - 1;
             } else {
-                currentTaskIndexIncludingActive = currentTaskIndex - 1;
+                if (allTasks[currentTaskIndex].isTaskComplete()) {
+                    currentTaskIndexIncludingActive = currentTaskIndex;
+                } else {
+                    currentTaskIndexIncludingActive = currentTaskIndex - 1;
+                }
             }
         }
 
@@ -241,6 +246,7 @@ public class RepeatingTask extends TaskGenerator {
         this.taskNames = taskNames;
 
         //purge the task from any list
+        taskManager.getCurrentTimePeriod().removeAllDailyTasksByParent(this);
         List<Task> removedTasks = taskManager.getCurrentTimePeriod().removeActiveTasksByParent(this);
 
         //if any tasks were removed in the process
@@ -248,7 +254,7 @@ public class RepeatingTask extends TaskGenerator {
         if(removedTasks.size() > 0) {
             int minTaskIndex = Integer.MAX_VALUE;
             for(Task removedTask : removedTasks) {
-                int taskIndex = 0;
+                int taskIndex = Integer.MAX_VALUE;
                 for(int i = 0; i < allTasks.length; i++) {
                     if(allTasks[i] == removedTask) {
                         taskIndex = i;
@@ -261,6 +267,9 @@ public class RepeatingTask extends TaskGenerator {
 
             currentTaskIndex = minTaskIndex;
         }
+
+        //if the starting date changed, then we must update accordingly
+        currentTaskIndex = Math.min(currentTaskIndex, getGoalTaskIndex());
 
         //re-add the task to all lists
         taskManager.getCurrentTimePeriod().processPendingTasks(this);
@@ -294,9 +303,9 @@ public class RepeatingTask extends TaskGenerator {
         }
 
         if (currentTaskIndex == 0) {
-            return startDate;
+            return startDate.plusDays(Utils.getDaysBetweenDaysOfWeek(startDate.getDayOfWeek(), dayOfWeekTaskBegins));
         } else {
-            int daysBetween = getDaysBetweenDaysOfWeek(allTasks[currentTaskIndex - 1].getDueDateTime().getDayOfWeek(), dayOfWeekTaskBegins);
+            int daysBetween = Utils.getDaysBetweenDaysOfWeek(allTasks[currentTaskIndex - 1].getDueDateTime().getDayOfWeek(), dayOfWeekTaskBegins);
 
             if (daysBetween == 0) {
                 daysBetween += 7;
@@ -306,12 +315,8 @@ public class RepeatingTask extends TaskGenerator {
         }
     }
 
-    private int getDaysBetweenDaysOfWeek(DayOfWeek start, DayOfWeek end) {
-        int dayOfWeekAdjustmentDays = end.getValue() - start.getValue();
-        if(dayOfWeekAdjustmentDays < 0) {
-            dayOfWeekAdjustmentDays += 7;
-        }
-        return dayOfWeekAdjustmentDays;
+    public DayOfWeek getDayOfWeekTaskBegins() {
+        return dayOfWeekTaskBegins;
     }
 
     public void setTaskNotes(String notes) {

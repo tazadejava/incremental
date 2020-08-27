@@ -98,8 +98,6 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
     private String dayToTitleFormat(LocalDate date) {
         if(date.equals(LocalDate.now())) {
             return "Today, " + date.getMonthValue() + "/" + date.getDayOfMonth();
-        } else if(date.equals(LocalDate.now().plusDays(1))) {
-            return "Tomorrow, " + date.getMonthValue() + "/" + date.getDayOfMonth();
         }
 
         String dayOfWeek = date.getDayOfWeek().toString();

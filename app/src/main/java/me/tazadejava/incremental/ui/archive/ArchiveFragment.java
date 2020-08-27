@@ -10,6 +10,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.MainActivity;
@@ -20,6 +22,9 @@ public class ArchiveFragment extends Fragment implements BackPressedInterface {
     private PastTasksListAdapter adapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
+        addTaskButton.setVisibility(View.GONE);
+
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
         View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);

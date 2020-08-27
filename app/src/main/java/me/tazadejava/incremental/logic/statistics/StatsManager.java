@@ -84,7 +84,7 @@ public class StatsManager {
                 statsManager.gson.toJson(data, writer);
 
                 writer.close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 

@@ -57,6 +57,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new task
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
+        addTaskButton.setVisibility(View.VISIBLE);
         addTaskButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

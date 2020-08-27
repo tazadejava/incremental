@@ -1,9 +1,15 @@
 package me.tazadejava.incremental.ui.main;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
@@ -12,6 +18,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -20,10 +27,16 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.navigation.NavigationView;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -56,15 +69,19 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        TaskManager taskManager = IncrementalApplication.taskManager;
+
         currentTimePeriod = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriod);
-        currentTimePeriod.setText(IncrementalApplication.taskManager.getCurrentTimePeriod().getName());
+        currentTimePeriod.setText(taskManager.getCurrentTimePeriod().getName());
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        LocalDate beginDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getBeginDate();
-        LocalDate endDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getEndDate();
+        if(taskManager.getCurrentTimePeriod().getBeginDate() != null && taskManager.getCurrentTimePeriod().getEndDate() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            LocalDate beginDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getBeginDate();
+            LocalDate endDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getEndDate();
 
-        TextView currentTimePeriodDates = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriodDates);
-        currentTimePeriodDates.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
+            TextView currentTimePeriodDates = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriodDates);
+            currentTimePeriodDates.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
+        }
 
         //check if need new time period
         if(IncrementalApplication.taskManager.hasTimePeriodExpired()) {
@@ -96,9 +113,77 @@ public class MainActivity extends AppCompatActivity {
                 Intent settings = new Intent(MainActivity.this, SettingsActivity.class);
                 startActivity(settings);
                 return true;
+            case R.id.action_save_backup:
+                saveBackup();
+                return true;
+            case R.id.action_load_backup:
+                loadBackup();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void saveBackup() {
+        AlertDialog.Builder confirmSave = new AlertDialog.Builder(this);
+
+        confirmSave.setTitle("Save task data to a backup location?");
+        confirmSave.setMessage("Your data will be stored in the directory of your choosing in a secured zip file.");
+
+        confirmSave.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+                startActivityForResult(intent, 1001);
+            }
+        });
+
+        confirmSave.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+
+        confirmSave.show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        if(requestCode == 1001 && resultCode == Activity.RESULT_OK) {
+            Uri uri = null;
+            if(resultData != null) {
+                uri = resultData.getData();
+
+                try {
+                    InputStream in = getContentResolver().openInputStream(uri);
+
+                    OutputStream newFile = new FileOutputStream(new File("testFile.txt"));
+
+                    byte[] buffer = new byte[1024];
+
+                    int len;
+                    while((len = in.read(buffer)) > 0) {
+                        newFile.write(buffer, 0, len);
+                    }
+
+                    newFile.close();
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("aj");
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, resultData);
+        }
+    }
+
+    private void loadBackup() {
+
     }
 
     @Override

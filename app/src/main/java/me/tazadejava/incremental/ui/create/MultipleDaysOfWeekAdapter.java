@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDaysOfWeekAdapter.ViewHolder> {
 
@@ -139,7 +140,7 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
         for(LocalDate date : potentialEndDays) {
             DayOfWeek dow = date.getDayOfWeek();
             String dueDateText = dow.toString().charAt(0) + dow.toString().substring(1).toLowerCase()
-                    + " (+" + daysBetween(referenceStartDate.getDayOfWeek(), dow) + " day" + (daysBetween(referenceStartDate.getDayOfWeek(), dow) == 1 ? "" : "s") + ")";
+                    + " (+" + Utils.getDaysBetweenDaysOfWeek(referenceStartDate.getDayOfWeek(), dow) + " day" + (Utils.getDaysBetweenDaysOfWeek(referenceStartDate.getDayOfWeek(), dow) == 1 ? "" : "s") + ")";
 
             dueDays.add(dueDateText);
         }
@@ -226,14 +227,6 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
         }
 
         return days;
-    }
-
-    private int daysBetween(DayOfWeek begin, DayOfWeek end) {
-        int daysBetween = end.getValue() - begin.getValue();
-        if(daysBetween < 0) {
-            daysBetween += 7;
-        }
-        return daysBetween;
     }
 
     @Override

@@ -25,11 +25,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.tasks.RepeatingTask;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -85,6 +87,8 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
         Switch useAverageRepeatingSwitch = root.findViewById(R.id.useAverageRepeatingSwitch);
         Spinner dueDayOfWeek = root.findViewById(R.id.dueDayOfWeek);
 
+        Spinner startDayOfWeek = root.findViewById(R.id.startDayOfWeek);
+
         RecyclerView repeatingTaskNamesList = root.findViewById(R.id.repeatingTaskNamesList);
         repeatingTaskNamesList.setLayoutManager(new LinearLayoutManager(getContext()));
         Button duplicateAllTaskEntries = root.findViewById(R.id.duplicateAllTaskEntries);
@@ -101,6 +105,15 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
 
         TextView startDate = root.findViewById(R.id.startDate);
         TextView dueTime = root.findViewById(R.id.dueTime);
+
+        if(taskManager.getActiveEditTask() != null) {
+            startDayOfWeek.setVisibility(View.VISIBLE);
+            startDate.setVisibility(View.GONE);
+
+            TextView startDateTitleText = root.findViewById(R.id.startDateTitleText);
+
+            startDateTitleText.setText("Start Day of Week");
+        }
 
         repeatingWeeksInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -128,33 +141,20 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
             }
         });
 
-        List<String> items = new ArrayList<>();
+        DayOfWeek[] dayOfWeekValues = DayOfWeek.values();
 
-        for(DayOfWeek dayOfWeek : DayOfWeek.values()) {
-            String val = dayOfWeek.toString();
+        ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
 
-            items.add(val.charAt(0) + val.substring(1).toLowerCase());
-        }
+        updateDueDayOfWeek(act, act.getStartDate(), groupSpinnerAdapter);
 
-        ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
         dueDayOfWeek.setAdapter(groupSpinnerAdapter);
 
-        int index = 0;
-
-        DayOfWeek[] dayOfWeekValues = DayOfWeek.values();
-        for(int i = 0; i < 7; i++) {
-            if(dayOfWeekValues[i] == act.getDueDayOfWeek()) {
-                index = i;
-                break;
-            }
-        }
-
-        dueDayOfWeek.setSelection(index);
+        dueDayOfWeek.setSelection(Utils.getDaysBetweenDaysOfWeek(act.getStartDate().getDayOfWeek(), act.getDueDayOfWeek()));
 
         dueDayOfWeek.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                DayOfWeek dayOfWeek = dayOfWeekValues[i];
+                DayOfWeek dayOfWeek = act.getStartDate().plusDays(i).getDayOfWeek();
 
                 act.setDueDayOfWeek(dayOfWeek);
 
@@ -169,6 +169,53 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
 
             }
         });
+
+        if(taskManager.getActiveEditTask() != null) {
+            List<String> items = new ArrayList<>();
+
+            DateTimeFormatter format = DateTimeFormatter.ofPattern("MM/dd");
+
+            for(DayOfWeek dayOfWeek : dayOfWeekValues) {
+                String val = dayOfWeek.toString();
+
+                LocalDate potentialStartDate = taskManager.getActiveEditTask().getParent().getStartDate().plusDays(
+                        Utils.getDaysBetweenDaysOfWeek(taskManager.getActiveEditTask().getParent().getStartDate().getDayOfWeek(), dayOfWeek));
+                if(potentialStartDate.equals(LocalDate.now())) {
+                    items.add(val.charAt(0) + val.substring(1).toLowerCase() + " (starts today, " + potentialStartDate.format(format) + ")");
+                } else {
+                    items.add(val.charAt(0) + val.substring(1).toLowerCase() + " (starts " + potentialStartDate.format(format) + ")");
+                }
+            }
+
+            startDayOfWeek.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items));
+
+            int index = 0;
+            for(int i = 0; i < 7; i++) {
+                if(dayOfWeekValues[i] == ((RepeatingTask) taskManager.getActiveEditTask().getParent()).getDayOfWeekTaskBegins()) {
+                    index = i;
+                    break;
+                }
+            }
+
+            startDayOfWeek.setSelection(index);
+
+            startDayOfWeek.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                    DayOfWeek dayOfWeek = dayOfWeekValues[i];
+
+                    LocalDate date = act.getStartDate().plusDays(Utils.getDaysBetweenDaysOfWeek(act.getStartDate().getDayOfWeek(), dayOfWeek));
+                    act.setStartDate(date);
+
+                    updateDueDayOfWeek(act, date, groupSpinnerAdapter);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> adapterView) {
+
+                }
+            });
+        }
 
         //multiple day of weeks
 
@@ -231,6 +278,8 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
                         startDate.setText(Utils.formatLocalDateWithDayOfWeek(startDateObject));
 
                         daysOfWeekAdapter.setStartDate(startDateObject);
+
+                        updateDueDayOfWeek(act, startDateObject, groupSpinnerAdapter);
                     }
                 });
 
@@ -246,7 +295,7 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                         LocalTime dueTimeObject = LocalTime.of(hourOfDay, minute);
                         act.setDueTime(dueTimeObject);
-                        dueTime.setText(Utils.formatLocalTime(hourOfDay, minute));
+                        dueTime.setText(Utils.formatLocalTime(dueTimeObject));
                     }
                 };
 
@@ -255,6 +304,12 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
                 timePicker.show();
             }
         });
+
+        //check for editing
+
+        if(taskManager.getActiveEditTask() != null) {
+            startDate.setEnabled(false);
+        }
 
         //check for previous data; put defaults if non-existent
 
@@ -277,6 +332,24 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
         nextButton.bringToFront();
 
         return root;
+    }
+
+    private void updateDueDayOfWeek(CreateTaskActivity act, LocalDate startDate, ArrayAdapter<String> dueDateAdapter) {
+        List<String> itemsAnnotated = new ArrayList<>();
+        for(int index = 0; index < 7; index++) {
+            DayOfWeek dow = startDate.getDayOfWeek();
+            String dowFormatted = dow.toString().charAt(0) + dow.toString().substring(1).toLowerCase();
+            String dueDateText = dowFormatted + " (+" + index + " day" + (index == 1 ? "" : "s") + ")";
+            itemsAnnotated.add(dueDateText);
+
+            startDate = startDate.plusDays(1);
+        }
+
+        dueDateAdapter.clear();
+        dueDateAdapter.addAll(itemsAnnotated);
+        dueDateAdapter.notifyDataSetChanged();
+
+        act.setDueDayOfWeek(startDate.getDayOfWeek());
     }
 
     public void updateNextButton(RepeatingTaskNamesAdapter repeatingTaskNamesAdapter, CreateTaskActivity act) {

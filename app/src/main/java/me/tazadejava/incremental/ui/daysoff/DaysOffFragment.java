@@ -12,6 +12,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -26,6 +28,9 @@ import me.tazadejava.incremental.ui.main.MainActivity;
 public class DaysOffFragment extends Fragment implements BackPressedInterface {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
+        addTaskButton.setVisibility(View.GONE);
+
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
         View root = inflater.inflate(R.layout.fragment_days_off, container, false);

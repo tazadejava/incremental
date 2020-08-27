@@ -105,6 +105,9 @@ public class CreateTaskActivity extends AppCompatActivity {
     public void createTask() {
         TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
 
+        //to avoid having errors with timing (particularly being overdue on the minute of), we will make the seconds marker at :59 for due times
+        dueTime = dueTime.withSecond(59);
+
         if(taskManager.getActiveEditTask() != null) {
             Task editTask = taskManager.getActiveEditTask();
             taskManager.setActiveEditTask(null);

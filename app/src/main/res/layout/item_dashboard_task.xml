@@ -25,7 +25,6 @@
             android:id="@+id/task_card_constraint_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:animateLayoutChanges="true"
             android:background="@drawable/task_card_gradient">
 
             <TextView

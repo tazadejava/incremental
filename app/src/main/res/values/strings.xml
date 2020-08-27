@@ -6,6 +6,8 @@
     <string name="nav_header_subtitle"></string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="action_save_backup">Save Backup File</string>
+    <string name="action_load_backup">Load Backup File</string>
     <string name="action_delete_task">Delete Task</string>
 
     <string name="menu_dashboard">Dashboard</string>

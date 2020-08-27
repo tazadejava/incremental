@@ -335,6 +335,19 @@ public class TimePeriod {
         return removed;
     }
 
+    public void removeAllDailyTasksByParent(TaskGenerator parent) {
+        for(List<Task> tasks : tasksByDay) {
+            Iterator<Task> allTasksIterator = tasks.iterator();
+            while (allTasksIterator.hasNext()) {
+                Task task = allTasksIterator.next();
+
+                if (task.getParent() == parent) {
+                    allTasksIterator.remove();
+                }
+            }
+        }
+    }
+
     public int getEstimatedMinutesOfWorkForDate(LocalDate date) {
         int deltaDays = (int) ChronoUnit.DAYS.between(LocalDate.now(), date);
 
@@ -344,8 +357,15 @@ public class TimePeriod {
             int estimatedMinutes = 0;
 
             List<Task> dayList = getTasksByDay(deltaDays);
-            for(Task task : dayList) {
-                estimatedMinutes += task.getTodaysMinutesLeft();
+
+            if(deltaDays == 0) {
+                for (Task task : dayList) {
+                    estimatedMinutes += task.getTodaysMinutesLeft();
+                }
+            } else {
+                for (Task task : dayList) {
+                    estimatedMinutes += task.getDayMinutesOfWorkTotal(date, true);
+                }
             }
 
             return estimatedMinutes;
@@ -409,32 +429,50 @@ public class TimePeriod {
         }
     }
 
-    private void addTaskInOrder(List<Task> list, Task task) {
+    private void addTaskInOrder(List<Task> tasks, Task task) {
         boolean added = false;
         //add by due date order first
-        for(int i = 0; i < list.size(); i++) {
-            if(task.getDueDateTime().isBefore(list.get(i).getDueDateTime())) {
-                list.add(i, task);
+        for(int i = 0; i < tasks.size(); i++) {
+            Task compareTask = tasks.get(i);
+            if(task.getDueDateTime().isBefore(compareTask.getDueDateTime())) {
+                tasks.add(i, task);
                 added = true;
                 break;
-            }
-        }
+            } else {
+                //sort by name within the same time date
+                if(task.getDueDateTime().equals(compareTask.getDueDateTime())) {
+                    if(task.getName().toLowerCase().compareTo(compareTask.getName().toLowerCase()) < 0) {
+                        tasks.add(i, task);
+                        added = true;
+                        break;
+                    } else {
+                        for(int j = i + 1; j < tasks.size(); j++) {
+                            Task sameDateTask = tasks.get(j);
 
-        //then, add by creation order
-        if(!added) {
-            LocalDateTime creationTime = task.getParent().getCreationTime();
-            for (int i = 0; i < list.size(); i++) {
-                if (creationTime.isBefore(list.get(i).getParent().getCreationTime())) {
-                    list.add(i, task);
-                    added = true;
-                    break;
+                            if(!sameDateTask.getDueDateTime().equals(task.getDueDateTime())) {
+                                tasks.add(j - 1, task);
+                                added = true;
+                                break;
+                            } else {
+                                if(task.getName().toLowerCase().compareTo(sameDateTask.getName().toLowerCase()) < 0) {
+                                    tasks.add(j, task);
+                                    added = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if(added) {
+                            break;
+                        }
+                    }
                 }
             }
         }
 
         //if all are equal, then just add at the end
         if(!added) {
-            list.add(task);
+            tasks.add(task);
         }
     }
 

@@ -1,6 +1,9 @@
 package me.tazadejava.incremental.ui.dashboard;
 
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,10 +13,13 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.os.Handler;
 import android.text.InputType;
+import android.transition.TransitionManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -21,10 +27,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 
@@ -128,10 +136,22 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                TransitionManager.beginDelayedTransition(holder.expandedOptionsLayout);
                 if(holder.expandedOptionsLayout.getVisibility() == View.VISIBLE) {
                     holder.expandedOptionsLayout.setVisibility(View.GONE);
                 } else {
                     holder.expandedOptionsLayout.setVisibility(View.VISIBLE);
+                    //TODO: how to expand animation
+//                    holder.expandedOptionsLayout.setLayoutParams(new ConstraintLayout.LayoutParams(0, 0));
+//                    for(int i = 0; i < 5; i++) {
+//                        int finalI = i;
+//                        new Handler().postDelayed(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                holder.expandedOptionsLayout.setMaxHeight((int) (maxHeight / 5d * (1 + finalI)));
+//                            }
+//                        }, i * 200);
+//                    }
                 }
             }
         });
@@ -173,17 +193,27 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         if(task.isOverdue()) {
             int overdueDays = task.getOverdueDays();
-            holder.dailyTimeRemaining.setText(holder.dailyTimeRemaining.getText() + "\nOVERDUE BY " + overdueDays + " DAY" + (overdueDays == 1 ? "" : "S"));
-            holder.actionTaskText.setTextColor(Color.RED);
+            if(overdueDays > 0) {
+                holder.dailyTimeRemaining.setText(holder.dailyTimeRemaining.getText() + "\nOVERDUE BY " + overdueDays + " DAY" + (overdueDays == 1 ? "" : "S"));
+            } else {
+                long overdueHours = ChronoUnit.HOURS.between(task.getDueDateTime(), LocalDateTime.now());
+                if(overdueHours < 1) {
+                    long overdueMin = ChronoUnit.MINUTES.between(task.getDueDateTime(), LocalDateTime.now());
+                    holder.dailyTimeRemaining.setText(holder.dailyTimeRemaining.getText() + "\nOVERDUE BY " + overdueMin + " minute" + (overdueMin == 1 ? "" : "s"));
+                } else {
+                    holder.dailyTimeRemaining.setText(holder.dailyTimeRemaining.getText() + "\nOVERDUE BY " + overdueHours + " hour" + (overdueHours == 1 ? "" : "s"));
+                }
+            }
+            holder.actionTaskText.setTextColor(ContextCompat.getColor(context, R.color.darkRed));
         } else {
             holder.actionTaskText.setTextColor(holder.actionTaskText.getTextColors());
         }
 
         LocalDateTime dueDateTime = task.getDueDateTime();
         if(dueDateTime.toLocalDate().equals(LocalDate.now())) {
-            holder.taskDueDate.setText("Due TODAY" + " @ " + Utils.formatLocalTime(dueDateTime.getHour(), dueDateTime.getMinute()));
+            holder.taskDueDate.setText("Due TODAY" + " @ " + Utils.formatLocalTime(dueDateTime));
         } else {
-            holder.taskDueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime.getHour(), dueDateTime.getMinute()));
+            holder.taskDueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
         }
 
         if(date.equals(LocalDate.now())) {

@@ -4,8 +4,11 @@ import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class Utils {
 
@@ -15,19 +18,14 @@ public class Utils {
                 + "/" + date.getDayOfMonth() + "/" + date.getYear();
     }
 
-    public static String formatLocalTime(LocalTime time) {
-        return formatLocalTime(time.getHour(), time.getMinute());
+    public static String formatLocalTime(LocalDateTime time) {
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("h:mm ");
+        return time.format(format) + (time.getHour() >= 12 ? "pm" : "am");
     }
 
-    public static String formatLocalTime(int hour, int minute) {
-        String demon = "AM";
-
-        if(hour > 12) {
-            hour -= 12;
-            demon = "PM";
-        }
-
-        return hour + ":" + (minute < 10 ? "0" + minute : minute) + " " + demon;
+    public static String formatLocalTime(LocalTime time) {
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("h:mm ");
+        return time.format(format) + (time.getHour() >= 12 ? "pm" : "am");
     }
 
     public static String formatHourMinuteTime(int minutes) {
@@ -58,6 +56,14 @@ public class Utils {
                 return hours + " hour" + (hours == 1 ? "" : "s") + " " + minutes + " minute" + (minutes == 1 ? "" : "s");
             }
         }
+    }
+
+    public static int getDaysBetweenDaysOfWeek(DayOfWeek start, DayOfWeek end) {
+        int dayOfWeekAdjustmentDays = end.getValue() - start.getValue();
+        if(dayOfWeekAdjustmentDays < 0) {
+            dayOfWeekAdjustmentDays += 7;
+        }
+        return dayOfWeekAdjustmentDays;
     }
 
     public static void hideKeyboard(View v) {

@@ -89,7 +89,7 @@ public class TaskManager {
                 for(TimePeriod saveTimePeriod : saveTimePeriods) {
                     saveTimePeriod.saveTaskData(taskManager.gson, dataFolder);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return null;

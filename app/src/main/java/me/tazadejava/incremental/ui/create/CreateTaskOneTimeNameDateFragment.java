@@ -163,7 +163,7 @@ public class CreateTaskOneTimeNameDateFragment extends Fragment implements BackP
                     public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                         LocalTime dueTimeObject = LocalTime.of(hourOfDay, minute);
                         act.setDueTime(dueTimeObject);
-                        dueTime.setText(Utils.formatLocalTime(hourOfDay, minute));
+                        dueTime.setText(Utils.formatLocalTime(dueTimeObject));
                     }
                 };
 
