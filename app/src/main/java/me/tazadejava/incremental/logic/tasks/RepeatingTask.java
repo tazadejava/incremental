@@ -175,6 +175,10 @@ public class RepeatingTask extends TaskGenerator {
     private int getGoalTaskIndex() {
         int daysDifference = (int) ChronoUnit.DAYS.between(startDate, LocalDate.now());
 
+        if(daysDifference < 0) {
+            return 0;
+        }
+
         int goalIndex = (daysDifference / 7) + 1;
 
         if(goalIndex > totalTasksCount) {

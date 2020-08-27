@@ -29,6 +29,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
@@ -69,13 +70,6 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
             }
         });
 
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                act.createTask();
-            }
-        });
-
         //activate some data early on for the adapter
 
         if(act.getStartDate() == null) {
@@ -96,7 +90,17 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
 
         RecyclerView repeatingTaskNamesList = root.findViewById(R.id.repeatingTaskNamesList);
         repeatingTaskNamesList.setLayoutManager(new LinearLayoutManager(getContext()));
-        RepeatingTaskNamesAdapter repeatingTaskNamesAdapter = new RepeatingTaskNamesAdapter(act, this, act.getStartDate(), act.getDueDayOfWeek());
+        Button duplicateAllTaskEntries = root.findViewById(R.id.duplicateAllTaskEntries);
+        RepeatingTaskNamesAdapter repeatingTaskNamesAdapter = new RepeatingTaskNamesAdapter(act, duplicateAllTaskEntries, this, act.getStartDate(), act.getDueDayOfWeek());
+
+        duplicateAllTaskEntries.setEnabled(false);
+
+        duplicateAllTaskEntries.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                repeatingTaskNamesAdapter.duplicateFirstTaskNameToAll();
+            }
+        });
 
         TextView startDate = root.findViewById(R.id.startDate);
         TextView dueTime = root.findViewById(R.id.dueTime);
@@ -169,6 +173,47 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
             }
         });
 
+        //multiple day of weeks
+
+        Button multipleDatesButton = root.findViewById(R.id.multipleDatesButton);
+
+        RecyclerView multipleStartEndDatesList = root.findViewById(R.id.multipleStartEndDatesList);
+        MultipleDaysOfWeekAdapter daysOfWeekAdapter = new MultipleDaysOfWeekAdapter(multipleStartEndDatesList, multipleDatesButton, act.getStartDate());
+        multipleStartEndDatesList.setLayoutManager(new LinearLayoutManager(getContext()));
+        multipleStartEndDatesList.setAdapter(daysOfWeekAdapter);
+
+        multipleDatesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(multipleStartEndDatesList.getVisibility() != View.VISIBLE) {
+                    multipleStartEndDatesList.setVisibility(View.VISIBLE);
+                }
+
+                daysOfWeekAdapter.addAdditionalWeek();
+
+                if(daysOfWeekAdapter.getItemCount() == 6) {
+                    multipleDatesButton.setEnabled(false);
+                }
+            }
+        });
+
+        //submit button
+
+        nextButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                HashMap<LocalDate, DayOfWeek> additionalDaysOfWeek = daysOfWeekAdapter.getAllAdditionalDaysOfWeek();
+
+                if(additionalDaysOfWeek.size() > 0) {
+                    act.setAdditionalDueDatesRepeating(additionalDaysOfWeek);
+                }
+
+                act.createTask();
+            }
+        });
+
+        //start date/due date
+
         startDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -187,6 +232,8 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
                         LocalDate startDateObject = LocalDate.of(year, month + 1, dayOfMonth);
                         act.setStartDate(startDateObject);
                         startDate.setText(Utils.formatLocalDateWithDayOfWeek(startDateObject));
+
+                        daysOfWeekAdapter.setStartDate(startDateObject);
                     }
                 });
 
@@ -219,6 +266,8 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
         if(act.getTaskNames() != null) {
             repeatingWeeksInput.setText(String.valueOf(act.getTaskNames().length));
             repeatingTaskNamesAdapter.setTaskNamesAndDisabled(act.getTaskNames(), act.getDisabledTasks());
+        } else {
+            repeatingWeeksInput.setText("1");
         }
 
         useAverageRepeatingSwitch.setChecked(act.isUseAverageEstimateRepeating());
@@ -226,6 +275,9 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
         startDate.setText(Utils.formatLocalDateWithDayOfWeek(act.getStartDate()));
 
         dueTime.setText(Utils.formatLocalTime(act.getDueTime()));
+
+        backButton.bringToFront();
+        nextButton.bringToFront();
 
         return root;
     }

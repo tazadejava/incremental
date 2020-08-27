@@ -1,6 +1,7 @@
 package me.tazadejava.incremental.ui.create;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -18,13 +20,17 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.Spinner;
 
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -82,6 +88,20 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         });
 
         EditText minutesToCompleteTask = root.findViewById(R.id.minutesToCompleteTask);
+
+        //suggested times
+
+        Button suggestedTime1Button = root.findViewById(R.id.suggestedTime1Button);
+        setSuggestedTimeButton(30, suggestedTime1Button, minutesToCompleteTask);
+
+        Button suggestedTime2Button = root.findViewById(R.id.suggestedTime2Button);
+        setSuggestedTimeButton(60, suggestedTime2Button, minutesToCompleteTask);
+
+        Button suggestedTime3Button = root.findViewById(R.id.suggestedTime3Button);
+        setSuggestedTimeButton(90, suggestedTime3Button, minutesToCompleteTask);
+
+        Button suggestedTime4Button = root.findViewById(R.id.suggestedTime4Button);
+        setSuggestedTimeButton(120, suggestedTime4Button, minutesToCompleteTask);
 
         Spinner groupSpinner = root.findViewById(R.id.groupSpinner);
 
@@ -155,6 +175,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                                 }
 
                                 act.setSelectedGroup(taskManager.getCurrentGroupByName(groupName));
+                                updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
                                 updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
 
                                 Utils.hideKeyboard(input);
@@ -178,11 +199,15 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
                     builder.show();
                     input.requestFocus();
+
+                    InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
                 } else {
                     lastPosition = position;
 
                     if(groupSpinner.getSelectedItemPosition() != AdapterView.INVALID_POSITION && groupSpinner.getSelectedItemPosition() != 0) {
                         act.setSelectedGroup(taskManager.getCurrentGroupByName(groupSpinner.getSelectedItem().toString()));
+                        updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
                     }
 
                     updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
@@ -220,6 +245,8 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
         if(act.getSelectedGroup() != null) {
             groupSpinner.setSelection(groupSpinnerAdapter.getPosition(act.getSelectedGroup().getGroupName()));
+
+            updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
         }
 
         if(act.getMinutesToCompletion() != -1) {
@@ -228,6 +255,48 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         }
 
         return root;
+    }
+
+    private void updateSuggestTimeButtons(TaskManager taskManager, CreateTaskActivity act, Button suggestedTime3Button, Button suggestedTime4Button, EditText minutesToCompleteTask) {
+        //get min and max minutes for this group, if exists
+
+        int[] minMax = taskManager.getCurrentTimePeriod().getMinMaxEstimatedMinutesByGroup(act.getSelectedGroup());
+        int[] buttonColors = new int[] {ContextCompat.getColor(act, R.color.colorPrimary), ContextCompat.getColor(act, R.color.colorPrimary)};
+        if(minMax[0] != Integer.MAX_VALUE && minMax[1] != Integer.MIN_VALUE) {
+            if(minMax[0] == minMax[1]) {
+                if(minMax[0] >= 120) {
+                    //change the big one only
+                    minMax[0] = 90;
+                    buttonColors[1] = ContextCompat.getColor(act, R.color.colorAccent);
+                } else {
+                    //change the small one only
+                    minMax[1] = 120;
+                    buttonColors[0] = ContextCompat.getColor(act, R.color.colorAccent);
+                }
+            } else {
+                buttonColors = new int[] {ContextCompat.getColor(act, R.color.colorAccent), ContextCompat.getColor(act, R.color.colorAccent)};
+            }
+        } else {
+            minMax[0] = 90;
+            minMax[1] = 120;
+        }
+
+        suggestedTime3Button.setText(Utils.formatHourMinuteTimeFull(minMax[0]));
+        suggestedTime3Button.setBackgroundColor(buttonColors[0]);
+        setSuggestedTimeButton(minMax[0], suggestedTime3Button, minutesToCompleteTask);
+
+        suggestedTime4Button.setText(Utils.formatHourMinuteTimeFull(minMax[1]));
+        suggestedTime4Button.setBackgroundColor(buttonColors[1]);
+        setSuggestedTimeButton(minMax[1], suggestedTime4Button, minutesToCompleteTask);
+    }
+
+    private void setSuggestedTimeButton(int minutes, Button button, EditText minutesToCompleteTask) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                minutesToCompleteTask.setText(String.valueOf(minutes));
+            }
+        });
     }
 
     private void updateNextButton(Spinner groupSpinner, EditText minutesToCompleteTask, Button nextButton) {

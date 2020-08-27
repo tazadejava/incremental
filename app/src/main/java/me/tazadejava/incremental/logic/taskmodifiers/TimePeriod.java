@@ -357,6 +357,36 @@ public class TimePeriod {
         }
     }
 
+    /**
+     * REQUIRES CALL TO OLDTASKS
+     * @param group
+     * @return length 2 array, representing min and max task estimated minute size
+     */
+    public int[] getMinMaxEstimatedMinutesByGroup(Group group) {
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+
+        for(TaskGenerator taskGenerator : allTaskGenerators) {
+            for(Task task : taskGenerator.getAllTasks()) {
+                if(task.getGroup() == group) {
+                    min = Math.min(task.getEstimatedCompletionTime(), min);
+                    max = Math.max(task.getEstimatedCompletionTime(), max);
+                }
+            }
+        }
+
+        for(TaskGenerator taskGenerator : allCompletedTaskGenerators) {
+            for(Task task : taskGenerator.getAllTasks()) {
+                if(task.getGroup() == group) {
+                    min = Math.min(task.getEstimatedCompletionTime(), min);
+                    max = Math.max(task.getEstimatedCompletionTime(), max);
+                }
+            }
+        }
+
+        return new int[] {min, max};
+    }
+
     private void addTaskToDailyLists(Task task) {
         addTaskToDailyLists(task, LocalDate.now(), task.getDueDateTime().toLocalDate());
     }

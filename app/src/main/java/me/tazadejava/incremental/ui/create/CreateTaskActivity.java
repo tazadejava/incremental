@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
@@ -14,6 +15,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,6 +50,7 @@ public class CreateTaskActivity extends AppCompatActivity {
     private boolean useAverageEstimateRepeating = true;
     private Set<Integer> disabledTasks;
     private DayOfWeek dueDayOfWeek;
+    private HashMap<LocalDate, DayOfWeek> additionalDueDatesRepeating;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,6 +123,19 @@ public class CreateTaskActivity extends AppCompatActivity {
             } else {
                 LocalDateTime dueDateAndTime = dueDate.atStartOfDay().withHour(dueTime.getHour()).withMinute(dueTime.getMinute());
                 taskManager.addNewGeneratedTask(new NonrepeatingTask(taskManager, startDate, timePeriod, taskName, dueDateAndTime, selectedGroup, minutesToCompletion));
+            }
+        }
+
+        //add additional days of week, if applicable
+        if(isRepeatingTask && additionalDueDatesRepeating != null && !additionalDueDatesRepeating.isEmpty()) {
+            for(LocalDate startDate : additionalDueDatesRepeating.keySet()) {
+                //the repeating tasks are identified by creation date, oops. so to alleviate this, forcibly sleep for a bit of time to ensure creation dates are different
+                SystemClock.sleep(50);
+
+                DayOfWeek dueDayOfWeek = additionalDueDatesRepeating.get(startDate);
+
+                taskManager.addNewGeneratedTask(new RepeatingTask(taskManager, taskNames,
+                        startDate, startDate.getDayOfWeek(), dueDayOfWeek, dueTime, selectedGroup, timePeriod, minutesToCompletion, useAverageEstimateRepeating));
             }
         }
 
@@ -271,5 +287,13 @@ public class CreateTaskActivity extends AppCompatActivity {
 
     public void setDueDayOfWeek(DayOfWeek dueDayOfWeek) {
         this.dueDayOfWeek = dueDayOfWeek;
+    }
+
+    public HashMap<LocalDate, DayOfWeek> getAdditionalDueDatesRepeating() {
+        return additionalDueDatesRepeating;
+    }
+
+    public void setAdditionalDueDatesRepeating(HashMap<LocalDate, DayOfWeek> additionalDueDatesRepeating) {
+        this.additionalDueDatesRepeating = additionalDueDatesRepeating;
     }
 }

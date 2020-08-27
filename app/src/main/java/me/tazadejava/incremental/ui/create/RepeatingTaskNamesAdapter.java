@@ -5,6 +5,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -42,6 +43,7 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
 
     private CreateTaskActivity act;
     private CreateTaskRepeatingNameDateFragment fragment;
+    private Button duplicateAllTaskEntries;
 
     private String[] taskNames;
 
@@ -54,8 +56,9 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
 
     private int repeatSize = 1;
 
-    public RepeatingTaskNamesAdapter(CreateTaskActivity act, CreateTaskRepeatingNameDateFragment fragment, LocalDate startDate, DayOfWeek dueDayOfWeek) {
+    public RepeatingTaskNamesAdapter(CreateTaskActivity act, Button duplicateAllTaskEntries, CreateTaskRepeatingNameDateFragment fragment, LocalDate startDate, DayOfWeek dueDayOfWeek) {
         this.act = act;
+        this.duplicateAllTaskEntries = duplicateAllTaskEntries;
         this.fragment = fragment;
         this.startDate = startDate;
 
@@ -95,12 +98,28 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
     }
 
     private int daysBetween(DayOfWeek begin, DayOfWeek end) {
-        return end.getValue() - begin.getValue();
+        int daysBetween = end.getValue() - begin.getValue();
+        if(daysBetween < 0) {
+            daysBetween += 7;
+        }
+        return daysBetween;
     }
 
     public void setTaskNamesAndDisabled(String[] taskNames, Set<Integer> disabled) {
         this.taskNames = taskNames;
         this.disabledPositions = disabled;
+    }
+
+    public void duplicateFirstTaskNameToAll() {
+        for(int i = 1; i < taskNames.length; i++) {
+            taskNames[i] = taskNames[0];
+        }
+
+        act.setTaskNames(getTaskNames());
+
+        fragment.updateNextButton(this, act);
+
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -171,12 +190,21 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
 
             @Override
             public void afterTextChanged(Editable s) {
-                if(s.length() > 0 && position < taskNames.length) {
+                if(position >= taskNames.length) {
+                    return;
+                }
+
+                if(s.length() > 0) {
                     taskNames[position] = s.toString();
 
                     act.setTaskNames(getTaskNames());
-                    fragment.updateNextButton(RepeatingTaskNamesAdapter.this, act);
+                } else {
+                    taskNames[position] = "";
                 }
+
+                duplicateAllTaskEntries.setEnabled(firstAndOnlyFirstTaskFilledIn());
+
+                fragment.updateNextButton(RepeatingTaskNamesAdapter.this, act);
             }
         });
 
@@ -195,6 +223,20 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
                 fragment.updateNextButton(RepeatingTaskNamesAdapter.this, act);
             }
         });
+    }
+
+    public boolean firstAndOnlyFirstTaskFilledIn() {
+        if(taskNames[0].isEmpty()) {
+            return false;
+        }
+
+        for(int i = 1; i < taskNames.length; i++) {
+            if(!taskNames[i].isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public String[] getTaskNames() {

@@ -93,4 +93,8 @@ public abstract class TaskGenerator {
             tasksList.put(task.getTaskID(), task);
         }
     }
+
+    public Task[] getAllTasks() {
+        return allTasks;
+    }
 }

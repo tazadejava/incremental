@@ -62,7 +62,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/backButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+        android:background="@android:color/white"
+        android:gravity="start"
         android:textSize="18dp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -73,7 +74,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/nextButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+        android:background="@android:color/white"
+        android:gravity="end"
         android:textSize="18dp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

@@ -45,6 +45,21 @@ public class Utils {
         }
     }
 
+    public static String formatHourMinuteTimeFull(int minutes) {
+        if(minutes < 60) {
+            return minutes + " minute" + (minutes == 1 ? "" : "s");
+        } else {
+            int hours = minutes / 60;
+            minutes %= 60;
+
+            if(minutes == 0) {
+                return hours + " hour" + (hours == 1 ? "" : "s");
+            } else {
+                return hours + " hour" + (hours == 1 ? "" : "s") + " " + minutes + " minute" + (minutes == 1 ? "" : "s");
+            }
+        }
+    }
+
     public static void hideKeyboard(View v) {
         v.postDelayed(new Runnable() {
             @Override

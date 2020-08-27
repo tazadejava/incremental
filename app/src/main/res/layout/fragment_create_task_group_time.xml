@@ -37,7 +37,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/backButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+        android:background="@android:color/white"
+        android:gravity="start"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="BACK"
@@ -48,7 +49,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/nextButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"
+        android:background="@android:color/white"
+        android:gravity="end"
         android:textSize="18dp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -99,5 +101,49 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView5" />
+
+    <Button
+        android:id="@+id/suggestedTime1Button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="30 minutes"
+        app:layout_constraintEnd_toStartOf="@+id/guideline6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/minutesToCompleteTask" />
+
+    <Button
+        android:id="@+id/suggestedTime2Button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="1 hour"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline6"
+        app:layout_constraintTop_toBottomOf="@+id/minutesToCompleteTask" />
+
+    <Button
+        android:id="@+id/suggestedTime3Button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="1 hour 30 minutes"
+        app:layout_constraintEnd_toStartOf="@+id/guideline6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/suggestedTime1Button" />
+
+    <Button
+        android:id="@+id/suggestedTime4Button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="2 hours"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline6"
+        app:layout_constraintTop_toBottomOf="@+id/suggestedTime1Button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

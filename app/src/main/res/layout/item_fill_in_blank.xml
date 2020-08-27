@@ -9,7 +9,6 @@
         android:id="@+id/fillInBlankIndex"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:text="1)"
         android:textSize="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -32,9 +31,8 @@
         android:id="@+id/enabledWeekSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:showText="false"
         android:checked="true"
+        android:showText="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

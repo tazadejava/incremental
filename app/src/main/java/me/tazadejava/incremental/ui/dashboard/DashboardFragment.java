@@ -232,6 +232,20 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         BarDataSet barDataSet = new BarDataSet(values, "");
         barDataSet.setDrawValues(false);
+
+        int[] colors = new int[currentDates.length];
+        int index = 0;
+        for(LocalDate date : currentDates) {
+            if(date.equals(LocalDate.now())) {
+                colors[index] = ContextCompat.getColor(getContext(), R.color.colorPrimary);
+            } else {
+                colors[index] = ContextCompat.getColor(getContext(), R.color.colorAccent);
+            }
+            index++;
+        }
+
+        barDataSet.setColors(colors);
+
         BarData data = new BarData(barDataSet);
 
         workBarChart.setData(data);
