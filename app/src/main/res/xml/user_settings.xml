@@ -6,8 +6,8 @@
 
         <SwitchPreferenceCompat
             app:key="persistentNotification"
-            app:title="Enable persistent notification"
-            app:summary="Reminds you daily when there are tasks to complete" />
+            app:title="Enable reminder notifications"
+            app:summary="Gently reminds you throughout the day when there are tasks left to complete" />
 
     </PreferenceCategory>
 

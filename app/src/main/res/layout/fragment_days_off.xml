@@ -10,6 +10,8 @@
         android:id="@+id/daysOffText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:text="Days off for the week of 8/23 to 8/29"
         android:textAlignment="viewStart"
         android:textSize="24sp"
@@ -20,10 +22,14 @@
 
     <TextView
         android:id="@+id/textView7"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:text="Select days to mark as days off this week. If possible, your daily task workload will account for the reduction in days worked. Your days off will reset every week."
         android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/daysOffText" />
 
     <Switch

@@ -1,7 +1,6 @@
 package me.tazadejava.incremental.logic.tasks;
 
 import android.os.AsyncTask;
-import android.os.Handler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,9 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import me.tazadejava.incremental.logic.customserializers.LocalDateAdapter;
 import me.tazadejava.incremental.logic.customserializers.LocalDateTimeAdapter;
@@ -342,5 +339,9 @@ public class TaskManager {
 
         saveTasksAsync = new TaskManagerSaveFileTask(this, savePersistentData, saveTimePeriods);
         saveTasksAsync.execute();
+    }
+
+    public Gson getGson() {
+        return gson;
     }
 }

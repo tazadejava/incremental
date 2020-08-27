@@ -6,23 +6,23 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_dashboard"
-            android:icon="@drawable/ic_menu_slideshow"
+            android:icon="@drawable/ic_layers_24px"
             android:title="@string/menu_dashboard" />
         <item
             android:id="@+id/nav_time_periods"
-            android:icon="@drawable/ic_menu_camera"
+            android:icon="@drawable/ic_schedule_black_18dp"
             android:title="@string/menu_time_periods" />
         <item
             android:id="@+id/nav_days_off"
-            android:icon="@drawable/ic_menu_send"
+            android:icon="@drawable/ic_date_range_24px"
             android:title="@string/menu_days_off" />
         <item
             android:id="@+id/nav_task_groups"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@drawable/ic_class_24px"
             android:title="@string/menu_task_groups" />
         <item
             android:id="@+id/nav_archive"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@drawable/ic_archive_24px"
             android:title="@string/menu_archive" />
     </group>
 

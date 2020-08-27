@@ -2,15 +2,14 @@ package me.tazadejava.incremental.ui.create;
 
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
+
+import androidx.fragment.app.Fragment;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;

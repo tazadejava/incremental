@@ -4,13 +4,15 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
-import androidx.appcompat.app.AlertDialog;
 
-import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -18,15 +20,10 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.navigation.NavigationView;
 
-import androidx.drawerlayout.widget.DrawerLayout;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
-import android.view.Menu;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -61,6 +58,13 @@ public class MainActivity extends AppCompatActivity {
 
         currentTimePeriod = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriod);
         currentTimePeriod.setText(IncrementalApplication.taskManager.getCurrentTimePeriod().getName());
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        LocalDate beginDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getBeginDate();
+        LocalDate endDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getEndDate();
+
+        TextView currentTimePeriodDates = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriodDates);
+        currentTimePeriodDates.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
 
         //check if need new time period
         if(IncrementalApplication.taskManager.hasTimePeriodExpired()) {

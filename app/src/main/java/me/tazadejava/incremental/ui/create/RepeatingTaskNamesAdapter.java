@@ -10,19 +10,18 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import me.tazadejava.incremental.R;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
+
+import me.tazadejava.incremental.R;
 
 public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTaskNamesAdapter.RepeatingTaskViewHolder> {
 
