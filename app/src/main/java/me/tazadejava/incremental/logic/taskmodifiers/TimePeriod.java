@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -620,6 +621,35 @@ public class TimePeriod {
         }
 
         return count;
+    }
+
+    public List<Task> getCompletedTasksHistory() {
+        List<Task> tasks = new ArrayList<>();
+
+        for(TaskGenerator generator : allTaskGenerators) {
+            for(Task task : generator.getAllTasks()) {
+                if(task.isTaskComplete()) {
+                    tasks.add(task);
+                }
+            }
+        }
+
+        for(TaskGenerator generator : allCompletedTaskGenerators) {
+            for(Task task : generator.getAllTasks()) {
+                if(task.isTaskComplete()) {
+                    tasks.add(task);
+                }
+            }
+        }
+
+        tasks.sort(new Comparator<Task>() {
+            @Override
+            public int compare(Task task, Task t1) {
+                return t1.getLastTaskWorkedTime().compareTo(task.getLastTaskWorkedTime());
+            }
+        });
+
+        return tasks;
     }
 
     public String getTimePeriodID() {

@@ -306,4 +306,12 @@ public class Task {
     public String getTaskID() {
         return parent.getGeneratorID() + " " + name + " " + dueDateTime.toString();
     }
+
+    public LocalDateTime getLastTaskWorkedTime() {
+        return lastTaskWorkEndTime;
+    }
+
+    public int getTotalLoggedMinutesOfWork() {
+        return totalLoggedMinutesOfWork;
+    }
 }

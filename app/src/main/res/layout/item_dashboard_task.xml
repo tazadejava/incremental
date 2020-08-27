@@ -80,6 +80,7 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="4dp"
                 android:text="Due 2/12 @ 11:59 PM"
+                android:textAlignment="textEnd"
                 app:layout_constraintEnd_toStartOf="@+id/guideline3"
                 app:layout_constraintTop_toBottomOf="@+id/estimatedDailyTime" />
 
