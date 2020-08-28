@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
@@ -89,7 +90,7 @@ public class IncrementalApplication extends android.app.Application implements L
 
         //schedule work
 
-        scheduleWork();
+        checkSettings();
     }
 
     public void reset() {
@@ -100,8 +101,10 @@ public class IncrementalApplication extends android.app.Application implements L
         return taskManager;
     }
 
-    public void scheduleWork() {
+    public void checkSettings() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+        //notifications
 
         if(prefs.getAll().containsKey("persistentNotification") && ((Boolean) prefs.getAll().get("persistentNotification"))) {
             PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(NotificationWorker.class, 1, TimeUnit.HOURS)
@@ -110,6 +113,15 @@ public class IncrementalApplication extends android.app.Application implements L
             WorkManager.getInstance(getApplicationContext()).enqueueUniquePeriodicWork(NOTIFICATION_MAIN_CHANNEL, ExistingPeriodicWorkPolicy.REPLACE, request);
         } else {
             WorkManager.getInstance(getApplicationContext()).cancelUniqueWork(NOTIFICATION_MAIN_CHANNEL);
+        }
+
+        //dark mode
+
+        if(prefs.getAll().containsKey("darkModeOn")) {
+            boolean darkModeOn = ((Boolean) prefs.getAll().get("darkModeOn"));
+            AppCompatDelegate.setDefaultNightMode(darkModeOn ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
     }
 

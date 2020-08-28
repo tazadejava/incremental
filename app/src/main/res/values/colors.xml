@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--<resources>-->
+<!--    <color name="colorPrimary">#d96209</color>-->
+<!--    <color name="colorPrimaryDark">#CE4908</color>-->
+<!--    <color name="colorAccent">#097fd9</color>-->
+
+<!--</resources>-->
+
 <resources>
-    <color name="colorPrimary">#d96209</color>
-    <color name="colorPrimaryDark">#CE4908</color>
-    <color name="colorAccent">#097fd9</color>
+    <color name="primaryColor">#d96209</color>
+    <color name="primaryLightColor">#ff9240</color>
+    <color name="primaryDarkColor">#a13300</color>
+    <color name="secondaryColor">#097fd9</color>
+    <color name="secondaryLightColor">#61aeff</color>
+    <color name="secondaryDarkColor">#0053a7</color>
+    <color name="primaryTextColor">#000000</color>
+    <color name="secondaryTextColor">#000000</color>
+
+    <color name="taskDarkTextColor">#444444</color>
 
     <color name="separatorGray">#b8c2c2</color>
     <color name="darkRed">#d90909</color>

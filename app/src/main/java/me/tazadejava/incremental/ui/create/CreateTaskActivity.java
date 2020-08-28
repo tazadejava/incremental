@@ -5,6 +5,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
@@ -155,6 +157,17 @@ public class CreateTaskActivity extends AppCompatActivity {
         }
 
         getMenuInflater().inflate(R.menu.menu_edit_task, menu);
+
+        for(int i = 0; i < menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+
+            SpannableString span = new SpannableString(item.getTitle());
+
+            span.setSpan(new ForegroundColorSpan(Utils.getAttrColor(this, android.R.attr.textColorPrimary)), 0, span.length(), 0);
+
+            item.setTitle(span);
+        }
+
         return true;
     }
 

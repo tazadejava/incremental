@@ -1,13 +1,16 @@
 package me.tazadejava.incremental.ui.dashboard;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -39,6 +42,7 @@ import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class DashboardFragment extends Fragment implements BackPressedInterface {
 
@@ -79,6 +83,13 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         createWorkChart();
 
+        //theme the work chart
+
+        int primaryTextColor = Utils.getAttrColor(getActivity(), android.R.attr.textColorPrimary);
+
+        workBarChart.getXAxis().setTextColor(primaryTextColor);
+        workBarChart.getAxisLeft().setTextColor(primaryTextColor);
+
         dashboardView = root.findViewById(R.id.dashboard_day_list);
         dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getContext()));
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -87,6 +98,24 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         return root;
     }
+//
+//    @Override
+//    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+//        super.onConfigurationChanged(newConfig);
+//
+//        int currentNightMode = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
+//        applyThemeConfig(currentNightMode == Configuration.UI_MODE_NIGHT_YES);
+//    }
+//
+//    private void applyThemeConfig(boolean nightMode) {
+//        if(nightMode) {
+//            TypedValue tv = new TypedValue();
+//            getActivity().getTheme().resolveAttribute(android.R.attr.textColorPrimary, tv, true);
+//            workBarChart.getXAxis().setTextColor(ContextCompat.getColor(getContext(), tv.resourceId));
+//        } else {
+//            workBarChart.setBackgroundColor(Color.RED);
+//        }
+//    }
 
     private String[] formatWorkDates() {
         String[] datesFormatted = new String[currentDates.length];
@@ -171,7 +200,6 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         //remove unnecessary labels
 
         workBarChart.getAxisRight().setDrawLabels(false);
-        workBarChart.getAxisRight().setDrawAxisLine(false);
         workBarChart.getAxisRight().setDrawGridLines(false);
         workBarChart.getLegend().setEnabled(false);
 
@@ -188,7 +216,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         if(currentDateOffset == 0) {
             workBarChart.getXAxis().setTextColor(Color.DKGRAY);
         } else {
-            workBarChart.getXAxis().setTextColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
+            workBarChart.getXAxis().setTextColor(ContextCompat.getColor(getContext(), R.color.primaryColor));
         }
 
         //refresh data
@@ -238,9 +266,9 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         int index = 0;
         for(LocalDate date : currentDates) {
             if(date.equals(LocalDate.now())) {
-                colors[index] = ContextCompat.getColor(getContext(), R.color.colorPrimary);
+                colors[index] = ContextCompat.getColor(getContext(), R.color.primaryColor);
             } else {
-                colors[index] = ContextCompat.getColor(getContext(), R.color.colorAccent);
+                colors[index] = ContextCompat.getColor(getContext(), R.color.secondaryColor);
             }
             index++;
         }

@@ -139,7 +139,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                     groupScopeSpinner.setSelection(groupScope.size() - 1);
 
                     EditText input = dialogView.findViewById(R.id.groupNameText);
-                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
                     builder.setView(dialogView);
 
@@ -181,7 +181,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-
+                            Utils.hideKeyboard(input);
                         }
                     });
 
@@ -189,6 +189,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                         @Override
                         public void onDismiss(DialogInterface dialog) {
                             groupSpinner.setSelection(lastPosition);
+                            Utils.hideKeyboard(input);
                         }
                     });
 
@@ -256,20 +257,20 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         //get min and max minutes for this group, if exists
 
         int[] minMax = taskManager.getCurrentTimePeriod().getMinMaxEstimatedMinutesByGroup(act.getSelectedGroup());
-        int[] buttonColors = new int[] {ContextCompat.getColor(act, R.color.colorPrimary), ContextCompat.getColor(act, R.color.colorPrimary)};
+        int[] buttonColors = new int[] {ContextCompat.getColor(act, R.color.primaryColor), ContextCompat.getColor(act, R.color.primaryColor)};
         if(minMax[0] != Integer.MAX_VALUE && minMax[1] != Integer.MIN_VALUE) {
             if(minMax[0] == minMax[1]) {
                 if(minMax[0] >= 120) {
                     //change the big one only
                     minMax[0] = 90;
-                    buttonColors[1] = ContextCompat.getColor(act, R.color.colorAccent);
+                    buttonColors[1] = ContextCompat.getColor(act, R.color.secondaryColor);
                 } else {
                     //change the small one only
                     minMax[1] = 120;
-                    buttonColors[0] = ContextCompat.getColor(act, R.color.colorAccent);
+                    buttonColors[0] = ContextCompat.getColor(act, R.color.secondaryColor);
                 }
             } else {
-                buttonColors = new int[] {ContextCompat.getColor(act, R.color.colorAccent), ContextCompat.getColor(act, R.color.colorAccent)};
+                buttonColors = new int[] {ContextCompat.getColor(act, R.color.secondaryColor), ContextCompat.getColor(act, R.color.secondaryColor)};
             }
         } else {
             minMax[0] = 90;

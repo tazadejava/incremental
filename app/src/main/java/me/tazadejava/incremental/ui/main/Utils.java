@@ -1,8 +1,12 @@
 package me.tazadejava.incremental.ui.main;
 
+import android.app.Activity;
 import android.content.Context;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+
+import androidx.core.content.ContextCompat;
 
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -123,5 +127,11 @@ public class Utils {
         }
 
         file.delete();
+    }
+
+    public static int getAttrColor(Activity activity, int attrID) {
+        TypedValue tv = new TypedValue();
+        activity.getTheme().resolveAttribute(attrID, tv, true);
+        return ContextCompat.getColor(activity, tv.resourceId);
     }
 }

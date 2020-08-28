@@ -17,6 +17,6 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     public void onStop() {
         super.onStop();
 
-        ((IncrementalApplication) getActivity().getApplication()).scheduleWork();
+        ((IncrementalApplication) getActivity().getApplication()).checkSettings();
     }
 }

@@ -36,7 +36,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public ConstraintLayout taskCardConstraintLayout;
-        public TextView taskGroupName, tasksCount, weeklyWorkTime, actionTaskText, timePeriodText;
+        public TextView taskGroupName, tasksCount, actionTaskText, timePeriodText;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -44,11 +44,10 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
 
             taskGroupName = itemView.findViewById(R.id.timePeriodName);
-            tasksCount = itemView.findViewById(R.id.tasksCount);
-            weeklyWorkTime = itemView.findViewById(R.id.timePeriodDatesText);
+            tasksCount = itemView.findViewById(R.id.estimatedDailyTime);
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
 
-            timePeriodText = itemView.findViewById(R.id.timePeriodActiveText);
+            timePeriodText = itemView.findViewById(R.id.task_due_date);
         }
     }
 
@@ -74,7 +73,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_taskgroup, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dashboard_task, parent, false);
         return new TaskGroupListAdapter.ViewHolder(view);
     }
 
@@ -138,7 +137,6 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         });
 
         int tasksCount = taskManager.getCurrentTimePeriod().getTasksCountThisWeekByGroup(group);
-        holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s"));
 
         int minutesWorked = 0;
 
@@ -146,8 +144,9 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
         }
 
-        holder.weeklyWorkTime.setText(Utils.formatHourMinuteTime(minutesWorked) + " worked this week");
+        holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + "\n" + Utils.formatHourMinuteTime(minutesWorked) + " worked this week");
 
+        holder.actionTaskText.setText("Randomize Color");
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

@@ -11,4 +11,14 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:title="App Theme">
+
+        <SwitchPreferenceCompat
+            app:key="darkModeOn"
+            app:title="Enable Dark Mode"
+            app:summary="Turns dark mode on or off" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

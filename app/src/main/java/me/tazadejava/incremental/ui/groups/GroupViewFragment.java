@@ -29,6 +29,7 @@ import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class GroupViewFragment extends Fragment implements BackPressedInterface {
 
@@ -80,7 +81,7 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
         groupScopeSpinner.setSelection(groupScope.size() - 1);
 
         EditText input = dialogView.findViewById(R.id.groupNameText);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
         builder.setView(dialogView);
 
@@ -101,6 +102,8 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
                         }
 
                         groupView.setAdapter(adapter = new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), getContext()));
+
+                        Utils.hideKeyboard(input);
                     }
                 }
             }
@@ -109,7 +112,14 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                Utils.hideKeyboard(input);
+            }
+        });
 
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                Utils.hideKeyboard(input);
             }
         });
 
