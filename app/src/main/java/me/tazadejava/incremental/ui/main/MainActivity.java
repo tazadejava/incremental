@@ -1,15 +1,11 @@
 package me.tazadejava.incremental.ui.main;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
@@ -18,7 +14,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -27,12 +23,13 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.navigation.NavigationView;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import me.tazadejava.incremental.R;
@@ -128,14 +125,69 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder confirmSave = new AlertDialog.Builder(this);
 
         confirmSave.setTitle("Save task data to a backup location?");
-        confirmSave.setMessage("Your data will be stored in the directory of your choosing in a secured zip file.");
+        confirmSave.setMessage("Your data will be stored in the directory of your choosing in an \".incremental\" file.");
 
         confirmSave.setPositiveButton("YES", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        String fileName = "databackup-" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME).replace(":", "-").replace(".", "-");
 
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        try {
+                            File dataFolder = new File(getFilesDir().getAbsolutePath() + "/data/");
+
+                            if(dataFolder.exists()) {
+                                File destinationZip = new File(dataFolder.getParentFile().getAbsolutePath() + "/" + fileName + ".incremental");
+                                Utils.zipFiles(dataFolder, destinationZip);
+
+                                currentTimePeriod.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Intent shareFile = new Intent(Intent.ACTION_SEND);
+
+                                        shareFile.setType("application/zip");
+                                        shareFile.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(MainActivity.this, "me.tazadejava.incremental.provider", destinationZip));
+                                        shareFile.putExtra(Intent.EXTRA_SUBJECT, fileName + ".incremental");
+                                        shareFile.putExtra(Intent.EXTRA_TEXT, fileName + ".incremental");
+
+                                        startActivityForResult(Intent.createChooser(shareFile, "Upload backup file"), 2001);
+                                    }
+                                });
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }.start();
+            }
+        });
+
+        confirmSave.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+
+        confirmSave.show();
+    }
+
+    private void loadBackup() {
+        AlertDialog.Builder confirmSave = new AlertDialog.Builder(this);
+
+        confirmSave.setTitle("Restore your data from an external backup?");
+        confirmSave.setMessage("You must select a valid .incremental file. WARNING: All current data will be overridden.");
+
+        confirmSave.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
+                intent.setType("application/zip");
+
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
 
                 startActivityForResult(intent, 1001);
             }
@@ -153,37 +205,79 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        if(requestCode == 1001 && resultCode == Activity.RESULT_OK) {
-            Uri uri = null;
-            if(resultData != null) {
-                uri = resultData.getData();
+        switch(requestCode) {
+            case 1001:
+                if(resultCode == Activity.RESULT_OK) {
+                    Uri uri = null;
+                    if (resultData != null) {
+                        uri = resultData.getData();
 
-                try {
-                    InputStream in = getContentResolver().openInputStream(uri);
+                        File destinationFile = new File(getFilesDir().getAbsolutePath() + "/output.zip");
 
-                    OutputStream newFile = new FileOutputStream(new File("testFile.txt"));
+                        try {
+                            BufferedInputStream bis = new BufferedInputStream(getContentResolver().openInputStream(uri));
+                            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(destinationFile, false));
 
-                    byte[] buffer = new byte[1024];
+                            byte[] buffer = new byte[1024];
 
-                    int len;
-                    while((len = in.read(buffer)) > 0) {
-                        newFile.write(buffer, 0, len);
+                            bis.read(buffer);
+
+                            do {
+                                bos.write(buffer);
+                            } while(bis.read(buffer) != -1);
+
+                            bis.close();
+                            bos.close();
+
+                            //now, remove the old data folder
+
+                            Utils.deleteDirectory(new File(getFilesDir().getAbsolutePath() + "/data/"));
+
+                            //finally, replace the data folder with the new one!
+
+                            Utils.unzipFile(destinationFile);
+
+                            destinationFile.delete();
+
+                            AlertDialog.Builder finished = new AlertDialog.Builder(MainActivity.this);
+                            finished.setTitle("The restoration completed successfully!");
+                            finished.setMessage("Please restart the app to view changes.");
+                            finished.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    finishAffinity();
+                                }
+                            });
+
+                            finished.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialogInterface) {
+                                    finishAffinity();
+                                }
+                            });
+
+                            finished.show();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
-
-                    newFile.close();
-                    in.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
-                System.out.println("aj");
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, resultData);
+                break;
+            case 2001:
+                File mainFolder = new File(getFilesDir().getAbsolutePath() + "/");
+
+                for(File file : mainFolder.listFiles()) {
+                    if(!file.isDirectory()) {
+                        if(file.getName().endsWith(".incremental")) {
+                            file.delete();
+                        }
+                    }
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, resultData);
+                break;
         }
-    }
-
-    private void loadBackup() {
-
     }
 
     @Override

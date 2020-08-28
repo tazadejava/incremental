@@ -61,6 +61,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         addTaskButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                IncrementalApplication.taskManager.setActiveEditTask(null);
+
                 Intent createTask = new Intent(getContext(), CreateTaskActivity.class);
                 startActivity(createTask);
             }

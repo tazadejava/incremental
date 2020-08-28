@@ -23,13 +23,12 @@ import me.tazadejava.incremental.logic.customserializers.LocalDateAdapter;
 import me.tazadejava.incremental.logic.customserializers.LocalDateTimeAdapter;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class TaskManager {
 
     //if the day changes while on this app, maybe do something?
 
-    private static class TaskManagerSaveFileTask extends AsyncTask<Void, Void, Void> {
+    private static class TaskManagerSaveFileTask extends AsyncTask<String, Void, Void> {
 
         private TaskManager taskManager;
         private boolean savePersistentData;
@@ -42,9 +41,9 @@ public class TaskManager {
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
+        protected Void doInBackground(String... fileDir) {
             try {
-                File dataFolder = new File(IncrementalApplication.filesDir + "/data/");
+                File dataFolder = new File(fileDir[0] + "/data/");
 
                 if(!dataFolder.exists()) {
                     dataFolder.mkdirs();
@@ -92,6 +91,10 @@ public class TaskManager {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            taskManager = null;
+            saveTimePeriods = null;
+
             return null;
         }
     }
@@ -99,6 +102,7 @@ public class TaskManager {
     private TaskManagerSaveFileTask saveTasksAsync;
 
     private Gson gson;
+    private String fileDir;
 
     private List<TimePeriod> timePeriods = new ArrayList<>();
     private TimePeriod currentTimePeriod;
@@ -107,11 +111,12 @@ public class TaskManager {
 
     private Task currentlyEditingTask;
 
-    public TaskManager() {
+    public TaskManager(String fileDir) {
         gson = new GsonBuilder().setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter().nullSafe())
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter().nullSafe())
                 .create();
+        this.fileDir = fileDir;
 
         loadData();
 
@@ -264,7 +269,7 @@ public class TaskManager {
 
     public void loadData() {
         try {
-            File dataFolder = new File(IncrementalApplication.filesDir + "/data/");
+            File dataFolder = new File(fileDir + "/data/");
 
             if (!dataFolder.exists()) {
                 dataFolder.mkdirs();
@@ -338,7 +343,7 @@ public class TaskManager {
         }
 
         saveTasksAsync = new TaskManagerSaveFileTask(this, savePersistentData, saveTimePeriods);
-        saveTasksAsync.execute();
+        saveTasksAsync.execute(fileDir);
     }
 
     public Gson getGson() {

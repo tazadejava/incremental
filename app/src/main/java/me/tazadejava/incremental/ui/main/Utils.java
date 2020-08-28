@@ -4,6 +4,14 @@ import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.model.enums.EncryptionMethod;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -74,5 +82,46 @@ public class Utils {
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
             }
         }, 50);
+    }
+
+    public static boolean unzipFile(File zippedFile) {
+        try {
+            new ZipFile(zippedFile, "ac9fc946-3a12-4081-aa54-712a0cb7a809".toCharArray()).extractAll(zippedFile.getParent());
+            return true;
+        } catch (ZipException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static boolean zipFiles(File sourceFile, File destinationFile) {
+        try {
+            ZipParameters zipParameters = new ZipParameters();
+            zipParameters.setEncryptFiles(true);
+            zipParameters.setEncryptionMethod(EncryptionMethod.AES);
+
+            ZipFile zipFile = new ZipFile(destinationFile, "ac9fc946-3a12-4081-aa54-712a0cb7a809".toCharArray());
+            zipFile.addFolder(sourceFile, zipParameters);
+
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static void deleteDirectory(File file) {
+        File[] contents = file.listFiles();
+
+        if(contents != null) {
+            for(File loopFile : contents) {
+                if(!Files.isSymbolicLink(loopFile.toPath())) {
+                    deleteDirectory(loopFile);
+                }
+            }
+        }
+
+        file.delete();
     }
 }

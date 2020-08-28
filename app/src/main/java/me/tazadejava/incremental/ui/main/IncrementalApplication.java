@@ -2,17 +2,14 @@ package me.tazadejava.incremental.ui.main;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
-import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
 import androidx.work.BackoffPolicy;
 import androidx.work.ExistingPeriodicWorkPolicy;
@@ -77,7 +74,6 @@ public class IncrementalApplication extends android.app.Application implements L
     public final static int PERSISTENT_NOTIFICATION_ID = 0;
 
     public static TaskManager taskManager;
-    public static String filesDir;
 
     private boolean isInForeground;
 
@@ -90,9 +86,7 @@ public class IncrementalApplication extends android.app.Application implements L
 
         createNotificationChannels();
 
-        filesDir = getFilesDir().getAbsolutePath();
-
-        taskManager = new TaskManager();
+        taskManager = new TaskManager(getFilesDir().getAbsolutePath());
 
         //schedule work
 

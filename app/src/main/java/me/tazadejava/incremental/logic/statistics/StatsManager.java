@@ -17,7 +17,6 @@ import java.util.Map;
 
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class StatsManager {
 
@@ -26,7 +25,7 @@ public class StatsManager {
     //  track by looking at incremented and completed hours
     //total hours worked by group by day
 
-    private static class SaveDataAsyncTask extends AsyncTask<Void, Void, Void> {
+    private static class SaveDataAsyncTask extends AsyncTask<String, Void, Void> {
 
         private StatsManager statsManager;
 
@@ -35,8 +34,8 @@ public class StatsManager {
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
-            File timePeriodFolder = new File(IncrementalApplication.filesDir + "/data/" + statsManager.timePeriod.getTimePeriodID() + "/");
+        protected Void doInBackground(String... fileDir) {
+            File timePeriodFolder = new File(fileDir[0] + "/data/" + statsManager.timePeriod.getTimePeriodID() + "/");
 
             if(!timePeriodFolder.exists()) {
                 timePeriodFolder.mkdirs();
@@ -93,6 +92,7 @@ public class StatsManager {
     }
 
     private Gson gson;
+    private String fileDir;
     private TimePeriod timePeriod;
 
     private SaveDataAsyncTask asyncTask;
@@ -100,17 +100,18 @@ public class StatsManager {
     private HashMap<LocalDate, HashMap<Group, Integer>> totalMinutesWorkedByGroup = new HashMap<>();
     private HashMap<LocalDate, HashMap<Group, Integer>> totalTasksCompletedByGroup = new HashMap<>();
 
-    public StatsManager(Gson gson, TimePeriod timePeriod) {
+    public StatsManager(Gson gson, String fileDir, TimePeriod timePeriod) {
         this.gson = gson;
+        this.fileDir = fileDir;
         this.timePeriod = timePeriod;
     }
 
     //load data
-    public StatsManager(Gson gson, TimePeriod timePeriod, HashMap<String, Group> groups) {
-        this(gson, timePeriod);
+    public StatsManager(Gson gson, String fileDir, TimePeriod timePeriod, HashMap<String, Group> groups) {
+        this(gson, fileDir, timePeriod);
 
         try {
-            File timePeriodFolder = new File(IncrementalApplication.filesDir + "/data/" + timePeriod.getTimePeriodID() + "/");
+            File timePeriodFolder = new File(fileDir + "/data/" + timePeriod.getTimePeriodID() + "/");
             File statsFile = new File(timePeriodFolder.getAbsolutePath() + "/statistics.json");
 
             if(statsFile.exists()) {
@@ -158,7 +159,7 @@ public class StatsManager {
         }
 
         asyncTask = new SaveDataAsyncTask(this);
-        asyncTask.execute();
+        asyncTask.execute(fileDir);
     }
 
     public void appendMinutes(Group group, LocalDate date, int minutes, boolean finishedTask) {
