@@ -12,6 +12,7 @@ import android.widget.RadioButton;
 import androidx.fragment.app.Fragment;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
@@ -93,8 +94,9 @@ public class CreateTaskTaskTypeFragment extends Fragment implements BackPressedI
 
     @Override
     public void onBackPressed() {
-        if(IncrementalApplication.taskManager.getActiveEditTask() != null) {
-            IncrementalApplication.taskManager.setActiveEditTask(null);
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+        if(taskManager.getActiveEditTask() != null) {
+            taskManager.setActiveEditTask(null);
         }
 
         Intent main = new Intent(getContext(), MainActivity.class);

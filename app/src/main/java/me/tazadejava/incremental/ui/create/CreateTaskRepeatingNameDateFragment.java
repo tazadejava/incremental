@@ -44,7 +44,7 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         CreateTaskActivity act = (CreateTaskActivity) getActivity();
-        TaskManager taskManager = IncrementalApplication.taskManager;
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         if(taskManager.getActiveEditTask() != null) {
             act.setTitle("Edit routine task");

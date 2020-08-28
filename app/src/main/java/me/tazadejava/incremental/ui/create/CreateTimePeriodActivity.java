@@ -19,6 +19,7 @@ import java.time.LocalDate;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 
@@ -112,10 +113,12 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
             }
         });
 
+        TaskManager taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
+
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(IncrementalApplication.taskManager.addNewTimePeriod(nameOfTimePeriod.getText().toString(), startDateFormatted, endDateFormatted)) {
+                if(taskManager.addNewTimePeriod(nameOfTimePeriod.getText().toString(), startDateFormatted, endDateFormatted)) {
                     Intent returnToMain = new Intent(CreateTimePeriodActivity.this, MainActivity.class);
                     startActivity(returnToMain);
                 } else {
@@ -124,7 +127,7 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
 
                     boolean foundReason = false;
 
-                    for(TimePeriod timePeriod : IncrementalApplication.taskManager.getTimePeriods()) {
+                    for(TimePeriod timePeriod : taskManager.getTimePeriods()) {
                         if(timePeriod.getName().equals(nameOfTimePeriod.getText().toString())) {
                             failedToCreateGroup.setMessage("A time period with that name already exists!");
                             foundReason = true;
@@ -171,7 +174,7 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
             saveButton.setEnabled(false);
             return;
         }
-        if(IncrementalApplication.taskManager.doesTimePeriodExist(nameOfTimePeriod.getText().toString())) {
+        if(((IncrementalApplication) getApplication()).getTaskManager().doesTimePeriodExist(nameOfTimePeriod.getText().toString())) {
             saveButton.setEnabled(false);
             return;
         }

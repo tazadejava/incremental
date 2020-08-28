@@ -17,6 +17,7 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
@@ -36,6 +37,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         }
     }
 
+    private TaskManager taskManager;
     private DashboardFragment fragment;
     private Context context;
 
@@ -43,13 +45,14 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
 
     private HashMap<TaskAdapter, ViewHolder> taskAdapters;
 
-    public MainDashboardAdapter(DashboardFragment fragment, Context context) {
+    public MainDashboardAdapter(TaskManager taskManager, DashboardFragment fragment, Context context) {
+        this.taskManager = taskManager;
         this.fragment = fragment;
         this.context = context;
 
         taskAdapters = new HashMap<>();
 
-        timePeriod = IncrementalApplication.taskManager.getCurrentTimePeriod();
+        timePeriod = taskManager.getCurrentTimePeriod();
     }
 
     @NonNull
@@ -65,7 +68,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
         TaskAdapter adapter;
-        holder.taskList.setAdapter(adapter = new TaskAdapter(context, timePeriod, position, date, dayTasks, this));
+        holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, dayTasks, this));
         holder.taskList.setLayoutManager(new LinearLayoutManager(context));
 
         taskAdapters.put(adapter, holder);

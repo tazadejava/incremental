@@ -18,6 +18,7 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.Task;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
@@ -47,10 +48,10 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 
     private List<Task> tasks;
 
-    public PastTasksListAdapter(Context context) {
+    public PastTasksListAdapter(TaskManager taskManager, Context context) {
         this.context = context;
 
-        tasks = IncrementalApplication.taskManager.getCurrentTimePeriod().getCompletedTasksHistory();
+        tasks = taskManager.getCurrentTimePeriod().getCompletedTasksHistory();
     }
 
     @NonNull

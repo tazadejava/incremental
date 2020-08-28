@@ -53,15 +53,13 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
     }
 
     private Context context;
-
     private TaskManager taskManager;
 
     private List<Group> groups;
 
-    public TaskGroupListAdapter(Context context) {
+    public TaskGroupListAdapter(TaskManager taskManager, Context context) {
         this.context = context;
-
-        taskManager = IncrementalApplication.taskManager;
+        this.taskManager = taskManager;
 
         groups = new ArrayList<>(taskManager.getAllCurrentGroups());
 

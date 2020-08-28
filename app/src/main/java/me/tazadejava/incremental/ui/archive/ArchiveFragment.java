@@ -14,6 +14,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 
 public class ArchiveFragment extends Fragment implements BackPressedInterface {
@@ -30,7 +31,7 @@ public class ArchiveFragment extends Fragment implements BackPressedInterface {
         View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);
 
         groupView = root.findViewById(R.id.dashboard_day_list);
-        groupView.setAdapter(adapter = new PastTasksListAdapter(getContext()));
+        groupView.setAdapter(adapter = new PastTasksListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), getContext()));
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return root;

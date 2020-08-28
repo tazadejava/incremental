@@ -73,8 +73,7 @@ public class IncrementalApplication extends android.app.Application implements L
     public final static String NOTIFICATION_MAIN_CHANNEL = "Reminder Notifications";
     public final static int PERSISTENT_NOTIFICATION_ID = 0;
 
-    public static TaskManager taskManager;
-
+    public TaskManager taskManager;
     private boolean isInForeground;
 
     @Override
@@ -91,6 +90,10 @@ public class IncrementalApplication extends android.app.Application implements L
         //schedule work
 
         scheduleWork();
+    }
+
+    public TaskManager getTaskManager() {
+        return taskManager;
     }
 
     public void scheduleWork() {

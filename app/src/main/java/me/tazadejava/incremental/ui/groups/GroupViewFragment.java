@@ -51,7 +51,7 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
         View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);
 
         groupView = root.findViewById(R.id.dashboard_day_list);
-        groupView.setAdapter(adapter = new TaskGroupListAdapter(getContext()));
+        groupView.setAdapter(adapter = new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), getContext()));
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return root;
@@ -61,7 +61,7 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Create new group");
 
-        TaskManager taskManager = IncrementalApplication.taskManager;
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         View dialogView = View.inflate(getContext(), R.layout.dialog_new_group, null);
 
@@ -100,7 +100,7 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
                             taskManager.getTimePeriods().get(groupScopeSpinner.getSelectedItemPosition() - 1).addNewGroup(groupName);
                         }
 
-                        groupView.setAdapter(adapter = new TaskGroupListAdapter(getContext()));
+                        groupView.setAdapter(adapter = new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), getContext()));
                     }
                 }
             }

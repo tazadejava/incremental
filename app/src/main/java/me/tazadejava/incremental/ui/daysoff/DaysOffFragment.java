@@ -39,7 +39,7 @@ public class DaysOffFragment extends Fragment implements BackPressedInterface {
                 root.findViewById(R.id.takeThursdayOff),root.findViewById(R.id.takeFridayOff),root.findViewById(R.id.takeSaturdayOff),root.findViewById(R.id.takeSundayOff)};
         DayOfWeek[] correspondingDaysOfWeek = new DayOfWeek[] {DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY};
 
-        TaskManager taskManager = IncrementalApplication.taskManager;
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         GlobalTaskWorkPreference workPreferences = taskManager.getCurrentTimePeriod().getWorkPreferences();
 

@@ -33,6 +33,7 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
@@ -67,7 +68,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
+    private TaskManager taskManager;
     private Context context;
+
     private LocalDate date;
     private List<Task> tasks;
     private MainDashboardAdapter mainDashboardAdapter;
@@ -79,7 +82,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     private boolean animateCardChanges = true;
 
-    public TaskAdapter(Context context, TimePeriod timePeriod, int dayPosition, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
+    public TaskAdapter(TaskManager taskManager, Context context, TimePeriod timePeriod, int dayPosition, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
+        this.taskManager = taskManager;
         this.context = context;
         this.date = date;
         this.tasks = tasks;
@@ -108,7 +112,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.secondaryActionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                IncrementalApplication.taskManager.setActiveEditTask(task);
+                taskManager.setActiveEditTask(task);
 
                 Intent editTask = new Intent(context, CreateTaskActivity.class);
                 context.startActivity(editTask);
@@ -118,7 +122,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                IncrementalApplication.taskManager.setActiveEditTask(task);
+                taskManager.setActiveEditTask(task);
 
                 Intent editTask = new Intent(context, CreateTaskActivity.class);
                 context.startActivity(editTask);

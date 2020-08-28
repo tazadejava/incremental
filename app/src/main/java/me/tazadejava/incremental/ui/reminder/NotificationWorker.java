@@ -43,11 +43,9 @@ public class NotificationWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        if(IncrementalApplication.taskManager != null) {
-            IncrementalApplication app = (IncrementalApplication) getApplicationContext();
-            if(app.isInForeground()) {
-                return Result.retry();
-            }
+        IncrementalApplication app = (IncrementalApplication) getApplicationContext();
+        if(app.isInForeground()) {
+            return Result.retry();
         }
 
         LocalDateTime nowTime = LocalDateTime.now();
@@ -63,7 +61,7 @@ public class NotificationWorker extends Worker {
             }
         }
 
-        TaskManager taskManager = new TaskManager();
+        TaskManager taskManager = new TaskManager(app.getFilesDir().getAbsolutePath());
 
         TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
 

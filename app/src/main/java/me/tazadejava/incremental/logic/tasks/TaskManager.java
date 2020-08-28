@@ -121,7 +121,7 @@ public class TaskManager {
         loadData();
 
         if(timePeriods.isEmpty()) {
-            timePeriods.add(new TimePeriod(this, gson, "", LocalDate.now(), null));
+            timePeriods.add(new TimePeriod(this, fileDir, gson, "", LocalDate.now(), null));
             currentTimePeriod = timePeriods.get(0);
         }
     }
@@ -148,7 +148,7 @@ public class TaskManager {
             }
         }
 
-        TimePeriod newTimePeriod = new TimePeriod(this, gson, timePeriod, startDate, endDate);
+        TimePeriod newTimePeriod = new TimePeriod(this, fileDir, gson, timePeriod, startDate, endDate);
         timePeriods.add(newTimePeriod);
         currentTimePeriod = newTimePeriod;
 
@@ -303,7 +303,7 @@ public class TaskManager {
                 }
 
                 for(TimePeriod timePeriod : timePeriods) {
-                    timePeriod.initializeStatsManager(gson);
+                    timePeriod.initializeStatsManager(gson, fileDir);
                 }
 
                 if(currentTimePeriod.getWorkPreferences().checkForWeekChanges()) {

@@ -53,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        TaskManager taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
 
@@ -66,23 +68,21 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        TaskManager taskManager = IncrementalApplication.taskManager;
-
         currentTimePeriod = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriod);
         currentTimePeriod.setText(taskManager.getCurrentTimePeriod().getName());
 
         if(taskManager.getCurrentTimePeriod().getBeginDate() != null && taskManager.getCurrentTimePeriod().getEndDate() != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-            LocalDate beginDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getBeginDate();
-            LocalDate endDate = IncrementalApplication.taskManager.getCurrentTimePeriod().getEndDate();
+            LocalDate beginDate = taskManager.getCurrentTimePeriod().getBeginDate();
+            LocalDate endDate = taskManager.getCurrentTimePeriod().getEndDate();
 
             TextView currentTimePeriodDates = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriodDates);
             currentTimePeriodDates.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
         }
 
         //check if need new time period
-        if(IncrementalApplication.taskManager.hasTimePeriodExpired()) {
-            showRenewalTimePeriodDialog();
+        if(taskManager.hasTimePeriodExpired()) {
+            showRenewalTimePeriodDialog(taskManager);
         }
 
         currentTimePeriod.postDelayed(new Runnable() {
@@ -287,10 +287,10 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-    private void showRenewalTimePeriodDialog() {
+    private void showRenewalTimePeriodDialog(TaskManager taskManager) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        boolean defaultTimePeriod = IncrementalApplication.taskManager.getCurrentTimePeriod().getName().isEmpty();
+        boolean defaultTimePeriod = taskManager.getCurrentTimePeriod().getName().isEmpty();
 
         if(defaultTimePeriod) {
             builder.setTitle("Create a new time period?");

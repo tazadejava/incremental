@@ -37,7 +37,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         CreateTaskActivity act = (CreateTaskActivity) getActivity();
-        TaskManager taskManager = IncrementalApplication.taskManager;
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         if(taskManager.getActiveEditTask() != null) {
             act.setTitle(act.isRepeatingTask() ? "Edit routine task" : "Edit one-time task");
@@ -310,8 +310,9 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
     @Override
     public void onBackPressed() {
-        if(IncrementalApplication.taskManager.getActiveEditTask() != null) {
-            IncrementalApplication.taskManager.setActiveEditTask(null);
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+        if(taskManager.getActiveEditTask() != null) {
+            taskManager.setActiveEditTask(null);
 
             Intent main = new Intent(getContext(), MainActivity.class);
             startActivity(main);

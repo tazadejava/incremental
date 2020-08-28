@@ -34,6 +34,7 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -56,12 +57,14 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new task
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
         addTaskButton.setVisibility(View.VISIBLE);
         addTaskButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                IncrementalApplication.taskManager.setActiveEditTask(null);
+                taskManager.setActiveEditTask(null);
 
                 Intent createTask = new Intent(getContext(), CreateTaskActivity.class);
                 startActivity(createTask);
@@ -77,7 +80,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         createWorkChart();
 
         dashboardView = root.findViewById(R.id.dashboard_day_list);
-        dashboardView.setAdapter(adapter = new MainDashboardAdapter(this, getContext()));
+        dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getContext()));
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         lastRefreshDate = LocalDate.now();
@@ -190,7 +193,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         //refresh data
 
-        StatsManager stats = IncrementalApplication.taskManager.getCurrentTimePeriod().getStatsManager();
+        StatsManager stats = ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod().getStatsManager();
 
         int totalMinutes = 0;
         int totalNonzeroDays = 0;
@@ -258,7 +261,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         if(!lastRefreshDate.equals(LocalDate.now())) {
             lastRefreshDate = LocalDate.now();
-            IncrementalApplication.taskManager.getCurrentTimePeriod().checkForPendingTasks();
+            ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod().checkForPendingTasks();
         }
         dashboardView.setAdapter(adapter);
     }

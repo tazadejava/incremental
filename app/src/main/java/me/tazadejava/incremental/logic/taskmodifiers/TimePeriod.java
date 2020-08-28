@@ -62,13 +62,13 @@ public class TimePeriod {
         }
     }
 
-    public TimePeriod(TaskManager taskManager, Gson gson, String name, LocalDate beginDate, LocalDate endDate) {
+    public TimePeriod(TaskManager taskManager, String fileDir, Gson gson, String name, LocalDate beginDate, LocalDate endDate) {
         this(taskManager);
         this.timePeriodName = name;
         this.beginDate = beginDate;
         this.endDate = endDate;
 
-        statsManager = new StatsManager(gson, this);
+        statsManager = new StatsManager(gson, fileDir, this);
 
         workPreferences = new GlobalTaskWorkPreference();
 
@@ -113,8 +113,8 @@ public class TimePeriod {
      * Run after all time periods have been defined
      * @param gson
      */
-    public void initializeStatsManager(Gson gson) {
-        statsManager = new StatsManager(gson, this, taskManager.getAllCurrentGroupsHashed());
+    public void initializeStatsManager(Gson gson, String fileDir) {
+        statsManager = new StatsManager(gson, fileDir, this, taskManager.getAllCurrentGroupsHashed());
     }
 
     //TODO: DON"T ALWAYS LOAD THE OLD TASKS

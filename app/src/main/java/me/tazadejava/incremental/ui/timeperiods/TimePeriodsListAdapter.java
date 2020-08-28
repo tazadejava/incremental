@@ -42,16 +42,14 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
         }
     }
 
-    private Context context;
-
     private TaskManager taskManager;
+    private Context context;
 
     private List<TimePeriod> timePeriods;
 
-    public TimePeriodsListAdapter(Context context) {
+    public TimePeriodsListAdapter(TaskManager taskManager, Context context) {
+        this.taskManager = taskManager;
         this.context = context;
-
-        taskManager = IncrementalApplication.taskManager;
 
         timePeriods = new ArrayList<>();
 
@@ -85,7 +83,7 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
 
         holder.timePeriodDatesText.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
 
-        holder.timePeriodActiveText.setText(IncrementalApplication.taskManager.getCurrentTimePeriod() == timePeriod ? "Active" : "");
+        holder.timePeriodActiveText.setText(taskManager.getCurrentTimePeriod() == timePeriod ? "Active" : "");
 
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
