@@ -83,6 +83,15 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
         updateCardColor(group, holder);
 
+        holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                //TODO: delete group, WARNING if there are any task conflicts and DELETING THEM TOO
+//                if(taskManager.getCurrentTimePeriod().getTask)
+                return false;
+            }
+        });
+
         holder.taskGroupName.setText(group.getGroupName());
 
         holder.taskGroupName.setOnClickListener(new View.OnClickListener() {
@@ -102,7 +111,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if(input.getText().length() > 0 && !input.getText().toString().equals(group.getGroupName())) {
-                            if(taskManager.updateGroupName(group, input.getText().toString())) {
+                            if(taskManager.getCurrentTimePeriod().updateGroupName(group, input.getText().toString())) {
                                 holder.taskGroupName.setText(input.getText().toString());
 
                                 input.postDelayed(new Runnable() {

@@ -117,6 +117,13 @@ public class TimePeriod {
         statsManager = new StatsManager(gson, fileDir, this, taskManager.getAllCurrentGroupsHashed());
     }
 
+    /**
+     * The hashes in the stats manager get messed up, so this has to be refreshed every time the group data changes
+     */
+    public void refreshAfterGroupAttributeChange() {
+        statsManager = new StatsManager(taskManager.getGson(), taskManager.getFileDir(), this, taskManager.getAllCurrentGroupsHashed());
+    }
+
     //TODO: DON"T ALWAYS LOAD THE OLD TASKS
     private void loadTaskData(TaskManager taskManager, Gson gson, File dataFolder) {
         try {
@@ -524,12 +531,14 @@ public class TimePeriod {
 
     public boolean updateGroupName(Group group, String name) {
         if(groups.containsKey(name)) {
-            return false;
+            return taskManager.updateGroupName(group, name);
         }
 
         groups.remove(group.getGroupName());
         group.setGroupName(name);
         groups.put(name, group);
+
+        refreshAfterGroupAttributeChange();
 
         taskManager.saveData(true, this);
 

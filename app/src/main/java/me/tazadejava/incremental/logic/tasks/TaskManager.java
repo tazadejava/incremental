@@ -324,6 +324,8 @@ public class TaskManager {
         group.setGroupName(name);
         allPersistentGroups.put(name, group);
 
+        currentTimePeriod.refreshAfterGroupAttributeChange();
+
         saveAllData();
 
         return true;
@@ -348,5 +350,9 @@ public class TaskManager {
 
     public Gson getGson() {
         return gson;
+    }
+
+    public String getFileDir() {
+        return fileDir;
     }
 }
