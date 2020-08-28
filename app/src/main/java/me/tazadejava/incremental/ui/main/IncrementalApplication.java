@@ -92,6 +92,10 @@ public class IncrementalApplication extends android.app.Application implements L
         scheduleWork();
     }
 
+    public void reset() {
+        taskManager = new TaskManager(getFilesDir().getAbsolutePath());
+    }
+
     public TaskManager getTaskManager() {
         return taskManager;
     }

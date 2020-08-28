@@ -245,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
                             finished.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
+                                    ((IncrementalApplication) getApplication()).reset();
                                     finishAffinity();
                                 }
                             });
@@ -252,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
                             finished.setOnDismissListener(new DialogInterface.OnDismissListener() {
                                 @Override
                                 public void onDismiss(DialogInterface dialogInterface) {
+                                    ((IncrementalApplication) getApplication()).reset();
                                     finishAffinity();
                                 }
                             });
