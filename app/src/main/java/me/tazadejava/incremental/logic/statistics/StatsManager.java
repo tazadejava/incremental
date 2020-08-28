@@ -26,6 +26,60 @@ public class StatsManager {
     //  track by looking at incremented and completed hours
     //total hours worked by group by day
 
+    /**
+     * Used to save stats for a particular group before changing a group's hashcode. MUST call restore to recover data.
+     */
+    public static class StatsGroupPacket {
+
+        private StatsManager statsManager;
+
+        private Group group;
+        private HashMap<LocalDate, Integer> totalMinutes = new HashMap<>();
+        private HashMap<LocalDate, Integer> totalTasks = new HashMap<>();
+
+        public StatsGroupPacket(StatsManager statsManager, Group group) {
+            this.statsManager = statsManager;
+            this.group = group;
+
+            //add to list and remove from stats
+
+            for(LocalDate date : statsManager.totalMinutesWorkedByGroup.keySet()) {
+                if(statsManager.totalMinutesWorkedByGroup.get(date).containsKey(group)) {
+                    totalMinutes.put(date, statsManager.totalMinutesWorkedByGroup.get(date).get(group));
+                    statsManager.totalMinutesWorkedByGroup.get(date).remove(group);
+                }
+            }
+
+            for(LocalDate date : statsManager.totalTasksCompletedByGroup.keySet()) {
+                if(statsManager.totalTasksCompletedByGroup.get(date).containsKey(group)) {
+                    totalTasks.put(date, statsManager.totalTasksCompletedByGroup.get(date).get(group));
+                    statsManager.totalTasksCompletedByGroup.get(date).remove(group);
+                }
+            }
+        }
+
+        /**
+         * Restores data and saves the new group data name.
+         */
+        public void restore() {
+            if(statsManager == null) {
+                return;
+            }
+
+            for(LocalDate date : totalMinutes.keySet()) {
+                statsManager.totalMinutesWorkedByGroup.get(date).put(group, totalMinutes.get(date));
+            }
+
+            for(LocalDate date : totalTasks.keySet()) {
+                statsManager.totalTasksCompletedByGroup.get(date).put(group, totalTasks.get(date));
+            }
+
+            statsManager.saveData();
+
+            statsManager = null;
+        }
+    }
+
     private static class SaveDataAsyncTask extends AsyncTask<String, Void, Void> {
 
         private StatsManager statsManager;
@@ -119,6 +173,10 @@ public class StatsManager {
                 FileReader reader = new FileReader(statsFile);
                 JsonObject data = gson.fromJson(reader, JsonObject.class);
                 reader.close();
+
+                if(data == null) {
+                    return;
+                }
 
                 JsonObject totalMinutesByGroup = data.getAsJsonObject("totalMinutesWorkedByGroup");
 

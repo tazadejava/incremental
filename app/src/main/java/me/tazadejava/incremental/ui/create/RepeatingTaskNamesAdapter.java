@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTaskNamesAdapter.RepeatingTaskViewHolder> {
 
@@ -90,10 +91,14 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
 
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
+
+        notifyDataSetChanged();
     }
 
     public void setDueDayOfWeek(DayOfWeek dueDayOfWeek) {
         dueDate = startDate.plusDays(daysBetween(startDate.getDayOfWeek(), dueDayOfWeek));
+
+        notifyDataSetChanged();
     }
 
     private int daysBetween(DayOfWeek begin, DayOfWeek end) {
@@ -107,11 +112,52 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
     public void setTaskNamesAndDisabled(String[] taskNames, Set<Integer> disabled) {
         this.taskNames = taskNames;
         this.disabledPositions = disabled;
+
+        notifyDataSetChanged();
     }
 
     public void duplicateFirstTaskNameToAll() {
         for(int i = 1; i < taskNames.length; i++) {
+            if(disabledPositions.contains(i)) {
+                continue;
+            }
+
             taskNames[i] = taskNames[0];
+        }
+
+        act.setTaskNames(getTaskNames());
+
+        fragment.updateNextButton(this, act);
+
+        notifyDataSetChanged();
+    }
+
+    public int getFirstNumberOfTask() {
+        int number;
+        if(taskNames[0].contains(" ") && Utils.isInteger(taskNames[0].substring(taskNames[0].lastIndexOf(" ") + 1))) {
+            return Integer.parseInt(taskNames[0].substring(taskNames[0].lastIndexOf(" ") + 1));
+        } else {
+            return 1;
+        }
+    }
+
+    public void duplicateFirstTaskNameToAllWithNumbering() {
+        String noNumber;
+        int number = 1;
+        if(taskNames[0].contains(" ") && Utils.isInteger(taskNames[0].substring(taskNames[0].lastIndexOf(" ") + 1))) {
+            noNumber = taskNames[0].substring(0, taskNames[0].lastIndexOf(" "));
+            number = Integer.parseInt(taskNames[0].substring(taskNames[0].lastIndexOf(" ") + 1));
+        } else {
+            noNumber = taskNames[0];
+        }
+
+        for(int i = 1; i < taskNames.length; i++) {
+            if(disabledPositions.contains(i)) {
+                continue;
+            }
+
+            number++;
+            taskNames[i] = noNumber + " " + number;
         }
 
         act.setTaskNames(getTaskNames());
@@ -141,6 +187,12 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
 
     @Override
     public void onBindViewHolder(@NonNull RepeatingTaskViewHolder holder, int position) {
+        //remove any text watchers before continuing
+        if (textWatchers.containsKey(holder.fillInBlankEdit)) {
+            holder.fillInBlankEdit.removeTextChangedListener(textWatchers.get(holder.fillInBlankEdit));
+            textWatchers.remove(holder.fillInBlankEdit);
+        }
+
         holder.fillInBlankIndex.setText(getFormattedDate(startDate, 7 * position) + "-" + getFormattedDate(dueDate, 7 * position) + ")");
         holder.fillInBlankEdit.setText(taskNames[position]);
         holder.fillInBlankEdit.setSelection(holder.fillInBlankEdit.getText().length());
@@ -168,11 +220,6 @@ public class RepeatingTaskNamesAdapter extends RecyclerView.Adapter<RepeatingTas
 
         if(position == lastSelectedEdit) {
             holder.fillInBlankEdit.requestFocus();
-        }
-
-        if (textWatchers.containsKey(holder.fillInBlankEdit)) {
-            holder.fillInBlankEdit.removeTextChangedListener(textWatchers.get(holder.fillInBlankEdit));
-            textWatchers.remove(holder.fillInBlankEdit);
         }
 
         TextWatcher watcher;

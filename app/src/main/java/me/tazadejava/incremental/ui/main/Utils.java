@@ -24,6 +24,20 @@ import java.time.format.DateTimeFormatter;
 
 public class Utils {
 
+    public static boolean isInteger(String value) {
+        if(value.isEmpty()) {
+            return false;
+        }
+
+        try {
+            Integer.parseInt(value);
+
+            return true;
+        } catch(NumberFormatException ex) {
+            return false;
+        }
+    }
+
     public static String formatLocalDateWithDayOfWeek(LocalDate date) {
         String dayOfWeek = date.getDayOfWeek().toString();
         return (dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase()) + ", " + date.getMonthValue()

@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.ui.dashboard;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,13 +40,13 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
 
     private TaskManager taskManager;
     private DashboardFragment fragment;
-    private Context context;
+    private Activity context;
 
     private TimePeriod timePeriod;
 
     private HashMap<TaskAdapter, ViewHolder> taskAdapters;
 
-    public MainDashboardAdapter(TaskManager taskManager, DashboardFragment fragment, Context context) {
+    public MainDashboardAdapter(TaskManager taskManager, DashboardFragment fragment, Activity context) {
         this.taskManager = taskManager;
         this.fragment = fragment;
         this.context = context;

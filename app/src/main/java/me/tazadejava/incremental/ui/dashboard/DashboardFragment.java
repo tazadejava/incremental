@@ -91,7 +91,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         workBarChart.getAxisLeft().setTextColor(primaryTextColor);
 
         dashboardView = root.findViewById(R.id.dashboard_day_list);
-        dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getContext()));
+        dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getActivity()));
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         lastRefreshDate = LocalDate.now();

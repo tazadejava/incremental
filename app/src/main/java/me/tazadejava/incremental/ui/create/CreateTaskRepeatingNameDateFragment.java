@@ -1,7 +1,9 @@
 package me.tazadejava.incremental.ui.create;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -99,7 +101,34 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
         duplicateAllTaskEntries.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                repeatingTaskNamesAdapter.duplicateFirstTaskNameToAll();
+                AlertDialog.Builder dialog = new AlertDialog.Builder(getContext());
+
+                dialog.setTitle("What type of duplication would you like to perform?");
+
+                dialog.setMessage("You can either copy the first task word-for-word or append the subsequent tasks with numbers (starting with " + repeatingTaskNamesAdapter.getFirstNumberOfTask() + ", going up)");
+
+                dialog.setPositiveButton("Copy word-for-word", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        repeatingTaskNamesAdapter.duplicateFirstTaskNameToAll();
+                    }
+                });
+
+                dialog.setNegativeButton("Append tasks with numbers", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        repeatingTaskNamesAdapter.duplicateFirstTaskNameToAllWithNumbering();
+                    }
+                });
+
+                dialog.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                });
+
+                dialog.show();
             }
         });
 
@@ -141,6 +170,40 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
             }
         });
 
+        Button minusWeek = root.findViewById(R.id.minusWeek);
+
+        minusWeek.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int currentWeeks;
+                if(Utils.isInteger(repeatingWeeksInput.getText().toString())) {
+                    currentWeeks = Integer.parseInt(repeatingWeeksInput.getText().toString());
+                } else {
+                    currentWeeks = 1;
+                }
+
+                if(currentWeeks > 1) {
+                    repeatingWeeksInput.setText(String.valueOf(currentWeeks - 1));
+                }
+            }
+        });
+
+        Button plusWeek = root.findViewById(R.id.plusWeek);
+
+        plusWeek.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int currentWeeks;
+                if(Utils.isInteger(repeatingWeeksInput.getText().toString())) {
+                    currentWeeks = Integer.parseInt(repeatingWeeksInput.getText().toString());
+                } else {
+                    currentWeeks = 1;
+                }
+
+                repeatingWeeksInput.setText(String.valueOf(currentWeeks + 1));
+            }
+        });
+
         DayOfWeek[] dayOfWeekValues = DayOfWeek.values();
 
         ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
@@ -159,7 +222,6 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
                 act.setDueDayOfWeek(dayOfWeek);
 
                 repeatingTaskNamesAdapter.setDueDayOfWeek(dayOfWeek);
-                repeatingTaskNamesAdapter.notifyDataSetChanged();
 
                 updateNextButton(repeatingTaskNamesAdapter, act);
             }
@@ -208,6 +270,9 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
                     act.setStartDate(date);
 
                     updateDueDayOfWeek(act, date, groupSpinnerAdapter);
+
+                    repeatingTaskNamesAdapter.setStartDate(date);
+                    repeatingTaskNamesAdapter.setDueDayOfWeek(act.getDueDayOfWeek());
                 }
 
                 @Override
@@ -222,7 +287,7 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
         Button multipleDatesButton = root.findViewById(R.id.multipleDatesButton);
 
         RecyclerView multipleStartEndDatesList = root.findViewById(R.id.multipleStartEndDatesList);
-        MultipleDaysOfWeekAdapter daysOfWeekAdapter = new MultipleDaysOfWeekAdapter(multipleStartEndDatesList, multipleDatesButton, act.getStartDate());
+        MultipleDaysOfWeekAdapter daysOfWeekAdapter = new MultipleDaysOfWeekAdapter(getActivity(), multipleStartEndDatesList, multipleDatesButton, act.getStartDate());
         multipleStartEndDatesList.setLayoutManager(new LinearLayoutManager(getContext()));
         multipleStartEndDatesList.setAdapter(daysOfWeekAdapter);
 
@@ -277,9 +342,11 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
                         act.setStartDate(startDateObject);
                         startDate.setText(Utils.formatLocalDateWithDayOfWeek(startDateObject));
 
-                        daysOfWeekAdapter.setStartDate(startDateObject);
-
                         updateDueDayOfWeek(act, startDateObject, groupSpinnerAdapter);
+
+                        repeatingTaskNamesAdapter.setStartDate(startDateObject);
+                        repeatingTaskNamesAdapter.setDueDayOfWeek(act.getDueDayOfWeek());
+                        daysOfWeekAdapter.setStartDate(startDateObject);
                     }
                 });
 
@@ -313,14 +380,14 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
 
         //check for previous data; put defaults if non-existent
 
-        repeatingTaskNamesList.setAdapter(repeatingTaskNamesAdapter);
-
         if(act.getTaskNames() != null) {
             repeatingWeeksInput.setText(String.valueOf(act.getTaskNames().length));
             repeatingTaskNamesAdapter.setTaskNamesAndDisabled(act.getTaskNames(), act.getDisabledTasks());
         } else {
             repeatingWeeksInput.setText("1");
         }
+
+        repeatingTaskNamesList.setAdapter(repeatingTaskNamesAdapter);
 
         useAverageRepeatingSwitch.setChecked(act.isUseAverageEstimateRepeating());
 

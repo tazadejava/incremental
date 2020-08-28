@@ -1,19 +1,25 @@
 package me.tazadejava.incremental.ui.dashboard;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.os.Handler;
 import android.text.InputType;
 import android.transition.TransitionManager;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnticipateOvershootInterpolator;
+import android.view.animation.BounceInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -69,7 +75,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     }
 
     private TaskManager taskManager;
-    private Context context;
+    private Activity context;
 
     private LocalDate date;
     private List<Task> tasks;
@@ -82,7 +88,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     private boolean animateCardChanges = true;
 
-    public TaskAdapter(TaskManager taskManager, Context context, TimePeriod timePeriod, int dayPosition, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
+    public TaskAdapter(TaskManager taskManager, Activity context, TimePeriod timePeriod, int dayPosition, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
         this.taskManager = taskManager;
         this.context = context;
         this.date = date;
@@ -354,7 +360,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         mainDashboardAdapter.updateTaskCards(task);
                                         mainDashboardAdapter.updateDayLayouts(task);
 
-                                        hideKeyboard(v);
+                                        hideKeyboard(taskText);
                                     }
                                 });
                             }
@@ -362,14 +368,24 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setNeutralButton("Finished the task!", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    task.incrementTaskMinutes(minutesWorked, true);
+                                    int width = Resources.getSystem().getDisplayMetrics().widthPixels;
+                                    ConstraintLayout mainView = ((ConstraintLayout) taskCardConstraintLayout.getParent().getParent());
+                                    mainView.animate()
+                                            .translationXBy(width).setStartDelay(200).setDuration(800).setInterpolator(new AnticipateOvershootInterpolator()).withEndAction(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            task.incrementTaskMinutes(minutesWorked, true);
+                                            mainDashboardAdapter.updateTaskCards(task);
+                                            mainDashboardAdapter.updateDayLayouts(task);
+//
+                                            mainView.setTranslationX(0);
+                                        }
+                                    }).start();
 
                                     taskText.setText("Start Task");
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
-                                    mainDashboardAdapter.updateTaskCards(task);
-                                    mainDashboardAdapter.updateDayLayouts(task);
 
-                                    hideKeyboard(v);
+                                    hideKeyboard(taskText);
                                 }
                             });
 
@@ -383,7 +399,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     mainDashboardAdapter.updateTaskCards(task);
                                     mainDashboardAdapter.updateDayLayouts(task);
 
-                                    hideKeyboard(v);
+                                    hideKeyboard(taskText);
                                 }
                             });
 

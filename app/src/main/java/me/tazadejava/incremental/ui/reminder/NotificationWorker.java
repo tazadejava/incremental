@@ -17,9 +17,11 @@ import com.google.gson.JsonObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
@@ -40,11 +42,33 @@ public class NotificationWorker extends Worker {
         super(context, workerParams);
     }
 
+    private void annotateLogDoc(String message) {
+        try {
+            File log = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/log.txt");
+
+            if(!log.exists()) {
+                log.createNewFile();
+            }
+
+            FileWriter writer = new FileWriter(log, true);
+
+            DateTimeFormatter format = DateTimeFormatter.ISO_DATE_TIME;
+
+            writer.append(String.format("[" + LocalDateTime.now(), format) + "] " + message);
+            writer.append("\n");
+
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @NonNull
     @Override
     public Result doWork() {
         IncrementalApplication app = (IncrementalApplication) getApplicationContext();
         if(app.isInForeground()) {
+            annotateLogDoc("The app is currently in the foreground, so the service will retry later.");
             return Result.retry();
         }
 
@@ -53,13 +77,17 @@ public class NotificationWorker extends Worker {
         long minutesBetweenLastAccess = ChronoUnit.MINUTES.between(getLastBumpOrApplicationOpenTime(), nowTime);
         //don't send notifications for 1.5 hours after the app was opened
         if(minutesBetweenLastAccess < 90) {
+            annotateLogDoc("The app was opened last " + minutesBetweenLastAccess + " minute(s) last. It is too soon (threshold 90 minutes).");
             return Result.success();
         } else {
             //don't send notifications between 11PM-9AM
             if(nowTime.getHour() < 9 || nowTime.getHour() > 22) {
+                annotateLogDoc("The time is not right. " + nowTime.getHour() + " needs to be between 9-21.");
                 return Result.success();
             }
         }
+
+        annotateLogDoc("Service is ready to run!");
 
         TaskManager taskManager = new TaskManager(app.getFilesDir().getAbsolutePath());
 
@@ -121,6 +149,8 @@ public class NotificationWorker extends Worker {
             NotificationManagerCompat nMan = NotificationManagerCompat.from(getApplicationContext());
             nMan.notify(IncrementalApplication.PERSISTENT_NOTIFICATION_ID, builder.build());
         }
+
+        annotateLogDoc("Service finished running successfully!");
 
         return Result.success();
     }

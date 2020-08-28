@@ -50,7 +50,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
     private String[] taskNames;
     private boolean useAverageEstimateRepeating = true;
-    private Set<Integer> disabledTasks;
+    private Set<Integer> disabledTasks = new HashSet<>();
     private DayOfWeek dueDayOfWeek;
     private HashMap<LocalDate, DayOfWeek> additionalDueDatesRepeating;
 

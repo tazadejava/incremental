@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.ui.create;
 
+import android.app.Activity;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +47,8 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
         }
     }
 
+    private Activity activity;
+
     private RecyclerView recyclerView;
     private Button multipleDatesButton;
     private LocalDate startDate;
@@ -55,7 +58,8 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
     private List<LocalDate> startDayOfWeeks = new ArrayList<>();
     private List<LocalDate> dueDayOfWeeks = new ArrayList<>();
 
-    public MultipleDaysOfWeekAdapter(RecyclerView recyclerView, Button multipleDatesButton, LocalDate startDate) {
+    public MultipleDaysOfWeekAdapter(Activity activity, RecyclerView recyclerView, Button multipleDatesButton, LocalDate startDate) {
+        this.activity = activity;
         this.recyclerView = recyclerView;
         this.multipleDatesButton = multipleDatesButton;
         this.startDate = startDate;
@@ -103,9 +107,9 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if(position % 2 == 0) {
-            holder.dayOfWeekLayout.setBackgroundColor(Color.WHITE);
+            holder.dayOfWeekLayout.setBackgroundColor(Utils.getAttrColor(activity, android.R.attr.colorBackground));
         } else {
-            holder.dayOfWeekLayout.setBackgroundColor(Color.LTGRAY);
+            holder.dayOfWeekLayout.setBackgroundColor(Utils.getAttrColor(activity, android.R.attr.colorPrimary));
         }
 
         holder.enableStartDueDate.setOnCheckedChangeListener(null);

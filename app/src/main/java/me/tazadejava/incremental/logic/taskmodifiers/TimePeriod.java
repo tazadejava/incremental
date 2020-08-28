@@ -121,7 +121,9 @@ public class TimePeriod {
      * The hashes in the stats manager get messed up, so this has to be refreshed every time the group data changes
      */
     public void refreshAfterGroupAttributeChange() {
-        statsManager = new StatsManager(taskManager.getGson(), taskManager.getFileDir(), this, taskManager.getAllCurrentGroupsHashed());
+        //TODO: this is going to crash unless we fix it; hashmap gets messed up...
+//        statsManager = new StatsManager(taskManager.getGson(), taskManager.getFileDir(), this, taskManager.getAllCurrentGroupsHashed());
+//        statsManager.saveData();
     }
 
     //TODO: DON"T ALWAYS LOAD THE OLD TASKS
@@ -372,6 +374,10 @@ public class TimePeriod {
                 for (Task task : dayList) {
                     estimatedMinutes += task.getDayMinutesOfWorkTotal(date, true);
                 }
+            }
+
+            if(estimatedMinutes < 0) {
+                return 0;
             }
 
             return estimatedMinutes;

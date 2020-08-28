@@ -25,6 +25,7 @@ import java.util.List;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
+import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
@@ -111,22 +112,27 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if(input.getText().length() > 0 && !input.getText().toString().equals(group.getGroupName())) {
+                            StatsManager.StatsGroupPacket packet = new StatsManager.StatsGroupPacket(taskManager.getCurrentTimePeriod().getStatsManager(), group);
                             if(taskManager.getCurrentTimePeriod().updateGroupName(group, input.getText().toString())) {
                                 holder.taskGroupName.setText(input.getText().toString());
 
-                                input.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
-                                    }
-                                }, 50);
+                                packet.restore();
                             } else {
+                                packet.restore();
+
                                 AlertDialog.Builder error = new AlertDialog.Builder(context);
                                 error.setTitle("Something went wrong! Does the group name already exist?");
                                 error.show();
                             }
                         }
+
+                        input.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                imm.hideSoftInputFromWindow(holder.taskGroupName.getWindowToken(), 0);
+                            }
+                        }, 50);
                     }
                 });
 
@@ -159,9 +165,13 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                StatsManager.StatsGroupPacket packet = new StatsManager.StatsGroupPacket(taskManager.getCurrentTimePeriod().getStatsManager(), group);
+
                 group.randomizeColor();
                 updateCardColor(group, holder);
                 taskManager.saveData(true);
+
+                packet.restore();
             }
         });
 
