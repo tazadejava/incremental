@@ -19,10 +19,12 @@ public abstract class TaskGenerator {
 
     protected transient TaskManager taskManager;
     protected transient Task[] allTasks;
+    protected transient TimePeriod timePeriod;
 
-    public TaskGenerator(TaskManager taskManager, LocalDate startDate) {
+    public TaskGenerator(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod) {
         this.taskManager = taskManager;
         this.startDate = startDate;
+        this.timePeriod = timePeriod;
 
         creationTime = LocalDateTime.now();
     }

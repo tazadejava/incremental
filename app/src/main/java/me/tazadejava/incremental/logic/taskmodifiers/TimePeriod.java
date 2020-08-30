@@ -232,7 +232,7 @@ public class TimePeriod {
 
             for (JsonElement taskID : tasksObject) {
                 //assert: this call will never fail if implemented correctly
-                tasks.add(tasksList.get(taskID.getAsString()));
+                addTaskInOrder(tasks, tasksList.get(taskID.getAsString()));
             }
         }
     }
@@ -421,19 +421,19 @@ public class TimePeriod {
     }
 
     private void addTaskToDailyLists(Task task) {
-        addTaskToDailyLists(task, LocalDate.now(), task.getDueDateTime().toLocalDate());
+        addTaskToDailyLists(task, task.getStartDate() != null ? task.getStartDate() : LocalDate.now(), task.getDueDateTime().toLocalDate());
     }
 
     private void addTaskToDailyLists(Task task, LocalDate taskStartDate, LocalDate taskDueDate) {
         //place respectively in the daily task list
         for (int i = 0; i < tasksByDay.length; i++) {
-            LocalDate date = LocalDate.now().plusDays(1 + i);
+            LocalDate dailyDate = LocalDate.now().plusDays(1 + i);
 
-            if(taskStartDate.isAfter(date)) {
+            if(taskStartDate.isAfter(dailyDate)) {
                 continue;
             }
 
-            if (date.equals(taskDueDate) || date.isBefore(taskDueDate)) {
+            if (dailyDate.equals(taskDueDate) || dailyDate.isBefore(taskDueDate)) {
                 if(!tasksByDay[i].contains(task)) {
                     addTaskInOrder(tasksByDay[i], task);
                 }
@@ -451,32 +451,22 @@ public class TimePeriod {
                 added = true;
                 break;
             } else {
-                //sort by name within the same time date
                 if(task.getDueDateTime().equals(compareTask.getDueDateTime())) {
-                    if(task.getName().toLowerCase().compareTo(compareTask.getName().toLowerCase()) < 0) {
-                        tasks.add(i, task);
-                        added = true;
-                        break;
-                    } else {
-                        for(int j = i + 1; j < tasks.size(); j++) {
-                            Task sameDateTask = tasks.get(j);
+                    //the due date is the same
 
-                            if(!sameDateTask.getDueDateTime().equals(task.getDueDateTime())) {
-                                tasks.add(j - 1, task);
-                                added = true;
-                                break;
-                            } else {
-                                if(task.getName().toLowerCase().compareTo(sameDateTask.getName().toLowerCase()) < 0) {
-                                    tasks.add(j, task);
-                                    added = true;
-                                    break;
-                                }
-                            }
-                        }
+                    //sort by creation date; older gets put first
+                    for(int j = i; j < tasks.size(); j++) {
+                        Task sameDateTask = tasks.get(j);
 
-                        if(added) {
+                        if(task.getParent().getCreationTime().compareTo(sameDateTask.getParent().getCreationTime()) < 0) {
+                            tasks.add(j, task);
+                            added = true;
                             break;
                         }
+                    }
+
+                    if(added) {
+                        break;
                     }
                 }
             }
@@ -585,6 +575,10 @@ public class TimePeriod {
 
     public LocalDate getEndDate() {
         return endDate;
+    }
+
+    public List<Task> getTasksByDay(LocalDate date) {
+        return getTasksByDay((int) ChronoUnit.DAYS.between(LocalDate.now(), date));
     }
 
     public List<Task> getTasksByDay(int index) {

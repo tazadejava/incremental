@@ -25,7 +25,6 @@ public class RepeatingTask extends TaskGenerator {
     private String[] taskNames;
     private int currentTaskIndex, totalTasksCount;
 
-    private transient TimePeriod timePeriod;
     protected transient Group taskGroup;
     private int originalEstimatedMinutesCompletion;
 
@@ -33,7 +32,7 @@ public class RepeatingTask extends TaskGenerator {
     private int totalMinutesWorked, totalTasksCompleted;
 
     public RepeatingTask(TaskManager taskManager, String[] taskNames, LocalDate startDate, DayOfWeek dayOfWeekTaskBegins, DayOfWeek dayOfWeekTaskDue, LocalTime timeTaskDue, Group taskGroup, TimePeriod timePeriod, int estimatedMinutesToCompletion, boolean useAverage) {
-        super(taskManager, startDate);
+        super(taskManager, startDate, timePeriod);
 
         this.taskNames = taskNames;
         this.taskGroup = taskGroup;
@@ -246,8 +245,8 @@ public class RepeatingTask extends TaskGenerator {
         this.taskNames = taskNames;
 
         //purge the task from any list
-        taskManager.getCurrentTimePeriod().removeAllDailyTasksByParent(this);
-        List<Task> removedTasks = taskManager.getCurrentTimePeriod().removeActiveTasksByParent(this);
+        timePeriod.removeAllDailyTasksByParent(this);
+        List<Task> removedTasks = timePeriod.removeActiveTasksByParent(this);
 
         //if any tasks were removed in the process
         //invariant; the removed items are actually in this repeating task generator. if not, that's quite strange
@@ -272,7 +271,7 @@ public class RepeatingTask extends TaskGenerator {
         currentTaskIndex = Math.min(currentTaskIndex, getGoalTaskIndex());
 
         //re-add the task to all lists
-        taskManager.getCurrentTimePeriod().processPendingTasks(this);
+        timePeriod.processPendingTasks(this);
 
         //save changes
         saveTaskToFile();

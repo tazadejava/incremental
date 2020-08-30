@@ -26,7 +26,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView taskName, estimatedTime;
+        private TextView taskName, estimatedTime, tasksCount;
         private RecyclerView taskList;
 
         public ViewHolder(@NonNull View itemView) {
@@ -35,6 +35,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
             taskList = itemView.findViewById(R.id.dashboard_tasks_list);
             taskName = itemView.findViewById(R.id.timePeriodName);
             estimatedTime = itemView.findViewById(R.id.dashoboard_estimated_time);
+            tasksCount = itemView.findViewById(R.id.dashboard_tasks_count);
         }
     }
 
@@ -76,27 +77,27 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
 
         holder.taskName.setText(dayToTitleFormat(date));
 
+        refreshEstimatedTime(holder, dayTasks, date);
+    }
+
+    private void refreshEstimatedTime(ViewHolder holder, List<Task> dayTasks, LocalDate date) {
         if(dayTasks.isEmpty()) {
             if(timePeriod.getWorkPreferences().isBlackedOutDay(date)) {
                 holder.estimatedTime.setText("No tasks here; it's your day off!");
             } else {
                 holder.estimatedTime.setText("No tasks here!");
             }
+            holder.tasksCount.setText("");
         } else {
+            int tasksCount = timePeriod.getTasksByDay(date).size();
             holder.estimatedTime.setText("est. " + Utils.formatHourMinuteTime(timePeriod.getEstimatedMinutesOfWorkForDate(date)) + " of work remaining");
+            holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s"));
         }
     }
 
     private void refreshEstimatedTime(TaskAdapter adapter) {
-        ViewHolder holder = taskAdapters.get(adapter);
-
         List<Task> dayTasks = adapter.getUpdatedTasks();
-
-        if(dayTasks.isEmpty()) {
-            holder.estimatedTime.setText("No tasks here; it's your day off!");
-        } else {
-            holder.estimatedTime.setText("est. " + Utils.formatHourMinuteTime(timePeriod.getEstimatedMinutesOfWorkForDate(adapter.getDate())) + " of work remaining");
-        }
+        refreshEstimatedTime(taskAdapters.get(adapter), dayTasks, adapter.getDate());
     }
 
     private String dayToTitleFormat(LocalDate date) {

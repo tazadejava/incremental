@@ -62,6 +62,9 @@ public class DaysOffFragment extends Fragment implements BackPressedInterface {
 
             if(monday.plusDays(i).equals(LocalDate.now())) {
                 daysOff[i].setTypeface(daysOff[i].getTypeface(), Typeface.BOLD);
+            } else if (monday.plusDays(i).isBefore(LocalDate.now())) {
+                daysOff[i].setTypeface(daysOff[i].getTypeface());
+                daysOff[i].setEnabled(false);
             } else {
                 daysOff[i].setTypeface(daysOff[i].getTypeface());
             }

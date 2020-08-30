@@ -42,9 +42,9 @@ public class NotificationWorker extends Worker {
         super(context, workerParams);
     }
 
-    private void annotateLogDoc(String message) {
+    public static void annotateLogDoc(Context context, String message) {
         try {
-            File log = new File(getApplicationContext().getFilesDir().getAbsolutePath() + "/log.txt");
+            File log = new File(context.getFilesDir().getAbsolutePath() + "/log.txt");
 
             if(!log.exists()) {
                 log.createNewFile();
@@ -61,6 +61,10 @@ public class NotificationWorker extends Worker {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void annotateLogDoc(String message) {
+        annotateLogDoc(getApplicationContext(), message);
     }
 
     @NonNull

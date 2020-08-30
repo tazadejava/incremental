@@ -15,7 +15,7 @@ public class NonrepeatingTask extends TaskGenerator {
     private boolean hasTaskStarted;
 
     public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, int estimatedMinutesToCompletion) {
-        super(taskManager, startDate);
+        super(taskManager, startDate, timePeriod);
 
         hasTaskStarted = false;
         allTasks = new Task[] {new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedMinutesToCompletion)};
@@ -25,6 +25,8 @@ public class NonrepeatingTask extends TaskGenerator {
         NonrepeatingTask task = gson.fromJson(data.get("serialized"), NonrepeatingTask.class);
 
         task.taskManager = taskManager;
+        task.timePeriod = timePeriod;
+
         task.loadAllTasks(gson, timePeriod, data.getAsJsonArray("tasks"));
 
         return task;
@@ -49,7 +51,7 @@ public class NonrepeatingTask extends TaskGenerator {
 
         //purge the task from any list and re-add it to all lists
         hasTaskStarted = false;
-        taskManager.getCurrentTimePeriod().resetTask(allTasks[0], this);
+        timePeriod.resetTask(allTasks[0], this);
 
         //save changes
         saveTaskToFile();

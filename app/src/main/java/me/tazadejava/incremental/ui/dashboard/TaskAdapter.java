@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnticipateOvershootInterpolator;
 import android.view.animation.BounceInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -352,13 +353,25 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 finishedTaskBuilder.setPositiveButton("Finished for today!", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        task.completeTaskForTheDay();
-                                        task.incrementTaskMinutes(minutesWorked, false);
+                                        int width = Resources.getSystem().getDisplayMetrics().widthPixels;
+                                        ConstraintLayout mainView = ((ConstraintLayout) taskCardConstraintLayout.getParent().getParent());
+                                        mainView.animate()
+                                                .translationXBy(width).setDuration(800).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                task.completeTaskForTheDay();
+                                                task.incrementTaskMinutes(minutesWorked, false);
+                                                mainDashboardAdapter.updateTaskCards(task);
+                                                mainDashboardAdapter.updateDayLayouts(task);
+
+                                                notifyDataSetChanged();
+
+                                                mainView.setTranslationX(0);
+                                            }
+                                        }).start();
 
                                         taskText.setText("Start Task");
                                         taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
-                                        mainDashboardAdapter.updateTaskCards(task);
-                                        mainDashboardAdapter.updateDayLayouts(task);
 
                                         hideKeyboard(taskText);
                                     }
@@ -377,7 +390,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             task.incrementTaskMinutes(minutesWorked, true);
                                             mainDashboardAdapter.updateTaskCards(task);
                                             mainDashboardAdapter.updateDayLayouts(task);
-//
+
+                                            notifyDataSetChanged();
+
                                             mainView.setTranslationX(0);
                                         }
                                     }).start();
