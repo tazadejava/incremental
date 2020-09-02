@@ -130,10 +130,21 @@ public class RepeatingTask extends TaskGenerator {
     private int calculateRevisedAverageCompletionTime() {
         double calculatedEstimatedTime = originalEstimatedMinutesCompletion;
 
+        //we don't want to count tasks that took 0 time; so we will recalculate the number of tasks calculated in this average
+
+        int totalTasksCompleted = 0;
+        for(Task task : allTasks) {
+            if(task != null) {
+                if(task.isTaskComplete() && task.getTotalLoggedMinutesOfWork() > 0) {
+                    totalTasksCompleted++;
+                }
+            }
+        }
+
         if(useAverageInWorktimeEstimate && totalTasksCompleted > 0) {
             //gradually incorporate the originalEstimatedTime with the new calculated average
 
-            double estimatedAverageMinutes = totalMinutesWorked / totalTasksCompleted;
+            double estimatedAverageMinutes = (double) totalMinutesWorked / totalTasksCompleted;
 
             if(totalTasksCompleted < 2) {
                 //50 50
@@ -298,23 +309,47 @@ public class RepeatingTask extends TaskGenerator {
 
     @Override
     protected LocalDate getNextUpcomingTaskStartDate() {
-        if(currentTaskIndex == totalTasksCount) {
-            return null;
-        }
-        if(taskNames[currentTaskIndex].isEmpty()) {
-            return null;
+        return getTaskStartDate(currentTaskIndex);
+    }
+
+    public LocalDate getTaskStartDate(Task task) {
+        int index = 0;
+        for(Task loopTask : allTasks) {
+            if(task.equals(loopTask)) {
+                return getTaskStartDate(index);
+            }
+
+            index++;
         }
 
-        if (currentTaskIndex == 0) {
+        return null;
+    }
+
+    public LocalDate getTaskStartDate(int index) {
+        if(index == totalTasksCount) {
+            return null;
+        }
+        if(index < 0) {
+            return null;
+        }
+        if(taskNames[index].isEmpty()) {
+            return getTaskStartDate(index - 1);
+        }
+
+        if (index == 0) {
             return startDate.plusDays(Utils.getDaysBetweenDaysOfWeek(startDate.getDayOfWeek(), dayOfWeekTaskBegins));
         } else {
-            int daysBetween = Utils.getDaysBetweenDaysOfWeek(allTasks[currentTaskIndex - 1].getDueDateTime().getDayOfWeek(), dayOfWeekTaskBegins);
+            if(allTasks[index - 1] == null) {
+                return getTaskStartDate(index - 2).plusDays(7);
+            }
+
+            int daysBetween = Utils.getDaysBetweenDaysOfWeek(allTasks[index - 1].getDueDateTime().getDayOfWeek(), dayOfWeekTaskBegins);
 
             if (daysBetween == 0) {
                 daysBetween += 7;
             }
 
-            return allTasks[currentTaskIndex - 1].getDueDateTime().toLocalDate().plusDays(daysBetween);
+            return allTasks[index - 1].getDueDateTime().toLocalDate().plusDays(daysBetween);
         }
     }
 

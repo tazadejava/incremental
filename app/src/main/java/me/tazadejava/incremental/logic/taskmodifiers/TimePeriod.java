@@ -677,11 +677,34 @@ public class TimePeriod {
         return count;
     }
 
+    public Set<Task> getAllTasksByGroup(Group group) {
+        Set<Task> countedTasks = new HashSet<>();
+
+        for(TaskGenerator generator : allTaskGenerators) {
+            for(Task task : generator.getAllTasks()) {
+                if(task == null) {
+                    continue;
+                }
+                if(!task.getGroup().equals(group)) {
+                    continue;
+                }
+
+                countedTasks.add(task);
+            }
+        }
+
+        return countedTasks;
+    }
+
     public List<Task> getCompletedTasksHistory() {
         List<Task> tasks = new ArrayList<>();
 
         for(TaskGenerator generator : allTaskGenerators) {
             for(Task task : generator.getAllTasks()) {
+                if(task == null) {
+                    continue;
+                }
+
                 if(task.isTaskComplete()) {
                     tasks.add(task);
                 }
@@ -690,6 +713,10 @@ public class TimePeriod {
 
         for(TaskGenerator generator : allCompletedTaskGenerators) {
             for(Task task : generator.getAllTasks()) {
+                if(task == null) {
+                    continue;
+                }
+
                 if(task.isTaskComplete()) {
                     tasks.add(task);
                 }

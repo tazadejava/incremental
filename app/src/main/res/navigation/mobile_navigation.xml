@@ -34,4 +34,9 @@
         android:name="me.tazadejava.incremental.ui.archive.ArchiveFragment"
         android:label="@string/menu_archive"
         tools:layout="@layout/fragment_archive" />
+
+    <fragment
+        android:id="@+id/nav_specific_group"
+        android:name="me.tazadejava.incremental.ui.groups.GroupTasksViewFragment"
+        tools:layout="@layout/fragment_archive" />
 </navigation>

@@ -164,7 +164,7 @@ public class Task {
     }
 
     public int getTotalMinutesLeftOfWork() {
-        return estimatedTotalMinutesToCompletion - totalLoggedMinutesOfWork;
+        return Math.max(0, estimatedTotalMinutesToCompletion - totalLoggedMinutesOfWork);
     }
 
     public int getEstimatedCompletionTime() {

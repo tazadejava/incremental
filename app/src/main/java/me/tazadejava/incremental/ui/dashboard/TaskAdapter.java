@@ -170,13 +170,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskClass.setText(task.getGroupName());
 
         int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
-
-        if(totalMinutesLeft < 0) {
-            totalMinutesLeft = 0;
-        }
-
         holder.totalTimeRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
-
 
         if(date.equals(LocalDate.now())) {
             int minutesLeftToday = task.getTodaysMinutesLeft();

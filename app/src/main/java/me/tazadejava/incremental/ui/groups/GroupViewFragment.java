@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,7 +53,8 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
         View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);
 
         groupView = root.findViewById(R.id.dashboard_day_list);
-        groupView.setAdapter(adapter = new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), getContext()));
+        groupView.setAdapter(adapter = new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
+                (AppCompatActivity) getActivity()));
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return root;
@@ -101,7 +103,9 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
                             taskManager.getTimePeriods().get(groupScopeSpinner.getSelectedItemPosition() - 1).addNewGroup(groupName);
                         }
 
-                        groupView.setAdapter(adapter = new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), getContext()));
+                        groupView.setAdapter(adapter =
+                                new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
+                                        (AppCompatActivity) getActivity()));
 
                         Utils.hideKeyboard(input);
                     }

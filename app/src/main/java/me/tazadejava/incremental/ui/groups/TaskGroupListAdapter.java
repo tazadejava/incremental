@@ -1,10 +1,12 @@
 package me.tazadejava.incremental.ui.groups;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,8 +16,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
@@ -52,12 +57,12 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         }
     }
 
-    private Context context;
+    private AppCompatActivity context;
     private TaskManager taskManager;
 
     private List<Group> groups;
 
-    public TaskGroupListAdapter(TaskManager taskManager, Context context) {
+    public TaskGroupListAdapter(TaskManager taskManager, AppCompatActivity context) {
         this.context = context;
         this.taskManager = taskManager;
 
@@ -83,15 +88,6 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         Group group = groups.get(position);
 
         updateCardColor(group, holder);
-
-        holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                //TODO: delete group, WARNING if there are any task conflicts and DELETING THEM TOO
-//                if(taskManager.getCurrentTimePeriod().getTask)
-                return false;
-            }
-        });
 
         holder.taskGroupName.setText(group.getGroupName());
 
@@ -159,7 +155,11 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
         }
 
-        holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + "\n" + Utils.formatHourMinuteTime(minutesWorked) + " worked this week");
+        int tasksTotal = taskManager.getCurrentTimePeriod().getAllTasksByGroup(group).size();
+
+        holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
+                + "\n" + tasksTotal + " task" + (tasksTotal == 1 ? "" : "s") + " total (active and pending)"
+                + "\n\n" + Utils.formatHourMinuteTime(minutesWorked) + " worked this week");
 
         holder.actionTaskText.setText("Randomize Color");
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
@@ -172,6 +172,31 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 taskManager.saveData(true);
 
                 packet.restore();
+            }
+        });
+
+        holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if(tasksTotal > 0) {
+                    NavController nav = Navigation.findNavController(context, R.id.nav_host_fragment);
+
+                    Bundle bundle = new Bundle();
+
+                    bundle.putString("group", group.getGroupName());
+
+                    TimePeriod scope = taskManager.getGroupScope(group);
+                    if (scope == null) {
+                        bundle.putString("scope", null);
+                    } else {
+                        bundle.putString("scope", scope.getName());
+                    }
+
+                    nav.navigate(R.id.nav_specific_group, bundle);
+                    return true;
+                }
+
+                return false;
             }
         });
 
