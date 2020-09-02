@@ -92,6 +92,10 @@ public abstract class TaskGenerator {
 
     public void assignTasksToLoadingHashMap(HashMap<String, Task> tasksList) {
         for(Task task : allTasks) {
+            //disabled weeks do not get counted
+            if(task == null) {
+                continue;
+            }
             tasksList.put(task.getTaskID(), task);
         }
     }

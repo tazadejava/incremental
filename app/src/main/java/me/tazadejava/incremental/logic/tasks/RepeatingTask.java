@@ -224,6 +224,10 @@ public class RepeatingTask extends TaskGenerator {
 
         //update the existing tasks; excluding the ones that have been finished
         for(int i = currentTaskIndexIncludingActive; i < allTasks.length; i++) {
+            if(allTasks[i] == null) {
+                continue;
+            }
+
             allTasks[i].editTask(taskNames[i], getIndexDueDate(i, startDate, dayOfWeekTaskBegins, dayOfWeekTaskDue, timeTaskDue), taskGroup, calculateRevisedAverageCompletionTime());
         }
 

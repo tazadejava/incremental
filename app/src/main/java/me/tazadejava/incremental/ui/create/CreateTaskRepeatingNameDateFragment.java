@@ -208,7 +208,7 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
 
         ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
 
-        updateDueDayOfWeek(act, act.getStartDate(), groupSpinnerAdapter);
+        updateDueDayOfWeek(act, act.getStartDate(), groupSpinnerAdapter, taskManager.getActiveEditTask() == null);
 
         dueDayOfWeek.setAdapter(groupSpinnerAdapter);
 
@@ -402,6 +402,10 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
     }
 
     private void updateDueDayOfWeek(CreateTaskActivity act, LocalDate startDate, ArrayAdapter<String> dueDateAdapter) {
+        updateDueDayOfWeek(act, startDate, dueDateAdapter, true);
+    }
+
+    private void updateDueDayOfWeek(CreateTaskActivity act, LocalDate startDate, ArrayAdapter<String> dueDateAdapter, boolean updateDueDate) {
         List<String> itemsAnnotated = new ArrayList<>();
         for(int index = 0; index < 7; index++) {
             DayOfWeek dow = startDate.getDayOfWeek();
@@ -416,7 +420,9 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
         dueDateAdapter.addAll(itemsAnnotated);
         dueDateAdapter.notifyDataSetChanged();
 
-        act.setDueDayOfWeek(startDate.getDayOfWeek());
+        if(updateDueDate) {
+            act.setDueDayOfWeek(startDate.getDayOfWeek());
+        }
     }
 
     public void updateNextButton(RepeatingTaskNamesAdapter repeatingTaskNamesAdapter, CreateTaskActivity act) {

@@ -114,22 +114,26 @@ public class NotificationWorker extends Worker {
                 LocalDateTime dueDateTime = task.getDueDateTime();
                 String dueDateFormatted;
 
-                if(dueDateTime.toLocalDate().equals(now)) {
-                    long hoursBetween = ChronoUnit.HOURS.between(nowTime, dueDateTime);
-                    if(hoursBetween < 1) {
-                        long minutesBetween = ChronoUnit.MINUTES.between(nowTime, dueDateTime);
-
-                        dueDateFormatted = "in " + minutesBetween + " minute" + (minutesBetween == 1 ? "" : "s!!!");
-                    } else {
-                        dueDateFormatted = "in " + hoursBetween + " hour" + (hoursBetween == 1 ? "" : "s");
-                    }
+                if(dueDateTime.toLocalDate().isBefore(now)) {
+                    tasksList.append("<u>" + task.getName() + "</u> - <i>" + Utils.formatHourMinuteTime(task.getTodaysMinutesLeft()) + " left - OVERDUE</i>");
                 } else {
-                    long daysBetween = ChronoUnit.DAYS.between(nowTime, dueDateTime);
+                    if (dueDateTime.toLocalDate().equals(now)) {
+                        long hoursBetween = ChronoUnit.HOURS.between(nowTime, dueDateTime);
+                        if (hoursBetween < 1) {
+                            long minutesBetween = ChronoUnit.MINUTES.between(nowTime, dueDateTime);
 
-                    dueDateFormatted = "in " + daysBetween + " day" + (daysBetween == 1 ? "" : "s");
+                            dueDateFormatted = "in " + minutesBetween + " minute" + (minutesBetween == 1 ? "" : "s!!!");
+                        } else {
+                            dueDateFormatted = "in " + hoursBetween + " hour" + (hoursBetween == 1 ? "" : "s");
+                        }
+                    } else {
+                        long daysBetween = ChronoUnit.DAYS.between(nowTime, dueDateTime);
+
+                        dueDateFormatted = "in " + daysBetween + " day" + (daysBetween == 1 ? "" : "s");
+                    }
+
+                    tasksList.append("<u>" + task.getName() + "</u> - <i>" + Utils.formatHourMinuteTime(task.getTodaysMinutesLeft()) + " left - due " + dueDateFormatted + "</i>");
                 }
-
-                tasksList.append("<u>" + task.getName() + "</u> - <i>" + Utils.formatHourMinuteTime(task.getTodaysMinutesLeft()) + " left - due " + dueDateFormatted + "</i>");
 
                 if(tasksLimit > 0) {
                     tasksList.append("<br>");
@@ -139,10 +143,10 @@ public class NotificationWorker extends Worker {
 
         int activeTasks = tasks.size();
         if(activeTasks > 0) {
-            String contentText = "You have " + Utils.formatHourMinuteTimeFull(timePeriod.getEstimatedMinutesOfWorkForDate(now)) + " of work today (" + activeTasks + " task" + (activeTasks == 1 ? "" : "s") + ").";
+            String contentText = "You have " + Utils.formatHourMinuteTimeFull(timePeriod.getEstimatedMinutesOfWorkForDate(now)) + " of work today (" + activeTasks + " task" + (activeTasks == 1 ? "" : "s") + ")";
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), IncrementalApplication.NOTIFICATION_MAIN_CHANNEL)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setSmallIcon(R.drawable.icon)
                     .setContentTitle(getTimeRelatedWelcomeMessage(nowTime))
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(Html.fromHtml("<b>" + contentText + "</b> <br>" + tasksList, 0)))

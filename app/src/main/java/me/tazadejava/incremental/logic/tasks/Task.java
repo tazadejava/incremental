@@ -126,6 +126,10 @@ public class Task {
 
         dailyWorkloadMinutes /= daysBetweenStartAndDueDate + 1;
 
+        if(dailyWorkloadMinutes < 0) {
+            return 0;
+        }
+
         return (int) dailyWorkloadMinutes;
     }
 
@@ -144,7 +148,7 @@ public class Task {
     }
 
     public int getTodaysMinutesLeft() {
-        return getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday;
+        return Math.max(0, getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday);
     }
 
     public String getName() {

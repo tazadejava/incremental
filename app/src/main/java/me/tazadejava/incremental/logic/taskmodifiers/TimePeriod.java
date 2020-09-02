@@ -401,6 +401,10 @@ public class TimePeriod {
 
         for(TaskGenerator taskGenerator : allTaskGenerators) {
             for(Task task : taskGenerator.getAllTasks()) {
+                if(task == null) {
+                    continue;
+                }
+
                 if(task.getGroup() == group) {
                     min = Math.min(task.getEstimatedCompletionTime(), min);
                     max = Math.max(task.getEstimatedCompletionTime(), max);
@@ -410,6 +414,10 @@ public class TimePeriod {
 
         for(TaskGenerator taskGenerator : allCompletedTaskGenerators) {
             for(Task task : taskGenerator.getAllTasks()) {
+                if(task == null) {
+                    continue;
+                }
+
                 if(task.getGroup() == group) {
                     min = Math.min(task.getEstimatedCompletionTime(), min);
                     max = Math.max(task.getEstimatedCompletionTime(), max);
@@ -582,7 +590,7 @@ public class TimePeriod {
     }
 
     public List<Task> getTasksByDay(int index) {
-        if(index < 0 || index >= tasksByDay.length) {
+        if(index < 0 || index > tasksByDay.length) { //allow tasksByDay length since it is subtracted by one
             return null;
         }
 
