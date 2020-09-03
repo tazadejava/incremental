@@ -36,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
@@ -79,6 +80,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private Activity context;
 
     private LocalDate date;
+    private Set<Task> tasksToday;
     private List<Task> tasks;
     private MainDashboardAdapter mainDashboardAdapter;
 
@@ -89,10 +91,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     private boolean animateCardChanges = true;
 
-    public TaskAdapter(TaskManager taskManager, Activity context, TimePeriod timePeriod, int dayPosition, LocalDate date, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
+    public TaskAdapter(TaskManager taskManager, Activity context, TimePeriod timePeriod, int dayPosition, LocalDate date, Set<Task> tasksToday, List<Task> tasks, MainDashboardAdapter mainDashboardAdapter) {
         this.taskManager = taskManager;
         this.context = context;
         this.date = date;
+        this.tasksToday = tasksToday;
         this.tasks = tasks;
         this.mainDashboardAdapter = mainDashboardAdapter;
 
@@ -215,15 +218,19 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.taskDueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
         }
 
-        if(date.equals(LocalDate.now())) {
+        if(dayPosition == 0 || !tasksToday.contains(task)) {
             holder.actionTaskText.setVisibility(View.VISIBLE);
             holder.horizontalLine.setVisibility(View.VISIBLE);
-            if(task.isTaskCurrentlyWorkedOn()) {
+            if (task.isTaskCurrentlyWorkedOn()) {
                 holder.actionTaskText.setText("Log Work");
 
                 holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, true));
             } else {
-                holder.actionTaskText.setText("Start Task");
+                if(dayPosition == 0) {
+                    holder.actionTaskText.setText("Start Task");
+                } else {
+                    holder.actionTaskText.setText("Start Task Early");
+                }
 
                 holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, false));
             }
@@ -343,7 +350,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
                             int minutesWorked = Integer.parseInt(input.getText().toString());
 
-                            if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate())) {
+                            if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate()) && dayPosition == 0) {
                                 finishedTaskBuilder.setPositiveButton("Finished for today!", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
@@ -364,7 +371,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             }
                                         }).start();
 
-                                        taskText.setText("Start Task");
+                                        if(dayPosition == 0) {
+                                            taskText.setText("Start Task");
+                                        } else {
+                                            taskText.setText("Start Task Early");
+                                        }
                                         taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
                                         hideKeyboard(taskText);
@@ -391,7 +402,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         }
                                     }).start();
 
-                                    taskText.setText("Start Task");
+                                    if(dayPosition == 0) {
+                                        taskText.setText("Start Task");
+                                    } else {
+                                        taskText.setText("Start Task Early");
+                                    }
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
                                     hideKeyboard(taskText);
@@ -403,7 +418,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 public void onClick(DialogInterface dialog, int which) {
                                     task.incrementTaskMinutes(minutesWorked, false);
 
-                                    taskText.setText("Start Task");
+                                    if(dayPosition == 0) {
+                                        taskText.setText("Start Task");
+                                    } else {
+                                        taskText.setText("Start Task Early");
+                                    }
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
                                     mainDashboardAdapter.updateTaskCards(task);
                                     mainDashboardAdapter.updateDayLayouts(task);

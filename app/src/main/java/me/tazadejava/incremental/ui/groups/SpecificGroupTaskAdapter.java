@@ -61,13 +61,17 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
         tasks = new ArrayList<>(timePeriod.getAllTasksByGroup(group));
 
+        //sort by start date
+
         tasks.sort(new Comparator<Task>() {
             @Override
             public int compare(Task task, Task t1) {
-                if(task.getDueDateTime().equals(t1.getDueDateTime())) {
-                    return task.getParent().getStartDate().compareTo(t1.getParent().getStartDate());
-                } else {
+                LocalDate startTask1 = getStartDate(task);
+                LocalDate startTask2 = getStartDate(t1);
+                if(startTask1.equals(startTask2)) {
                     return task.getDueDateTime().compareTo(t1.getDueDateTime());
+                } else {
+                    return startTask1.compareTo(startTask2);
                 }
             }
         });
@@ -78,6 +82,21 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dashboard_task, parent, false);
         return new SpecificGroupTaskAdapter.ViewHolder(view);
+    }
+
+    private LocalDate getStartDate(Task task) {
+        LocalDate startDate;
+        if(task.getStartDate() != null) {
+            startDate = task.getStartDate();
+        } else {
+            if(task.getParent() instanceof RepeatingTask) {
+                startDate = ((RepeatingTask) task.getParent()).getTaskStartDate(task);
+            } else {
+                startDate = task.getParent().getStartDate();
+            }
+        }
+
+        return startDate;
     }
 
     @Override
@@ -99,16 +118,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
         holder.taskGroupName.setText(task.getName());
 
-        LocalDate startDate;
-        if(task.getStartDate() != null) {
-            startDate = task.getStartDate();
-        } else {
-            if(task.getParent() instanceof RepeatingTask) {
-                startDate = ((RepeatingTask) task.getParent()).getTaskStartDate(task);
-            } else {
-                startDate = task.getParent().getStartDate();
-            }
-        }
+        LocalDate startDate = getStartDate(task);
 
         holder.startDate.setText("Task starts " + Utils.formatLocalDateWithDayOfWeek(startDate));
 

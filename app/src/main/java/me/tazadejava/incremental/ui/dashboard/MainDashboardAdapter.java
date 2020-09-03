@@ -12,8 +12,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
@@ -47,6 +50,8 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
 
     private HashMap<TaskAdapter, ViewHolder> taskAdapters;
 
+    private Set<Task> tasksToday;
+
     public MainDashboardAdapter(TaskManager taskManager, DashboardFragment fragment, Activity context) {
         this.taskManager = taskManager;
         this.fragment = fragment;
@@ -55,6 +60,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         taskAdapters = new HashMap<>();
 
         timePeriod = taskManager.getCurrentTimePeriod();
+        tasksToday = new HashSet<>(timePeriod.getTasksByDay(0));
     }
 
     @NonNull
@@ -67,10 +73,16 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LocalDate date = LocalDate.now().plusDays(position);
-        List<Task> dayTasks = timePeriod.getTasksByDay(position);
+
+        List<Task> dayTasks;
+        if(position == 0) {
+            dayTasks = new ArrayList<>(tasksToday);
+        } else {
+            dayTasks = timePeriod.getTasksByDay(position);
+        }
 
         TaskAdapter adapter;
-        holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, dayTasks, this));
+        holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, tasksToday, dayTasks, this));
         holder.taskList.setLayoutManager(new LinearLayoutManager(context));
 
         taskAdapters.put(adapter, holder);
