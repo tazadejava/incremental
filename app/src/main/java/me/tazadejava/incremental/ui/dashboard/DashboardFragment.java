@@ -186,8 +186,10 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         yAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         yAxis.setGranularity(1.0f);
         yAxis.setGranularityEnabled(true);
-        yAxis.setLabelCount(3, true);
+        yAxis.setLabelCount(4, true);
+
         yAxis.setAxisMinimum(0);
+
         yAxis.setValueFormatter(yAxisFormatter);
         yAxis.setDrawGridLines(true);
         yAxis.setMinWidth(20);
@@ -224,10 +226,13 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         StatsManager stats = ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod().getStatsManager();
 
+        int maxMinutes = 0;
         int totalMinutes = 0;
         int totalNonzeroDays = 0;
         for(LocalDate date : currentDates) {
             int minutes = stats.getMinutesWorked(date);
+
+            maxMinutes = Math.max(maxMinutes, minutes);
 
             if(minutes > 0) {
                 totalMinutes += minutes;
@@ -247,6 +252,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
                 values.add(new BarEntry(index, hours));
                 index++;
             }
+
+            workBarChart.getAxisLeft().setAxisMaximum((int) (maxMinutes / 60f));
         } else {
             isShowingHours = false;
             description.setText("Minutes worked weekly");
@@ -258,6 +265,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
                 values.add(new BarEntry(index, minutes));
                 index++;
             }
+
+            workBarChart.getAxisLeft().setAxisMaximum(maxMinutes);
         }
 
         BarDataSet barDataSet = new BarDataSet(values, "");
@@ -297,6 +306,6 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
     @Override
     public void onBackPressed() {
-
+        dashboardView.smoothScrollToPosition(0);
     }
 }

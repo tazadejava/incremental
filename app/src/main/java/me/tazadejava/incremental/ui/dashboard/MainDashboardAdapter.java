@@ -74,12 +74,7 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LocalDate date = LocalDate.now().plusDays(position);
 
-        List<Task> dayTasks;
-        if(position == 0) {
-            dayTasks = new ArrayList<>(tasksToday);
-        } else {
-            dayTasks = timePeriod.getTasksByDay(position);
-        }
+        List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
         TaskAdapter adapter;
         holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, tasksToday, dayTasks, this));

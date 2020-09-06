@@ -466,6 +466,12 @@ public class TimePeriod {
                     for(int j = i; j < tasks.size(); j++) {
                         Task sameDateTask = tasks.get(j);
 
+                        if(!sameDateTask.getDueDateTime().equals(task.getDueDateTime())) {
+                            tasks.add(j, task);
+                            added = true;
+                            break;
+                        }
+
                         if(task.getParent().getCreationTime().compareTo(sameDateTask.getParent().getCreationTime()) < 0) {
                             tasks.add(j, task);
                             added = true;

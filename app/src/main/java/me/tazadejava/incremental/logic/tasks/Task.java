@@ -103,6 +103,11 @@ public class Task {
 
         int daysBetweenStartAndDueDate = (int) ChronoUnit.DAYS.between(startDate, dueDate);
 
+        //if we have no more time, we have to do it all
+        if(LocalDate.now().equals(date) && date.equals(dueDate)) {
+            daysBetweenStartAndDueDate = 0;
+        }
+
         //we've already finished working for today, so this day is no more
         if(isDoneWithTaskToday) {
             daysBetweenStartAndDueDate--;

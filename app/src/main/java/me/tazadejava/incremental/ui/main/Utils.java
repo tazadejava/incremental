@@ -2,6 +2,9 @@ package me.tazadejava.incremental.ui.main;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -147,5 +150,15 @@ public class Utils {
         TypedValue tv = new TypedValue();
         activity.getTheme().resolveAttribute(attrID, tv, true);
         return ContextCompat.getColor(activity, tv.resourceId);
+    }
+
+    public static void vibrate(Context context, int milliseconds) {
+        Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            v.vibrate(VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE));
+        } else {
+            v.vibrate(milliseconds);
+        }
     }
 }

@@ -331,6 +331,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             return new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Utils.vibrate(context, 20);
+
                     AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
                     builder.setTitle("For how many minutes did you work on this task?");
 
@@ -409,7 +411,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     }
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
 
-                                    hideKeyboard(taskText);
+                                    hideKeyboard(taskCardConstraintLayout);
                                 }
                             });
 
@@ -427,7 +429,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     mainDashboardAdapter.updateTaskCards(task);
                                     mainDashboardAdapter.updateDayLayouts(task);
 
-                                    hideKeyboard(taskText);
+                                    hideKeyboard(taskCardConstraintLayout);
                                 }
                             });
 
@@ -460,6 +462,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             return new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Utils.vibrate(context, 80);
+
                     task.startWorkingOnTask();
 
                     taskText.setText("Log Work");
