@@ -82,7 +82,8 @@ public class Task {
 
     public int getDayMinutesOfWorkTotal(LocalDate date, boolean ignoreTodayWorkTime) {
         LocalDate startDate;
-        if(this.startDate != null) {
+        //only use the task's start date if it starts after now
+        if(this.startDate != null && this.startDate.isAfter(LocalDate.now())) {
             startDate = this.startDate;
         } else {
             startDate = LocalDate.now();
@@ -102,11 +103,10 @@ public class Task {
         }
 
         int daysBetweenStartAndDueDate = (int) ChronoUnit.DAYS.between(startDate, dueDate);
-
-        //if we have no more time, we have to do it all
-        if(LocalDate.now().equals(date) && date.equals(dueDate)) {
-            daysBetweenStartAndDueDate = 0;
-        }
+        //if we have no more time, we have to do it all; THIS SHOULDN'T MATTER NOW IF THE ABOVE START DATE IS SET CORRECTLY
+//        if(LocalDate.now().equals(date) && date.equals(dueDate)) {
+//            daysBetweenStartAndDueDate = 0;
+//        }
 
         //we've already finished working for today, so this day is no more
         if(isDoneWithTaskToday) {

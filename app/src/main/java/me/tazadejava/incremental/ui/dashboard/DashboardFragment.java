@@ -243,7 +243,9 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         List<BarEntry> values = new ArrayList<>();
         if(totalNonzeroDays != 0 && totalMinutes / totalNonzeroDays > 60) {
             isShowingHours = true;
-            description.setText("Hours worked weekly");
+            float totalHours = totalMinutes / 60f;
+            totalHours = Math.round(totalHours * 10f) / 10f;
+            description.setText("Hours worked weekly (" + totalHours + " total)");
             ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(1);
 
             int index = 0;
@@ -256,7 +258,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             workBarChart.getAxisLeft().setAxisMaximum((int) (maxMinutes / 60f));
         } else {
             isShowingHours = false;
-            description.setText("Minutes worked weekly");
+            description.setText("Minutes worked weekly (" + totalMinutes + " total)");
             ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(0);
 
             int index = 0;
