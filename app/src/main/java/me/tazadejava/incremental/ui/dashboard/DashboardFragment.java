@@ -255,7 +255,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
                 index++;
             }
 
-            workBarChart.getAxisLeft().setAxisMaximum((int) (maxMinutes / 60f));
+            workBarChart.getAxisLeft().setAxisMaximum((int) Math.ceil(maxMinutes / 60f));
         } else {
             isShowingHours = false;
             description.setText("Minutes worked weekly (" + totalMinutes + " total)");

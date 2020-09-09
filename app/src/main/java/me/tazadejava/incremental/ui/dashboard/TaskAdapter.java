@@ -51,7 +51,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         private ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
-        private TextView taskName, taskClass, totalTimeRemaining, dailyTimeRemaining, taskDueDate, actionTaskText, secondaryActionTaskText, taskNotes;
+        private TextView taskName, taskClass, totalTimeRemaining, dailyTimeRemaining, taskDueDate, actionTaskText,
+                secondaryActionTaskText, taskNotes, thirdActionTaskText;
 
         private View horizontalLine;
 
@@ -69,6 +70,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
             secondaryActionTaskText = itemView.findViewById(R.id.secondaryActionTaskText);
+            thirdActionTaskText = itemView.findViewById(R.id.thirdActionTaskText);
 
             taskNotes = itemView.findViewById(R.id.taskNotes);
 
@@ -128,6 +130,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 context.startActivity(editTask);
             }
         });
+
+        holder.thirdActionTaskText.setOnClickListener(getDelayTaskClickListener(task, holder.actionTaskText, holder.taskCardConstraintLayout));
+        holder.thirdActionTaskText.setVisibility((dayPosition != 0 || task.getDueDateTime().toLocalDate().equals(LocalDate.now()) || task.isOverdue()) ?
+                View.GONE : View.VISIBLE);
 
         holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -218,7 +224,18 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.taskDueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
         }
 
-        if(dayPosition == 0 || !tasksToday.contains(task)) {
+        boolean containsTaskAndIsNotDoneToday = false;
+
+        for(Task taskToday : tasksToday) {
+            if(taskToday.equals(task)) {
+                if(!task.isDoneWithTaskToday()) {
+                    containsTaskAndIsNotDoneToday = true;
+                }
+                break;
+            }
+        }
+
+        if(dayPosition == 0 || !containsTaskAndIsNotDoneToday) {
             holder.actionTaskText.setVisibility(View.VISIBLE);
             holder.horizontalLine.setVisibility(View.VISIBLE);
             if (task.isTaskCurrentlyWorkedOn()) {
@@ -274,6 +291,54 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 }
             }
         });
+    }
+
+    private View.OnClickListener getDelayTaskClickListener(Task task, TextView taskText, ConstraintLayout taskCardConstraintLayout) {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder finishedTaskBuilder = new AlertDialog.Builder(v.getContext());
+                finishedTaskBuilder.setCancelable(false);
+                finishedTaskBuilder.setTitle("Delay the task until tomorrow?");
+
+                finishedTaskBuilder.setPositiveButton("Delay", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int width = Resources.getSystem().getDisplayMetrics().widthPixels;
+                        ConstraintLayout mainView = ((ConstraintLayout) taskCardConstraintLayout.getParent().getParent());
+                        mainView.animate()
+                                .translationXBy(width).setDuration(800).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                task.completeTaskForTheDay();
+                                task.incrementTaskMinutes(0, false);
+                                mainDashboardAdapter.updateTaskCards(task);
+                                mainDashboardAdapter.updateDayLayouts(task);
+
+                                notifyDataSetChanged();
+
+                                mainView.setTranslationX(0);
+                            }
+                        }).start();
+
+                        if(dayPosition == 0) {
+                            taskText.setText("Start Task");
+                        } else {
+                            taskText.setText("Start Task Early");
+                        }
+                        taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
+                    }
+                });
+
+                finishedTaskBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+
+                finishedTaskBuilder.show();
+            }
+        };
     }
 
     private View.OnClickListener getAddTaskNotesListener(Task task, ViewHolder holder) {

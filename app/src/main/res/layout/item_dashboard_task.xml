@@ -180,17 +180,31 @@
                 <TextView
                     android:id="@+id/secondaryActionTaskText"
                     android:layout_width="0dp"
-                    android:layout_height="0dp"
+                    android:layout_height="40dp"
                     android:background="?attr/selectableItemBackground"
                     android:gravity="center"
                     android:text="Edit Task"
                     android:textColor="@color/taskDarkTextColor"
                     android:textStyle="bold"
                     android:visibility="visible"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="@+id/guideline4"
                     app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/thirdActionTaskText"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:text="Delay Task"
+                    android:textColor="@color/taskDarkTextColor"
+                    android:textStyle="bold"
+                    android:visibility="visible"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/guideline4"
+                    app:layout_constraintTop_toBottomOf="@+id/secondaryActionTaskText" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
