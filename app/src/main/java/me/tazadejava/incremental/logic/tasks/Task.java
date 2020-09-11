@@ -139,7 +139,7 @@ public class Task {
     }
 
     public float getTodaysTaskCompletionPercentage() {
-        float percentage = (float) loggedMinutesOfWorkToday / getDayMinutesOfWorkTotal(LocalDate.now());
+        float percentage = (float) Math.min(loggedMinutesOfWorkToday, lastTaskWorkStartTime == null ? Integer.MAX_VALUE : getCurrentWorkedMinutes()) / getDayMinutesOfWorkTotal(LocalDate.now());
 
         if (percentage > 1) {
             percentage = 1;
@@ -154,6 +154,10 @@ public class Task {
 
     public int getTodaysMinutesLeft() {
         return Math.max(0, getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday);
+    }
+
+    public int getTodaysMinutesLeftIncludingCurrentWork() {
+        return Math.max(0, Math.min(getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday, lastTaskWorkStartTime == null || !isTaskCurrentlyWorkedOn ? Integer.MAX_VALUE : getCurrentWorkedMinutes()));
     }
 
     public String getName() {

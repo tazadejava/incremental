@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -237,11 +239,7 @@ public class TimePeriod {
         }
     }
 
-    private void saveTasksToFile(Gson gson, File file, List<TaskGenerator> generators, List<Task> tasks) throws IOException {
-        if(!file.exists()) {
-            file.createNewFile();
-        }
-
+    private void saveTasksToFile(Gson gson, File destFile, List<TaskGenerator> generators, List<Task> tasks) throws IOException {
         JsonObject data = new JsonObject();
 
         JsonArray generatorsObject = new JsonArray();
@@ -262,9 +260,16 @@ public class TimePeriod {
             data.add("activeTasks", tasksObject);
         }
 
-        FileWriter writer = new FileWriter(file);
+        //create temp file just in case something fails
+        File tempFile = new File(destFile.getParentFile().getAbsolutePath() + "/" + destFile.getName() + ".TMP");
+
+        FileWriter writer = new FileWriter(tempFile);
         gson.toJson(data, writer);
         writer.close();
+
+        Files.copy(tempFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        tempFile.delete();
     }
 
     public void checkForPendingTasks() {

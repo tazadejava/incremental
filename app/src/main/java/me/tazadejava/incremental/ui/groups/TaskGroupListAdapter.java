@@ -24,9 +24,12 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
@@ -155,11 +158,45 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
         }
 
+        //calculate average time worked per week, only including weeks where one actually worked
+        //don't include the current week in the calculation
+
+        int averageMinutesWorked = 0;
+        int totalWeeksWorked = 0;
+
+        LocalDate weekDate = taskManager.getCurrentTimePeriod().getBeginDate();
+        LocalDate now = LocalDate.now();
+        WeekFields week = WeekFields.of(Locale.getDefault());
+
+        //make the week start on a MONDAY not sunday, offset by one day
+        long nowWeek = now.plusDays(-1).get(week.weekOfWeekBasedYear());
+
+        while(weekDate.plusDays(-1).get(week.weekOfWeekBasedYear()) < nowWeek || weekDate.getYear() < now.getYear()) {
+            boolean workedThisWeek = false;
+            for(LocalDate date : LogicalUtils.getWorkWeekDates(weekDate)) {
+                if(!workedThisWeek) {
+                    workedThisWeek = true;
+                }
+
+                averageMinutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
+            }
+
+            if(workedThisWeek) {
+                totalWeeksWorked++;
+            }
+
+            weekDate = weekDate.plusDays(7);
+        }
+
+        //find the average
+        averageMinutesWorked = averageMinutesWorked / totalWeeksWorked;
+
         int tasksTotal = taskManager.getCurrentTimePeriod().getAllTasksByGroup(group).size();
 
         holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
                 + "\n" + tasksTotal + " task" + (tasksTotal == 1 ? "" : "s") + " total (active and pending)"
-                + "\n\n" + Utils.formatHourMinuteTime(minutesWorked) + " worked this week");
+                + "\n\n" + Utils.formatHourMinuteTime(minutesWorked) + " worked this week"
+                + "\n\nAverage workload per week (" + totalWeeksWorked + "): " + Utils.formatHourMinuteTime(averageMinutesWorked));
 
         holder.actionTaskText.setText("Randomize Color");
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {

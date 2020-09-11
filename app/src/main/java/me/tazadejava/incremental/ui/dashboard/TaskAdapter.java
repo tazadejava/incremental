@@ -182,7 +182,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.totalTimeRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
 
         if(date.equals(LocalDate.now())) {
-            int minutesLeftToday = task.getTodaysMinutesLeft();
+            int minutesLeftToday = task.getTodaysMinutesLeftIncludingCurrentWork();
 
             if(minutesLeftToday < 0) {
                 minutesLeftToday = 0;
@@ -310,8 +310,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 .translationXBy(width).setDuration(800).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
                             @Override
                             public void run() {
-                                task.completeTaskForTheDay();
+                                task.startWorkingOnTask();
                                 task.incrementTaskMinutes(0, false);
+                                task.completeTaskForTheDay();
                                 mainDashboardAdapter.updateTaskCards(task);
                                 mainDashboardAdapter.updateDayLayouts(task);
 
