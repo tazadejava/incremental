@@ -33,7 +33,9 @@ import me.tazadejava.incremental.logic.tasks.TaskManager;
 
 public class TimePeriod {
 
-    public static final int DAILY_LOGS_AHEAD_COUNT = 6;
+    //need to account for the possible next 2 weeks plus 6 days if on a Monday
+    public static final int DAILY_LOGS_AHEAD_COUNT_LOAD = 20;
+    public static final int DAILY_LOGS_AHEAD_COUNT_SHOW = 6;
 
     private TaskManager taskManager;
 
@@ -57,7 +59,7 @@ public class TimePeriod {
     private TimePeriod(TaskManager taskManager) {
         this.taskManager = taskManager;
 
-        tasksByDay = new List[DAILY_LOGS_AHEAD_COUNT];
+        tasksByDay = new List[DAILY_LOGS_AHEAD_COUNT_LOAD];
 
         for (int i = 0; i < tasksByDay.length; i++) {
             tasksByDay[i] = new ArrayList<>();

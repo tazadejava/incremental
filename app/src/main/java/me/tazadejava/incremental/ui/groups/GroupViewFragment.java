@@ -3,9 +3,12 @@ package me.tazadejava.incremental.ui.groups;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -28,14 +31,18 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
+import me.tazadejava.incremental.ui.main.CustomOptionsMenu;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
+import me.tazadejava.incremental.ui.main.SettingsActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
-public class GroupViewFragment extends Fragment implements BackPressedInterface {
+public class GroupViewFragment extends Fragment implements BackPressedInterface, CustomOptionsMenu {
 
     private RecyclerView groupView;
     private TaskGroupListAdapter adapter;
+
+    private Menu menu;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new group
@@ -50,6 +57,11 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
 
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
+        menu = ((MainActivity) getActivity()).getOptionsMenu();
+
+        menu.getItem(3).setVisible(true);
+        menu.getItem(4).setVisible(true);
+
         View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);
 
         groupView = root.findViewById(R.id.dashboard_day_list);
@@ -58,6 +70,28 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface 
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        menu.getItem(3).setVisible(false);
+        menu.getItem(4).setVisible(false);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.action_sort_by_average_week_hours:
+                adapter.sortByAverageWeekHours();
+                return true;
+            case R.id.action_sort_by_current_week_hours:
+                adapter.sortByCurrentWeekHours();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private void openCreateGroupDialog() {

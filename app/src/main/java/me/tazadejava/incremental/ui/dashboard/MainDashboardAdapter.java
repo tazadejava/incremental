@@ -1,7 +1,6 @@
 package me.tazadejava.incremental.ui.dashboard;
 
 import android.app.Activity;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +11,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +20,6 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdapter.ViewHolder> {
@@ -139,6 +136,6 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
 
     @Override
     public int getItemCount() {
-        return TimePeriod.DAILY_LOGS_AHEAD_COUNT + 1;
+        return TimePeriod.DAILY_LOGS_AHEAD_COUNT_SHOW + 1;
     }
 }

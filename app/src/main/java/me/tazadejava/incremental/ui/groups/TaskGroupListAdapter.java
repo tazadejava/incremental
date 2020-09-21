@@ -1,6 +1,5 @@
 package me.tazadejava.incremental.ui.groups;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -24,10 +23,10 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -37,7 +36,6 @@ import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdapter.ViewHolder> {
@@ -71,12 +69,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
         groups = new ArrayList<>(taskManager.getAllCurrentGroups());
 
-        groups.sort(new Comparator<Group>() {
-            @Override
-            public int compare(Group group1, Group group2) {
-                return group1.getGroupName().compareTo(group2.getGroupName());
-            }
-        });
+        sortByCurrentWeekHours();
     }
 
     @NonNull
@@ -151,52 +144,14 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         });
 
         int tasksCount = taskManager.getCurrentTimePeriod().getTasksCountThisWeekByGroup(group);
-
-        int minutesWorked = 0;
-
-        for(LocalDate date : LogicalUtils.getWorkWeekDates()) {
-            minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
-        }
-
-        //calculate average time worked per week, only including weeks where one actually worked
-        //don't include the current week in the calculation
-
-        int averageMinutesWorked = 0;
-        int totalWeeksWorked = 0;
-
-        LocalDate weekDate = taskManager.getCurrentTimePeriod().getBeginDate();
-        LocalDate now = LocalDate.now();
-        WeekFields week = WeekFields.of(Locale.getDefault());
-
-        //make the week start on a MONDAY not sunday, offset by one day
-        long nowWeek = now.plusDays(-1).get(week.weekOfWeekBasedYear());
-
-        while(weekDate.plusDays(-1).get(week.weekOfWeekBasedYear()) < nowWeek || weekDate.getYear() < now.getYear()) {
-            boolean workedThisWeek = false;
-            for(LocalDate date : LogicalUtils.getWorkWeekDates(weekDate)) {
-                if(!workedThisWeek) {
-                    workedThisWeek = true;
-                }
-
-                averageMinutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
-            }
-
-            if(workedThisWeek) {
-                totalWeeksWorked++;
-            }
-
-            weekDate = weekDate.plusDays(7);
-        }
-
-        //find the average
-        averageMinutesWorked = averageMinutesWorked / totalWeeksWorked;
-
         int tasksTotal = taskManager.getCurrentTimePeriod().getAllTasksByGroup(group).size();
+
+        int[] averageWorkload = getAverageMinutesWorkedPerWeek(group);
 
         holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
                 + "\n" + tasksTotal + " task" + (tasksTotal == 1 ? "" : "s") + " total (active and pending)"
-                + "\n\n" + Utils.formatHourMinuteTime(minutesWorked) + " worked this week"
-                + "\n\nAverage workload per week (" + totalWeeksWorked + "): " + Utils.formatHourMinuteTime(averageMinutesWorked));
+                + "\n\n" + Utils.formatHourMinuteTime(getMinutesWorkedThisWeek(group)) + " worked this week"
+                + "\n\nAverage workload per week (" + averageWorkload[1] + "): " + Utils.formatHourMinuteTime(averageWorkload[0]));
 
         holder.actionTaskText.setText("Randomize Color");
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
@@ -246,6 +201,53 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         }
     }
 
+    /**
+     *
+     * @param group
+     * @return array of two ints: the first value is the average minutes worked, and the second value is the total weeks counted
+     */
+    private int[] getAverageMinutesWorkedPerWeek(Group group) {
+        int averageMinutesWorked = 0;
+        int totalWeeksWorked = 0;
+
+        LocalDate weekDate = taskManager.getCurrentTimePeriod().getBeginDate();
+        LocalDate now = LocalDate.now();
+        WeekFields week = WeekFields.of(Locale.getDefault());
+
+        //make the week start on a MONDAY not sunday, offset by one day
+        long nowWeek = now.plusDays(-1).get(week.weekOfWeekBasedYear());
+
+        while(weekDate.plusDays(-1).get(week.weekOfWeekBasedYear()) < nowWeek || weekDate.getYear() < now.getYear()) {
+            boolean workedThisWeek = false;
+            for(LocalDate date : LogicalUtils.getWorkWeekDates(weekDate)) {
+                if(!workedThisWeek) {
+                    workedThisWeek = true;
+                }
+
+                averageMinutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
+            }
+
+            if(workedThisWeek) {
+                totalWeeksWorked++;
+            }
+
+            weekDate = weekDate.plusDays(7);
+        }
+
+        //find the average
+        return new int[] {averageMinutesWorked / totalWeeksWorked, totalWeeksWorked};
+    }
+
+    private int getMinutesWorkedThisWeek(Group group) {
+        int minutesWorked = 0;
+
+        for(LocalDate date : LogicalUtils.getWorkWeekDates()) {
+            minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
+        }
+
+        return minutesWorked;
+    }
+
     private void updateCardColor(Group group, ViewHolder viewHolder) {
         viewHolder.taskCardConstraintLayout.post(new Runnable() {
             @Override
@@ -263,6 +265,40 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
             }
         });
+    }
+
+    public void sortByAverageWeekHours() {
+        HashMap<Group, Integer> averageWorkHours = new HashMap<>();
+
+        for(Group group : groups) {
+            averageWorkHours.put(group, getAverageMinutesWorkedPerWeek(group)[0]);
+        }
+
+        groups.sort(new Comparator<Group>() {
+            @Override
+            public int compare(Group group, Group t1) {
+                return Integer.compare(averageWorkHours.get(t1), averageWorkHours.get(group));
+            }
+        });
+
+        notifyDataSetChanged();
+    }
+
+    public void sortByCurrentWeekHours() {
+        HashMap<Group, Integer> currentWeekHours = new HashMap<>();
+
+        for(Group group : groups) {
+            currentWeekHours.put(group, getMinutesWorkedThisWeek(group));
+        }
+
+        groups.sort(new Comparator<Group>() {
+            @Override
+            public int compare(Group group, Group t1) {
+                return Integer.compare(currentWeekHours.get(t1), currentWeekHours.get(group));
+            }
+        });
+
+        notifyDataSetChanged();
     }
 
     @Override

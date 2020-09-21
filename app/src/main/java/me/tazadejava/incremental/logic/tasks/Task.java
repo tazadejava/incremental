@@ -157,7 +157,8 @@ public class Task {
     }
 
     public int getTodaysMinutesLeftIncludingCurrentWork() {
-        return Math.max(0, Math.min(getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday, lastTaskWorkStartTime == null || !isTaskCurrentlyWorkedOn ? Integer.MAX_VALUE : getCurrentWorkedMinutes()));
+        return Math.max(0, Math.min(getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday, lastTaskWorkStartTime == null
+                || !isTaskCurrentlyWorkedOn ? Integer.MAX_VALUE : getDayMinutesOfWorkTotal(LocalDate.now()) - getCurrentWorkedMinutes()));
     }
 
     public String getName() {

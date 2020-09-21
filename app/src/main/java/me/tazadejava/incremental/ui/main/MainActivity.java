@@ -50,6 +50,8 @@ public class MainActivity extends AppCompatActivity {
 
     private NavController navController;
 
+    private Menu menu;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navigationView = findViewById(R.id.nav_view);
 
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_dashboard, R.id.nav_days_off, R.id.nav_time_periods, R.id.nav_task_groups, R.id.nav_archive)
+                R.id.nav_dashboard, R.id.nav_days_off, R.id.nav_time_periods, R.id.nav_task_groups, R.id.nav_statistics, R.id.nav_archive)
                 .setDrawerLayout(drawer)
                 .build();
 
@@ -102,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        this.menu = menu;
 
         for(int i = 0; i < menu.size(); i++) {
             MenuItem item = menu.getItem(i);
@@ -132,7 +135,11 @@ public class MainActivity extends AppCompatActivity {
                 loadBackup();
                 return true;
             default:
-                return super.onOptionsItemSelected(item);
+                if(backPressedInterface instanceof CustomOptionsMenu) {
+                    return ((CustomOptionsMenu) backPressedInterface).onOptionsItemSelected(item);
+                } else {
+                    return super.onOptionsItemSelected(item);
+                }
         }
     }
 
@@ -341,6 +348,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void setBackPressedInterface(BackPressedInterface backPressedInterface) {
         this.backPressedInterface = backPressedInterface;
+    }
+
+    public Menu getOptionsMenu() {
+        return menu;
     }
 
     @Override

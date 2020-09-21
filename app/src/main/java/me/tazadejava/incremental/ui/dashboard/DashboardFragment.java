@@ -192,8 +192,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         yAxis.setValueFormatter(yAxisFormatter);
         yAxis.setDrawGridLines(true);
-        yAxis.setMinWidth(20);
-        yAxis.setMaxWidth(20);
+        yAxis.setMinWidth(30);
+        yAxis.setMaxWidth(30);
 
         int zeroLineColor = yAxis.getZeroLineColor();
         yAxis.setGridColor(Color.LTGRAY);
