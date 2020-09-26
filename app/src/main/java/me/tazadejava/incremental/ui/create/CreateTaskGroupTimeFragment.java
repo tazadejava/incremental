@@ -87,16 +87,21 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         //suggested times
 
         Button suggestedTime1Button = root.findViewById(R.id.suggestedTime1Button);
-        setSuggestedTimeButton(30, suggestedTime1Button, minutesToCompleteTask);
-
         Button suggestedTime2Button = root.findViewById(R.id.suggestedTime2Button);
-        setSuggestedTimeButton(60, suggestedTime2Button, minutesToCompleteTask);
-
         Button suggestedTime3Button = root.findViewById(R.id.suggestedTime3Button);
-        setSuggestedTimeButton(90, suggestedTime3Button, minutesToCompleteTask);
-
         Button suggestedTime4Button = root.findViewById(R.id.suggestedTime4Button);
-        setSuggestedTimeButton(120, suggestedTime4Button, minutesToCompleteTask);
+
+        if(taskManager.getActiveEditTask() != null) {
+            updateSuggestedTimeAddButton(act, -15, suggestedTime1Button, minutesToCompleteTask);
+            updateSuggestedTimeAddButton(act, 15, suggestedTime2Button, minutesToCompleteTask);
+            updateSuggestedTimeAddButton(act, 30, suggestedTime3Button, minutesToCompleteTask);
+            updateSuggestedTimeAddButton(act, 60, suggestedTime4Button, minutesToCompleteTask);
+        } else {
+            setSuggestedTimeButton(30, suggestedTime1Button, minutesToCompleteTask);
+            setSuggestedTimeButton(60, suggestedTime2Button, minutesToCompleteTask);
+            setSuggestedTimeButton(90, suggestedTime3Button, minutesToCompleteTask);
+            setSuggestedTimeButton(120, suggestedTime4Button, minutesToCompleteTask);
+        }
 
         Spinner groupSpinner = root.findViewById(R.id.groupSpinner);
 
@@ -170,7 +175,9 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                                 }
 
                                 act.setSelectedGroup(taskManager.getCurrentGroupByName(groupName));
-                                updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+                                if(taskManager.getActiveEditTask() == null) {
+                                    updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+                                }
                                 updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
 
                                 Utils.hideKeyboard(input);
@@ -203,7 +210,9 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
                     if(groupSpinner.getSelectedItemPosition() != AdapterView.INVALID_POSITION && groupSpinner.getSelectedItemPosition() != 0) {
                         act.setSelectedGroup(taskManager.getCurrentGroupByName(groupSpinner.getSelectedItem().toString()));
-                        updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+                        if(taskManager.getActiveEditTask() == null) {
+                            updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+                        }
                     }
 
                     updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
@@ -242,7 +251,9 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         if(act.getSelectedGroup() != null) {
             groupSpinner.setSelection(groupSpinnerAdapter.getPosition(act.getSelectedGroup().getGroupName()));
 
-            updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+            if(taskManager.getActiveEditTask() == null) {
+                updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+            }
         }
 
         if(act.getMinutesToCompletion() != -1) {
@@ -284,6 +295,28 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         suggestedTime4Button.setText(Utils.formatHourMinuteTimeFull(minMax[1]));
         suggestedTime4Button.setBackgroundColor(buttonColors[1]);
         setSuggestedTimeButton(minMax[1], suggestedTime4Button, minutesToCompleteTask);
+    }
+
+    private void updateSuggestedTimeAddButton(CreateTaskActivity act, int minutesAdd, Button button, EditText minutesToCompleteTask) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (minutesToCompleteTask.getText().length() == 0) {
+                    minutesToCompleteTask.setText(String.valueOf(minutesAdd));
+                } else {
+                    minutesToCompleteTask.setText(String.valueOf(Integer.parseInt(minutesToCompleteTask.getText().toString()) + minutesAdd));
+                }
+            }
+        });
+
+        int updateColor = ContextCompat.getColor(act, R.color.secondaryColor);
+
+        button.setBackgroundColor(updateColor);
+        if(minutesAdd > 0) {
+            button.setText("+ " + Utils.formatHourMinuteTimeFull(minutesAdd));
+        } else {
+            button.setText("- " + Utils.formatHourMinuteTimeFull(-minutesAdd));
+        }
     }
 
     private void setSuggestedTimeButton(int minutes, Button button, EditText minutesToCompleteTask) {

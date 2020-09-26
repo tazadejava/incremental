@@ -72,7 +72,7 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
         List<LocalDate[]> weeks = new ArrayList<>();
         for(int i = 0; i < weekSize; i++) {
-            weeks.add(LogicalUtils.getWorkWeekDates(LocalDate.now().plusDays(7 * (i - 2))));
+            weeks.add(LogicalUtils.getWorkWeekDates(LocalDate.now().plusDays(7 * (i - 3))));
         }
 
         String[] weeksFormatted = new String[weekSize];
@@ -140,7 +140,7 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
         int totalNonzeroDays = 0;
 
         //mark trends for past two weeks and current week
-        for(int i = 0; i <= weekSize / 2; i++) {
+        for(int i = 0; i < weekSize - 1; i++) {
             LocalDate[] dates = weeks.get(i);
             for(LocalDate date : dates) {
                 int minutes = stats.getMinutesWorked(date);
@@ -154,9 +154,20 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
             maxMinutes = Math.max(maxMinutes, totalMinutes[i]);
         }
 
-        //guess trends for next two weeks
+        //guess trends for next week
+        int startIndex;
+        boolean currentWeekIsProjection;
+
+        if(totalMinutes[weekSize - 2] == 0) {
+            currentWeekIsProjection = true;
+            startIndex = weekSize - 2;
+        } else {
+            currentWeekIsProjection = false;
+            startIndex = weekSize - 1;
+        }
+
         TimePeriod currentTimePeriod = ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod();
-        for(int i = weekSize / 2 + 1; i < weekSize; i++) {
+        for(int i = startIndex; i < weekSize; i++) {
             int projectedMinutes = 0;
 
             for(LocalDate date : weeks.get(i)) {
@@ -182,7 +193,7 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
             //add offset to allow for top axis to appear
             chart.getAxisLeft().setAxisMaximum((int) Math.ceil(maxMinutes / 60f) + 5);
-            description.setText("Average hours worked per week (gray is projection)");
+            description.setText("Average hours worked per week (transparent is projection)");
         } else {
             ((DefaultValueFormatter) chart.getAxisLeft().getValueFormatter()).setup(0);
 
@@ -194,7 +205,7 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
             //add offset to allow for top axis to appear
             chart.getAxisLeft().setAxisMaximum(maxMinutes + 30);
-            description.setText("Average minutes worked per week (gray is projection)");
+            description.setText("Average minutes worked per week (transparent is projection)");
         }
 
         BarDataSet barDataSet = new BarDataSet(values, "");
@@ -203,10 +214,14 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
         int[] colors = new int[weekSize];
         for(int index = 0; index < weekSize; index++) {
             int relativeWeek;
-            if(index < weekSize / 2) {
+            if(index < weekSize - 2) {
                 relativeWeek = -1;
-            } else if (index == weekSize / 2) {
-                relativeWeek = 0;
+            } else if (index == weekSize - 2) {
+                if(currentWeekIsProjection) {
+                    relativeWeek = 2;
+                } else {
+                    relativeWeek = 0;
+                }
             } else {
                 relativeWeek = 1;
             }
@@ -214,6 +229,10 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
             switch(relativeWeek) {
                 case 0:
                     colors[index] = ContextCompat.getColor(getContext(), R.color.primaryColor);
+                    break;
+                case 2:
+                    Color primaryColor = Color.valueOf(ContextCompat.getColor(getContext(), R.color.primaryColor));
+                    colors[index] = Color.argb(0.5f, primaryColor.red(), primaryColor.green(), primaryColor.blue());
                     break;
                 case 1:
                     colors[index] = Color.argb(0.5f, 0.7f, 0.7f, 0.7f);
