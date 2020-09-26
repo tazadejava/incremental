@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.BarChart;
@@ -51,6 +53,10 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
         BarChart workloadTrendsChart = root.findViewById(R.id.workloadTrendChart);
 
         defineWorkloadTrends(workloadTrendsChart);
+
+        RecyclerView dailyGroupTrendsRecyclerView = root.findViewById(R.id.dailyGroupTrendsRecyclerView);
+        dailyGroupTrendsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        dailyGroupTrendsRecyclerView.setAdapter(new GroupStatisticsAdapter(getActivity(), ((IncrementalApplication) getActivity().getApplication()).getTaskManager()));
 
         return root;
     }
