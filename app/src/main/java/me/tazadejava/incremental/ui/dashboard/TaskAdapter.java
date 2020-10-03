@@ -33,9 +33,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import me.tazadejava.incremental.R;
@@ -131,7 +133,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
         });
 
-        holder.thirdActionTaskText.setOnClickListener(getDelayTaskClickListener(task, holder.actionTaskText, holder.taskCardConstraintLayout));
+        holder.thirdActionTaskText.setOnClickListener(getDelayTaskClickListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, holder.actionTaskText, holder.expandedOptionsLayout));
         holder.thirdActionTaskText.setVisibility((dayPosition != 0 || task.getDueDateTime().toLocalDate().equals(LocalDate.now()) || task.isOverdue()) ?
                 View.GONE : View.VISIBLE);
 
@@ -221,7 +223,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         if(dueDateTime.toLocalDate().equals(LocalDate.now())) {
             holder.taskDueDate.setText("Due TODAY" + " @ " + Utils.formatLocalTime(dueDateTime));
         } else {
-            holder.taskDueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
+            holder.taskDueDate.setText("Due " + dueDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.US) + ", " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
         }
 
         boolean containsTaskAndIsNotDoneToday = false;
@@ -241,7 +243,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             if (task.isTaskCurrentlyWorkedOn()) {
                 holder.actionTaskText.setText("Log Work");
 
-                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, true));
+                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, holder.actionTaskText, holder.expandedOptionsLayout, true));
             } else {
                 if(dayPosition == 0) {
                     holder.actionTaskText.setText("Start Task");
@@ -249,7 +251,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     holder.actionTaskText.setText("Start Task Early");
                 }
 
-                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, false));
+                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, holder.actionTaskText, holder.expandedOptionsLayout, false));
             }
         } else {
             holder.actionTaskText.setVisibility(View.GONE);
@@ -278,8 +280,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskCardConstraintLayout.post(new Runnable() {
             @Override
             public void run() {
-                unwrapped.setLayerSize(1, (int) (date.equals(LocalDate.now()) ? (double) holder.taskCardConstraintLayout.getWidth() * task.getTodaysTaskCompletionPercentage()
-                        : (double) holder.taskCardConstraintLayout.getWidth() * task.getTaskCompletionPercentage()), unwrapped.getLayerHeight(1));
+                unwrapped.setLayerSize(1, (int) ((double) holder.taskCardConstraintLayout.getWidth() * (date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage())), unwrapped.getLayerHeight(1));
 
                 if(animateCardChanges) {
                     TransitionDrawable transitionDrawable = new TransitionDrawable(new Drawable[]{lightColor, unwrapped});
@@ -293,7 +294,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         });
     }
 
-    private View.OnClickListener getDelayTaskClickListener(Task task, TextView taskText, ConstraintLayout taskCardConstraintLayout) {
+    private View.OnClickListener getDelayTaskClickListener(Task task, TextView taskText, ConstraintLayout taskCardConstraintLayout, TextView actionTaskText, ConstraintLayout expandedOptionsLayout) {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -327,7 +328,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                         } else {
                             taskText.setText("Start Task Early");
                         }
-                        taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
+                        taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
                     }
                 });
 
@@ -392,7 +393,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
-    private View.OnClickListener getActionTaskListener(Task task, TextView taskText, ConstraintLayout taskCardConstraintLayout, boolean hasTaskStarted) {
+    private View.OnClickListener getActionTaskListener(Task task, TextView taskText, ConstraintLayout taskCardConstraintLayout, TextView actionTaskText, ConstraintLayout expandedOptionsLayout, boolean hasTaskStarted) {
         if(hasTaskStarted) {
             return new View.OnClickListener() {
                 @Override
@@ -424,6 +425,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     public void onClick(DialogInterface dialog, int which) {
                                         int width = Resources.getSystem().getDisplayMetrics().widthPixels;
                                         ConstraintLayout mainView = ((ConstraintLayout) taskCardConstraintLayout.getParent().getParent());
+
+                                        //reset the task card to defaults
+                                        actionTaskText.setTextColor(actionTaskText.getTextColors());
+                                        expandedOptionsLayout.setVisibility(View.GONE);
+
                                         mainView.animate()
                                                 .translationXBy(width).setDuration(800).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
                                             @Override
@@ -444,7 +450,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         } else {
                                             taskText.setText("Start Task Early");
                                         }
-                                        taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
+                                        taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
 
                                         hideKeyboard(taskText);
                                     }
@@ -456,6 +462,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 public void onClick(DialogInterface dialog, int which) {
                                     int width = Resources.getSystem().getDisplayMetrics().widthPixels;
                                     ConstraintLayout mainView = ((ConstraintLayout) taskCardConstraintLayout.getParent().getParent());
+
+                                    //reset the task card to defaults
+                                    actionTaskText.setTextColor(actionTaskText.getTextColors());
+                                    expandedOptionsLayout.setVisibility(View.GONE);
+
                                     mainView.animate()
                                             .translationXBy(width).setStartDelay(200).setDuration(800).setInterpolator(new AnticipateOvershootInterpolator()).withEndAction(new Runnable() {
                                         @Override
@@ -475,7 +486,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     } else {
                                         taskText.setText("Start Task Early");
                                     }
-                                    taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
+                                    taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
 
                                     hideKeyboard(taskCardConstraintLayout);
                                 }
@@ -491,7 +502,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     } else {
                                         taskText.setText("Start Task Early");
                                     }
-                                    taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, false));
+                                    taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
                                     mainDashboardAdapter.updateTaskCards(task);
                                     mainDashboardAdapter.updateDayLayouts(task);
 
@@ -533,7 +544,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     task.startWorkingOnTask();
 
                     taskText.setText("Log Work");
-                    taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, true));
+                    taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, true));
 
                     task.getParent().saveTaskToFile();
                 }

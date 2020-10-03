@@ -118,7 +118,9 @@ public class RepeatingTask extends TaskGenerator {
 
     private Task getIndexTask(int index) {
         //update the task based on previous runs to determine how many hours will be needed to complete this task
-        allTasks[index].setEstimatedTotalMinutesToCompletion(calculateRevisedAverageCompletionTime());
+        if(allTasks[index] != null) {
+            allTasks[index].setEstimatedTotalMinutesToCompletion(calculateRevisedAverageCompletionTime());
+        }
 
         return allTasks[index];
     }

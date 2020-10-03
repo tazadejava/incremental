@@ -139,7 +139,7 @@ public class Task {
     }
 
     public float getTodaysTaskCompletionPercentage() {
-        float percentage = (float) Math.min(loggedMinutesOfWorkToday, lastTaskWorkStartTime == null ? Integer.MAX_VALUE : getCurrentWorkedMinutes()) / getDayMinutesOfWorkTotal(LocalDate.now());
+        float percentage = (float) Math.min(loggedMinutesOfWorkToday, lastTaskWorkStartTime == null || !isTaskCurrentlyWorkedOn ? Integer.MAX_VALUE : getCurrentWorkedMinutes()) / getDayMinutesOfWorkTotal(LocalDate.now());
 
         if (percentage > 1) {
             percentage = 1;

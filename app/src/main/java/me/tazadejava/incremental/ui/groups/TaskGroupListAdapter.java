@@ -260,7 +260,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 darkColor.setColor(group.getBeginColor());
                 lightColor.setColor(group.getEndColor());
 
-                unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * 0.5), unwrapped.getLayerHeight(1));
+                unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * 0.8), unwrapped.getLayerHeight(1));
 
                 viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
             }

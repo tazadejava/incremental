@@ -3,6 +3,7 @@ package me.tazadejava.incremental.ui.statistics;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -42,6 +43,8 @@ import me.tazadejava.incremental.ui.main.Utils;
 
 public class StatisticsFragment extends Fragment implements BackPressedInterface {
 
+    private GroupStatisticsAdapter groupStatisticsAdapter;
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
         addTaskButton.setVisibility(View.GONE);
@@ -56,7 +59,7 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
         RecyclerView dailyGroupTrendsRecyclerView = root.findViewById(R.id.dailyGroupTrendsRecyclerView);
         dailyGroupTrendsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        dailyGroupTrendsRecyclerView.setAdapter(new GroupStatisticsAdapter(getActivity(), ((IncrementalApplication) getActivity().getApplication()).getTaskManager()));
+        dailyGroupTrendsRecyclerView.setAdapter(groupStatisticsAdapter = new GroupStatisticsAdapter(getActivity(), ((IncrementalApplication) getActivity().getApplication()).getTaskManager()));
 
         return root;
     }
@@ -254,6 +257,19 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
         chart.setData(data);
         chart.animateY(500, Easing.EaseOutCubic);
+
+        //add touch listener
+
+        chart.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    groupStatisticsAdapter.reverseAllWeeklyCharts();
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     @Override
