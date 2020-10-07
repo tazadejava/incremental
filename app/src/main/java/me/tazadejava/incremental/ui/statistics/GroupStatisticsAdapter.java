@@ -1,6 +1,5 @@
 package me.tazadejava.incremental.ui.statistics;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -9,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.animation.Easing;
@@ -24,12 +22,15 @@ import com.github.mikephil.charting.formatter.DefaultValueFormatter;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
@@ -54,6 +55,9 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
     private Activity activity;
 
+    private List<DayOfWeek> daysOfWeek;
+    private int currentDayOfWeek;
+
     private TimePeriod timePeriod;
     private List<Group> groups;
     private StatsManager statsManager;
@@ -61,63 +65,37 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
     private int dateWeeksSize;
     private HashMap<Group, Integer> maxIndex = new HashMap<>();
     private HashMap<Group, Integer> maxMinutes = new HashMap<>();
-    private HashMap<Group, List<BarEntry>> barEntryValues = new HashMap<>();
+    private HashMap<Group, List<Integer>> weeklyAverageMinutesByGroupAndDay = new HashMap<>();
 
     private HashMap<Group, Integer> maxIndexCurrentWeek = new HashMap<>();
     private HashMap<Group, Integer> maxMinutesCurrentWeek = new HashMap<>();
-    private HashMap<Group, List<BarEntry>> barEntryValuesCurrentWeek = new HashMap<>();
+    private HashMap<Group, List<Integer>> currentWeekAveragesByGroupAndDay = new HashMap<>();
 
-    private HashMap<Group, Boolean> isViewingWeeklyAverage = new HashMap<>();
+    private boolean isViewingWeeklyAverage = true;
 
     public GroupStatisticsAdapter(Activity activity, TaskManager taskManager) {
         this.activity = activity;
         timePeriod = taskManager.getCurrentTimePeriod();
 
+        daysOfWeek = new ArrayList<>(Arrays.asList(DayOfWeek.values()));
+
+        currentDayOfWeek = daysOfWeek.indexOf(LocalDate.now().getDayOfWeek());
+
         groups = new ArrayList<>(timePeriod.getAllGroups());
         statsManager = timePeriod.getStatsManager();
 
         calculateDailyTrends();
-
-        for(Group group : groups) {
-            isViewingWeeklyAverage.put(group, true);
-        }
-
-        //sort them by maxIndex
-        groups.sort(new Comparator<Group>() {
-            @Override
-            public int compare(Group group, Group t1) {
-                return Integer.compare(maxMinutes.get(t1), maxMinutes.get(group));
-            }
-        });
     }
 
     /**
      * If viewing weekly average, switch to current week, and vice versa. Takes the value of the first group in the list only.
      */
-    public void reverseAllWeeklyCharts() {
-        boolean weeklyAverage = !isViewingWeeklyAverage.get(groups.get(0));
-
-        for(Group group : groups) {
-            isViewingWeeklyAverage.put(group, weeklyAverage);
-        }
-
-        if(weeklyAverage) {
-            groups.sort(new Comparator<Group>() {
-                @Override
-                public int compare(Group group, Group t1) {
-                    return Integer.compare(maxMinutes.get(t1), maxMinutes.get(group));
-                }
-            });
-        } else {
-            groups.sort(new Comparator<Group>() {
-                @Override
-                public int compare(Group group, Group t1) {
-                    return Integer.compare(maxMinutesCurrentWeek.get(t1), maxMinutesCurrentWeek.get(group));
-                }
-            });
-        }
+    public boolean reverseAllWeeklyCharts() {
+        isViewingWeeklyAverage = !isViewingWeeklyAverage;
 
         notifyDataSetChanged();
+
+        return isViewingWeeklyAverage;
     }
 
     private void calculateDailyTrends() {
@@ -147,14 +125,14 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
                 }
             }
 
-            List<BarEntry> values = new ArrayList<>();
+            List<Integer> values = new ArrayList<>();
             int maxMinutes = 0;
 
             int i = 0;
             for (int mins : totalMinutes) {
                 maxMinutes = Math.max(maxMinutes, mins);
 
-                values.add(new BarEntry(i, mins / dateWeeks.size()));
+                values.add(mins / dateWeeks.size());
                 i++;
             }
 
@@ -172,18 +150,18 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
             this.maxIndex.put(group, maxIndex);
             this.maxMinutes.put(group, maxMinutes);
-            this.barEntryValues.put(group, values);
+            this.weeklyAverageMinutesByGroupAndDay.put(group, values);
 
             //also, calculate the current week's numbers and data
 
             maxIndex = 0;
             maxMinutes = 0;
-            List<BarEntry> entriesByDay = new ArrayList<>();
+            List<Integer> entriesByDay = new ArrayList<>();
 
             int index = 0;
             for(LocalDate date : LogicalUtils.getWorkWeekDates()) {
                 int minutesWorked = statsManager.getMinutesWorkedByGroup(group, date);
-                entriesByDay.add(new BarEntry(index, minutesWorked));
+                entriesByDay.add(minutesWorked);
 
                 if(minutesWorked > maxMinutes) {
                     maxMinutes = minutesWorked;
@@ -193,27 +171,25 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
                 index++;
             }
 
-            BarDataSet barDataSet = new BarDataSet(entriesByDay, "");
-            barDataSet.setDrawValues(false);
-
             this.maxIndexCurrentWeek.put(group, maxIndex);
             this.maxMinutesCurrentWeek.put(group, maxMinutes);
-            this.barEntryValuesCurrentWeek.put(group, entriesByDay);
+            this.currentWeekAveragesByGroupAndDay.put(group, entriesByDay);
         }
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Group group = groups.get(position);
+        DayOfWeek dow = daysOfWeek.get(position);
 
         BarChart chart = holder.chart;
 
         //define the graph
 
-        chart.setPinchZoom(false);
         chart.setDrawGridBackground(false);
         chart.setAutoScaleMinMaxEnabled(true);
-        chart.setScaleEnabled(false);
+        chart.setPinchZoom(false);
+        chart.setScaleXEnabled(false);
+        chart.setScaleYEnabled(false);
         chart.setHighlightFullBarEnabled(false);
         chart.setHighlightPerTapEnabled(false);
         chart.setHighlightPerDragEnabled(false);
@@ -260,66 +236,92 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
         //set to respective chart
 
-        if(isViewingWeeklyAverage.get(group)) {
-            setChartToWeeklyAverage(group, chart, description);
+        if(isViewingWeeklyAverage) {
+            setChartToWeeklyAverage(dow, chart, description);
         } else {
-            setChartToCurrentWeek(group, chart, description);
+            setChartToCurrentWeek(dow, chart, description);
         }
 
-        chart.animateY(500, Easing.EaseOutCubic);
+        chart.animateY(300, Easing.EaseOutCubic);
 
         //attach touch listener
 
-        chart.setOnTouchListener((view, motionEvent) -> {
-            if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                if(isViewingWeeklyAverage.get(group)) {
-                    setChartToCurrentWeek(group, chart, description);
-                } else {
-                    setChartToWeeklyAverage(group, chart, description);
-                }
-                isViewingWeeklyAverage.put(group, !isViewingWeeklyAverage.get(group));
-                return true;
-            }
+//        chart.setOnTouchListener((view, motionEvent) -> {
+//            if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
+//                if(isViewingWeeklyAverage) {
+//                    setChartToCurrentWeek(dow, chart, description);
+//                } else {
+//                    setChartToWeeklyAverage(dow, chart, description);
+//                }
+//                isViewingWeeklyAverage = !isViewingWeeklyAverage;
+//                return true;
+//            }
+//
+//            return false;
+//        });
+    }
 
-            return false;
+    private void setCustomDataChart(DayOfWeek dow, BarChart chart, Description description, HashMap<Group, List<Integer>> minuteValues) {
+        int dowIndex = daysOfWeek.indexOf(dow);
+
+        //calculate the minutes by group
+
+        List<BarEntry> barEntries = new ArrayList<>();
+
+        HashMap<Group, Integer> minutesByGroupForDOW = new HashMap<>();
+
+        for(Group group : groups) {
+            int minutes = minuteValues.get(group).get(dowIndex);
+            if(minutes > 0) {
+                minutesByGroupForDOW.put(group, minutes);
+            }
+        }
+
+        List<Group> groups = new ArrayList<>(minutesByGroupForDOW.keySet());
+
+        groups.sort(new Comparator<Group>() {
+            @Override
+            public int compare(Group group, Group t1) {
+                return minutesByGroupForDOW.get(t1).compareTo(minutesByGroupForDOW.get(group));
+            }
         });
-    }
 
-    private void setChartToWeeklyAverage(Group group, BarChart chart, Description description) {
-        //get the weeks to work with
+        //format group names
 
-        List<String> weeks = new ArrayList<>(Arrays.asList("Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"));
-        int weekSize = weeks.size();
+        String[] groupNames = new String[groups.size()];
 
-        ValueFormatter xAxisFormatter = new IndexAxisValueFormatter(weeks);
+        int maxMinutes = 0;
+        int i = 0;
+        for(Group group : groups) {
+            maxMinutes = Math.max(maxMinutes, minutesByGroupForDOW.get(group));
+            barEntries.add(new BarEntry(i, minutesByGroupForDOW.get(group)));
+
+            groupNames[i] = group.getGroupName();
+
+            i++;
+        }
+
+        ValueFormatter xAxisFormatter = new IndexAxisValueFormatter(groupNames);
 
         XAxis xAxis = chart.getXAxis();
-        xAxis.setLabelCount(weekSize);
+        xAxis.setLabelCount(groups.size());
         xAxis.setValueFormatter(xAxisFormatter);
 
         //setup y axis
 
         ((DefaultValueFormatter) chart.getAxisLeft().getValueFormatter()).setup(0);
+        chart.getAxisLeft().setAxisMaximum(maxMinutes * 1.1f);
 
-        description.setText(group.getGroupName() + " - average min per day (" + dateWeeksSize + ")");
+        //set other chart values
 
-        BarDataSet barDataSet = new BarDataSet(barEntryValues.get(group), "");
+        description.setText(dow.getDisplayName(TextStyle.FULL, Locale.US) + " (" + dateWeeksSize + ")");
+
+        BarDataSet barDataSet = new BarDataSet(barEntries, "");
         barDataSet.setDrawValues(false);
 
-        int maxIndex = this.maxIndex.get(group);
-
-        int[] colors = new int[weekSize];
-        for(int index = 0; index < weekSize; index++) {
-            int relativeWeek = index == maxIndex ? 0 : 1;
-
-            switch(relativeWeek) {
-                case 0:
-                    colors[index] = ContextCompat.getColor(activity, R.color.primaryColor);
-                    break;
-                case 1:
-                    colors[index] = ContextCompat.getColor(activity, R.color.secondaryColor);
-                    break;
-            }
+        int[] colors = new int[groups.size()];
+        for(int index = 0; index < colors.length; index++) {
+            colors[index] = groups.get(index).getBeginColor();
         }
         barDataSet.setColors(colors);
 
@@ -327,46 +329,12 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
         chart.setData(data);
     }
 
-    private void setChartToCurrentWeek(Group group, BarChart chart, Description description) {
-        //instead of calculating average values, show the current week's minutes
+    private void setChartToWeeklyAverage(DayOfWeek dow, BarChart chart, Description description) {
+        setCustomDataChart(dow, chart, description, weeklyAverageMinutesByGroupAndDay);
+    }
 
-        //get the weeks to work with
-
-        List<String> weeks = new ArrayList<>(Arrays.asList("Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun"));
-        int weekSize = weeks.size();
-
-        ValueFormatter xAxisFormatter = new IndexAxisValueFormatter(weeks);
-
-        XAxis xAxis = chart.getXAxis();
-        xAxis.setLabelCount(weekSize);
-        xAxis.setValueFormatter(xAxisFormatter);
-
-        //setup y axis
-
-        ((DefaultValueFormatter) chart.getAxisLeft().getValueFormatter()).setup(0);
-
-        description.setText(group.getGroupName() + " - min daily for this week");
-
-        BarDataSet barDataSet = new BarDataSet(barEntryValuesCurrentWeek.get(group), "");
-        barDataSet.setDrawValues(false);
-
-        int[] colors = new int[weekSize];
-        for(int index = 0; index < weekSize; index++) {
-            int relativeWeek = index == maxIndexCurrentWeek.get(group) ? 0 : 1;
-
-            switch(relativeWeek) {
-                case 0:
-                    colors[index] = ContextCompat.getColor(activity, R.color.primaryColor);
-                    break;
-                case 1:
-                    colors[index] = ContextCompat.getColor(activity, R.color.secondaryColor);
-                    break;
-            }
-        }
-        barDataSet.setColors(colors);
-
-        BarData data = new BarData(barDataSet);
-        chart.setData(data);
+    private void setChartToCurrentWeek(DayOfWeek dow, BarChart chart, Description description) {
+        setCustomDataChart(dow, chart, description, currentWeekAveragesByGroupAndDay);
     }
 
     @NonNull
@@ -378,6 +346,6 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
     @Override
     public int getItemCount() {
-        return groups.size();
+        return isViewingWeeklyAverage ? daysOfWeek.size() : currentDayOfWeek + 1;
     }
 }

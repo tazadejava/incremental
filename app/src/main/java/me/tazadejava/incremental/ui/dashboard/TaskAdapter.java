@@ -417,7 +417,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setCancelable(false);
                             finishedTaskBuilder.setTitle("Did you finish the task?");
 
-                            int minutesWorked = Integer.parseInt(input.getText().toString());
+                            int minutesWorked;
+                            if(input.getText().length() == 0) {
+                                minutesWorked = 0;
+                            } else {
+                                minutesWorked = Integer.parseInt(input.getText().toString());
+                            }
 
                             if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate()) && dayPosition == 0) {
                                 finishedTaskBuilder.setPositiveButton("Finished for today!", new DialogInterface.OnClickListener() {

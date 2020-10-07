@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -45,6 +46,8 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
     private GroupStatisticsAdapter groupStatisticsAdapter;
 
+    private TextView dailyGroupTrends;
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
         addTaskButton.setVisibility(View.GONE);
@@ -52,6 +55,10 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
         View root = inflater.inflate(R.layout.fragment_statistics, container, false);
+
+        dailyGroupTrends = root.findViewById(R.id.dailyGroupTrendsText);
+
+        dailyGroupTrends.setText("Workload Trends Overall (min)");
 
         BarChart workloadTrendsChart = root.findViewById(R.id.workloadTrendChart);
 
@@ -264,7 +271,11 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                    groupStatisticsAdapter.reverseAllWeeklyCharts();
+                    if(groupStatisticsAdapter.reverseAllWeeklyCharts()) {
+                        dailyGroupTrends.setText("Workload Trends Overall (min)");
+                    } else {
+                        dailyGroupTrends.setText("Workload Trends This Week (min)");
+                    }
                     return true;
                 }
                 return false;
