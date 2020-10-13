@@ -34,7 +34,7 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.Utils;
 

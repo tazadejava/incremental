@@ -14,10 +14,9 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 
 public class StatsManager {
 

@@ -4,8 +4,13 @@ import android.graphics.Color;
 
 import com.chroma.Chroma;
 import com.chroma.ColorSpace;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Group {
@@ -14,6 +19,8 @@ public class Group {
     private double color;
 
     private int beginColor, endColor;
+
+    private HashMap<String, SubGroup> subGroups = new HashMap<>();
 
     public Group(String name) {
         this.name = name;
@@ -26,6 +33,12 @@ public class Group {
         name = data.get("name").getAsString();
 
         setColor(data.get("color").getAsDouble());
+
+        if(data.has("subgroups")) {
+            for (Map.Entry<String, JsonElement> subgroup : data.get("subgroups").getAsJsonObject().entrySet()) {
+                subGroups.put(subgroup.getKey(), new SubGroup(subgroup.getValue().getAsJsonObject()));
+            }
+        }
     }
 
     public JsonObject save() {
@@ -33,6 +46,14 @@ public class Group {
 
         data.addProperty("name", name);
         data.addProperty("color", color);
+
+        JsonObject subgroups = new JsonObject();
+
+        for(String subgroupName : subGroups.keySet()) {
+            subgroups.add(subgroupName, subGroups.get(subgroupName).save());
+        }
+
+        data.add("subgroups", subgroups);
 
         return data;
     }
@@ -70,6 +91,19 @@ public class Group {
 
     public int getEndColor() {
         return endColor;
+    }
+
+    public void addNewSubgroup(String subGroupName) {
+        subGroups.put(subGroupName, new SubGroup(subGroupName));
+    }
+
+    public SubGroup getSubGroupByName(String name) {
+        return subGroups.getOrDefault(name, null);
+    }
+
+    public List<String> getAllCurrentSubgroupNames() {
+        List<String> names = new ArrayList<>(subGroups.keySet());
+        return names;
     }
 
     @Override

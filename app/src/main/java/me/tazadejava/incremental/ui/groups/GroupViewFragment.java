@@ -3,7 +3,6 @@ package me.tazadejava.incremental.ui.groups;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -28,13 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.CustomOptionsMenu;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
-import me.tazadejava.incremental.ui.main.SettingsActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class GroupViewFragment extends Fragment implements BackPressedInterface, CustomOptionsMenu {

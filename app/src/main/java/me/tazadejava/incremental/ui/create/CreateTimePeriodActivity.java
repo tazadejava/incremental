@@ -18,7 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.time.LocalDate;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;

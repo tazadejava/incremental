@@ -22,7 +22,6 @@ import java.util.List;
 import me.tazadejava.incremental.logic.customserializers.LocalDateAdapter;
 import me.tazadejava.incremental.logic.customserializers.LocalDateTimeAdapter;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
 
 public class TaskManager {
 

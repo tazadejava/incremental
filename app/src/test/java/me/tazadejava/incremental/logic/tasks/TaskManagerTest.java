@@ -6,8 +6,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
-
 import static org.junit.Assert.*;
 
 public class TaskManagerTest {

@@ -19,7 +19,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/useAverageRepeatingSwitch" />
+        app:layout_constraintTop_toBottomOf="@+id/repeatingWeeksInput" />
 
     <TextView
         android:id="@+id/startDateTitleText"
@@ -184,18 +184,6 @@
         app:layout_constraintTop_toBottomOf="@+id/duplicateAllTaskEntries">
 
     </androidx.recyclerview.widget.RecyclerView>
-
-    <Switch
-        android:id="@+id/useAverageRepeatingSwitch"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="Calculate workload week estimates using average worktimes from previous weeks?"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/repeatingWeeksInput"
-        tools:checked="true" />
 
     <Spinner
         android:id="@+id/dueDayOfWeek"

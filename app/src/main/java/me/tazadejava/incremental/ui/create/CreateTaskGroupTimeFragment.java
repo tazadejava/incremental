@@ -25,7 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.SubGroup;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -40,9 +41,9 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         if(taskManager.getActiveEditTask() != null) {
-            act.setTitle(act.isRepeatingTask() ? "Edit routine task" : "Edit one-time task");
+            act.setTitle("Edit task");
         } else {
-            act.setTitle(act.isRepeatingTask() ? "Create new routine task" : "Create new one-time task");
+            act.setTitle(act.getIsBatchCreation() ? "Batch-create new tasks" : "Create new task");
         }
         act.setBackPressedInterface(this);
 
@@ -66,7 +67,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(act.isRepeatingTask()) {
+                if(act.getIsBatchCreation()) {
                     act.getSupportFragmentManager().beginTransaction()
                             .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right, R.anim.slide_in_right, R.anim.slide_out_left)
                             .replace(R.id.createTaskFrame, new CreateTaskRepeatingNameDateFragment())
@@ -115,6 +116,17 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
         ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
         groupSpinner.setAdapter(groupSpinnerAdapter);
+
+        Spinner subgroupSpinner = root.findViewById(R.id.subgroupSpinner);
+
+        //initialize subgroup items before setting group click listener
+
+        List<String> subgroupItems = new ArrayList<>();
+        subgroupItems.add("No subgroup");
+        if(act.getSelectedGroup() != null) {
+            subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
+        }
+        ArrayAdapter<String> subgroupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, subgroupItems);
 
         groupSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -216,6 +228,21 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                     }
 
                     updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
+
+                    if(position == 0) {
+                        //remove subgroup options
+                        subgroupItems.clear();
+                        subgroupItems.add("No subgroup");
+
+                        subgroupSpinner.setEnabled(false);
+                    } else {
+                        subgroupItems.clear();
+                        subgroupItems.add("No subgroup");
+                        subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
+                        subgroupItems.add("Add new subgroup...");
+
+                        subgroupSpinner.setEnabled(true);
+                    }
                 }
             }
 
@@ -246,6 +273,110 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
             }
         });
 
+        //create subgroup spinner
+
+        subgroupSpinner.setAdapter(subgroupSpinnerAdapter);
+
+        subgroupSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+            private int lastPosition = 0;
+
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(!subgroupSpinner.isEnabled()) {
+                    return;
+                }
+                //If the user has no classes or needs a new one, open a dialog to create a new one!
+                if(position == subgroupItems.size() - 1) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    builder.setTitle("Create new subgroup");
+                    builder.setMessage("Group: " + groupSpinner.getSelectedItem());
+
+                    EditText input = new EditText(getContext());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+
+                    builder.setView(input);
+
+                    builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if(!input.getText().toString().isEmpty()) {
+                                lastPosition = position;
+
+                                String subgroupName = input.getText().toString();
+
+                                if(!items.contains(subgroupName)) {
+                                    items.add(items.size() - 1, subgroupName);
+
+                                    act.getSelectedGroup().addNewSubgroup(subgroupName);
+
+                                    taskManager.saveData(true, taskManager.getCurrentTimePeriod());
+
+                                    subgroupItems.clear();
+                                    subgroupItems.add("No subgroup");
+                                    subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
+                                    subgroupItems.add("Add new subgroup...");
+
+                                    subgroupSpinner.setSelection(items.size() - 2);
+                                    subgroupSpinnerAdapter.notifyDataSetChanged();
+                                } else {
+                                    AlertDialog.Builder failedToCreateGroup = new AlertDialog.Builder(getContext());
+                                    failedToCreateGroup.setTitle("Failed to create subgroup!");
+                                    failedToCreateGroup.setMessage("A subgroup with that name already exists!");
+                                    failedToCreateGroup.show();
+                                }
+
+                                act.setSelectedSubgroup(act.getSelectedGroup().getSubGroupByName(subgroupName));
+
+                                Utils.hideKeyboard(input);
+                            }
+                        }
+                    });
+
+                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Utils.hideKeyboard(input);
+                        }
+                    });
+
+                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            subgroupSpinner.setSelection(lastPosition);
+                            Utils.hideKeyboard(input);
+                        }
+                    });
+
+                    builder.show();
+                    input.requestFocus();
+
+                    InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                } else {
+                    lastPosition = position;
+
+                    if(subgroupSpinner.getSelectedItemPosition() != AdapterView.INVALID_POSITION && subgroupSpinner.getSelectedItemPosition() != 0) {
+                        SubGroup subgroup = act.getSelectedGroup().getSubGroupByName(subgroupSpinner.getSelectedItem().toString());
+                        act.setSelectedSubgroup(subgroup);
+
+                        if(subgroup.haveMinutesBeenSet()) {
+                            minutesToCompleteTask.setText(String.valueOf(subgroup.getAveragedEstimatedMinutes()));
+                        }
+                    }
+
+                    updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        subgroupSpinner.setEnabled(false);
+
         //check for previous data
 
         if(act.getSelectedGroup() != null) {
@@ -253,6 +384,17 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
             if(taskManager.getActiveEditTask() == null) {
                 updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+            }
+
+            subgroupSpinner.setEnabled(true);
+
+            subgroupItems.clear();
+            subgroupItems.add("No subgroup");
+            subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
+            subgroupItems.add("Add new subgroup...");
+
+            if(act.getSelectedSubgroup() != null) {
+                subgroupSpinner.setSelection(subgroupSpinnerAdapter.getPosition(act.getSelectedSubgroup().getName()));
             }
         }
 

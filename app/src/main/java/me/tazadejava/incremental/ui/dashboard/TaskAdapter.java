@@ -11,15 +11,12 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.TransitionDrawable;
-import android.os.Handler;
 import android.text.InputType;
 import android.transition.TransitionManager;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnticipateOvershootInterpolator;
-import android.view.animation.BounceInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -41,11 +38,10 @@ import java.util.Locale;
 import java.util.Set;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
@@ -186,10 +182,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         if(date.equals(LocalDate.now())) {
             int minutesLeftToday = task.getTodaysMinutesLeftIncludingCurrentWork();
 
-            if(minutesLeftToday < 0) {
-                minutesLeftToday = 0;
-            }
-
             holder.dailyTimeRemaining.setText(Utils.formatHourMinuteTime(minutesLeftToday) + " of work left today");
         } else {
             int minutesLeft = task.getDayMinutesOfWorkTotal(date);
@@ -280,7 +272,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskCardConstraintLayout.post(new Runnable() {
             @Override
             public void run() {
-                unwrapped.setLayerSize(1, (int) ((double) holder.taskCardConstraintLayout.getWidth() * (date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage())), unwrapped.getLayerHeight(1));
+                unwrapped.setLayerSize(1, (int) ((double) holder.taskCardConstraintLayout.getWidth() *
+                        (date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage())),
+                        unwrapped.getLayerHeight(1));
 
                 if(animateCardChanges) {
                     TransitionDrawable transitionDrawable = new TransitionDrawable(new Drawable[]{lightColor, unwrapped});

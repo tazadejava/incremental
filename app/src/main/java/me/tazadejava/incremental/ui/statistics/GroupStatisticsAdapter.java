@@ -3,7 +3,6 @@ package me.tazadejava.incremental.ui.statistics;
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -36,7 +35,7 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.Utils;
 

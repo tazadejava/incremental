@@ -8,17 +8,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.SubGroup;
 
 public class NonrepeatingTask extends TaskGenerator {
 
     private boolean hasTaskStarted;
 
-    public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, int estimatedMinutesToCompletion) {
+    public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, SubGroup subgroup, int estimatedMinutesToCompletion) {
         super(taskManager, startDate, timePeriod);
 
         hasTaskStarted = false;
-        allTasks = new Task[] {new Task(this, taskName, dueDateTime, taskGroup, timePeriod, estimatedMinutesToCompletion)};
+        allTasks = new Task[] {new Task(this, taskName, dueDateTime, taskGroup, subgroup, timePeriod, estimatedMinutesToCompletion)};
     }
 
     public static NonrepeatingTask createInstance(Gson gson, TaskManager taskManager, TimePeriod timePeriod, JsonObject data) {
@@ -43,9 +43,9 @@ public class NonrepeatingTask extends TaskGenerator {
         return data;
     }
 
-    public void updateAndSaveTask(LocalDate startDate, String name, LocalDateTime dueDateTime, Group group, int estimatedMinutesToCompletion) {
+    public void updateAndSaveTask(LocalDate startDate, String name, LocalDateTime dueDateTime, Group group, SubGroup subgroup, int estimatedMinutesToCompletion) {
         //update changes
-        allTasks[0].editTask(name, dueDateTime, group, estimatedMinutesToCompletion);
+        allTasks[0].editTask(name, dueDateTime, group, subgroup, estimatedMinutesToCompletion);
 
         this.startDate = startDate;
 

@@ -22,10 +22,9 @@ import java.util.List;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
-import me.tazadejava.incremental.logic.tasks.RepeatingTask;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
@@ -89,11 +88,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         if(task.getStartDate() != null) {
             startDate = task.getStartDate();
         } else {
-            if(task.getParent() instanceof RepeatingTask) {
-                startDate = ((RepeatingTask) task.getParent()).getTaskStartDate(task);
-            } else {
-                startDate = task.getParent().getStartDate();
-            }
+            startDate = task.getParent().getStartDate();
         }
 
         return startDate;

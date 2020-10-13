@@ -59,7 +59,7 @@ public class CreateTaskTaskTypeFragment extends Fragment implements BackPressedI
                 }
 
                 if (b) {
-                    act.setRepeatingTask(false);
+                    act.setIsBatchCreation(false);
                 }
             }
         });
@@ -72,17 +72,17 @@ public class CreateTaskTaskTypeFragment extends Fragment implements BackPressedI
                 }
 
                 if(b) {
-                    act.setRepeatingTask(true);
+                    act.setIsBatchCreation(true);
                 }
             }
         });
 
         //check for previous data
 
-        if(act.isRepeatingTask() != null) {
+        if(act.getIsBatchCreation() != null) {
             nextButton.setEnabled(true);
 
-            if(act.isRepeatingTask()) {
+            if(act.getIsBatchCreation()) {
                 repeatingTaskRadioButton.setChecked(true);
             } else {
                 oneTimeTaskRadioButton.setChecked(true);

@@ -10,8 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
-
 public abstract class TaskGenerator {
 
     protected LocalDateTime creationTime;
@@ -30,6 +28,10 @@ public abstract class TaskGenerator {
     }
 
     public void completeTask(Task task, int totalMinutesWorked) {
+        if(task.isInSubGroup()) {
+            task.getSubgroup().completeTask(totalMinutesWorked);
+        }
+
         taskManager.completeTask(task);
     }
 

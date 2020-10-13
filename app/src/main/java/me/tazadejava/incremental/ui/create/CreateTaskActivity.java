@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
@@ -17,17 +16,20 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.SubGroup;
 import me.tazadejava.incremental.logic.tasks.NonrepeatingTask;
-import me.tazadejava.incremental.logic.tasks.RepeatingTask;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
@@ -40,8 +42,9 @@ public class CreateTaskActivity extends AppCompatActivity {
 
     private FrameLayout frame;
 
-    private Boolean isRepeatingTask;
+    private Boolean isBatchCreation;
     private Group selectedGroup;
+    private SubGroup selectedSubgroup;
     private int minutesToCompletion = -1;
 
     private String taskName;
@@ -66,33 +69,15 @@ public class CreateTaskActivity extends AppCompatActivity {
             //fill in the data
             Task activeTask = taskManager.getActiveEditTask();
 
-            isRepeatingTask = activeTask.getParent() instanceof RepeatingTask;
             selectedGroup = activeTask.getGroup();
+            selectedSubgroup = activeTask.getSubgroup();
             minutesToCompletion = activeTask.getEstimatedCompletionTime();
 
             startDate = activeTask.getParent().getStartDate();
             dueTime = activeTask.getDueDateTime().toLocalTime();
 
-            if(isRepeatingTask) {
-                RepeatingTask generator = (RepeatingTask) activeTask.getParent();
-                taskNames = generator.getTaskNames();
-
-                useAverageEstimateRepeating = generator.getUseAverageInWorktimeEstimate();
-
-                disabledTasks = new HashSet<>();
-
-                for(int i = 0; i < taskNames.length; i++) {
-                    if(taskNames[i].isEmpty()) {
-                        disabledTasks.add(i);
-                    }
-                }
-
-                dueDayOfWeek = activeTask.getDueDateTime().getDayOfWeek();
-            } else {
-                taskName = activeTask.getName();
-
-                dueDate = activeTask.getDueDateTime().toLocalDate();
-            }
+            taskName = activeTask.getName();
+            dueDate = activeTask.getDueDateTime().toLocalDate();
 
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.createTaskFrame, new CreateTaskGroupTimeFragment())
@@ -110,37 +95,48 @@ public class CreateTaskActivity extends AppCompatActivity {
         //to avoid having errors with timing (particularly being overdue on the minute of), we will make the seconds marker at :59 for due times
         dueTime = dueTime.withSecond(59);
 
+        //update subgroup original time estimation ONLY IF is the first task being created with it
+        if(selectedSubgroup != null && !selectedSubgroup.haveMinutesBeenSet()) {
+            selectedSubgroup.setOriginalEstimatedMinutesCompletion(minutesToCompletion);
+        }
+
         if(taskManager.getActiveEditTask() != null) {
             Task editTask = taskManager.getActiveEditTask();
             taskManager.setActiveEditTask(null);
 
-            if(editTask.isRepeatingTask()) {
-                ((RepeatingTask) editTask.getParent()).updateAndSaveTask(taskNames,
-                        startDate.getDayOfWeek(), dueDayOfWeek, dueTime, selectedGroup, minutesToCompletion, useAverageEstimateRepeating);
-            } else {
-                LocalDateTime dueDateAndTime = dueDate.atStartOfDay().withHour(dueTime.getHour()).withMinute(dueTime.getMinute());
-                ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDate, taskName, dueDateAndTime, selectedGroup, minutesToCompletion);
-            }
+            LocalDateTime dueDateAndTime = dueDate.atStartOfDay().withHour(dueTime.getHour()).withMinute(dueTime.getMinute());
+                ((NonrepeatingTask) editTask.getParent()).updateAndSaveTask(startDate, taskName, dueDateAndTime, selectedGroup, selectedSubgroup, minutesToCompletion);
         } else {
-            if (isRepeatingTask) {
-                taskManager.addNewGeneratedTask(new RepeatingTask(taskManager, taskNames,
-                        startDate, startDate.getDayOfWeek(), dueDayOfWeek, dueTime, selectedGroup, timePeriod, minutesToCompletion, useAverageEstimateRepeating));
+            if (isBatchCreation) {
+                List<LocalDate> startDates = new ArrayList<>();
+                List<DayOfWeek> dueDayOfWeeks = new ArrayList<>();
+
+                startDates.add(startDate);
+                dueDayOfWeeks.add(dueDayOfWeek);
+
+                if(additionalDueDatesRepeating != null && !additionalDueDatesRepeating.isEmpty()) {
+                    for(Map.Entry<LocalDate, DayOfWeek> entry : additionalDueDatesRepeating.entrySet()) {
+                        startDates.add(entry.getKey());
+                        dueDayOfWeeks.add(entry.getValue());
+                    }
+                }
+
+                int startDateIndex = 0;
+                for(LocalDate startDate : startDates) {
+                    DayOfWeek dueDayOfWeek = dueDayOfWeeks.get(startDateIndex);
+                    for (int i = 0; i < taskNames.length; i++) {
+                        if (!taskNames[i].isEmpty()) {
+                            LocalDate taskStartDate = startDate.plusDays(7 * i);
+                            LocalDateTime taskDueDateTime = taskStartDate.plusDays(Utils.getDaysBetweenDaysOfWeek(startDate.getDayOfWeek(), dueDayOfWeek)).atTime(dueTime);
+                            taskManager.addNewGeneratedTask(new NonrepeatingTask(taskManager, taskStartDate, timePeriod, taskNames[i], taskDueDateTime, selectedGroup, selectedSubgroup, minutesToCompletion));
+                        }
+                    }
+
+                    startDateIndex++;
+                }
             } else {
                 LocalDateTime dueDateAndTime = dueDate.atStartOfDay().withHour(dueTime.getHour()).withMinute(dueTime.getMinute());
-                taskManager.addNewGeneratedTask(new NonrepeatingTask(taskManager, startDate, timePeriod, taskName, dueDateAndTime, selectedGroup, minutesToCompletion));
-            }
-        }
-
-        //add additional days of week, if applicable
-        if(isRepeatingTask && additionalDueDatesRepeating != null && !additionalDueDatesRepeating.isEmpty()) {
-            for(LocalDate startDate : additionalDueDatesRepeating.keySet()) {
-                //the repeating tasks are identified by creation date, oops. so to alleviate this, forcibly sleep for a bit of time to ensure creation dates are different
-                SystemClock.sleep(50);
-
-                DayOfWeek dueDayOfWeek = additionalDueDatesRepeating.get(startDate);
-
-                taskManager.addNewGeneratedTask(new RepeatingTask(taskManager, taskNames,
-                        startDate, startDate.getDayOfWeek(), dueDayOfWeek, dueTime, selectedGroup, timePeriod, minutesToCompletion, useAverageEstimateRepeating));
+                taskManager.addNewGeneratedTask(new NonrepeatingTask(taskManager, startDate, timePeriod, taskName, dueDateAndTime, selectedGroup, selectedSubgroup, minutesToCompletion));
             }
         }
 
@@ -180,12 +176,7 @@ public class CreateTaskActivity extends AppCompatActivity {
                 AlertDialog.Builder confirmation = new AlertDialog.Builder(this);
 
                 confirmation.setTitle("Are you sure you want to delete this task?");
-
-                if(taskManager.getActiveEditTask().getParent() instanceof RepeatingTask) {
-                    confirmation.setMessage("All tasks in this chain will be deleted. This cannot be undone!");
-                } else {
-                    confirmation.setMessage("This task will be deleted. This cannot be undone!");
-                }
+                confirmation.setMessage("This task will be deleted. This cannot be undone!");
 
                 confirmation.setPositiveButton("DELETE TASK", new DialogInterface.OnClickListener() {
                     @Override
@@ -217,12 +208,12 @@ public class CreateTaskActivity extends AppCompatActivity {
         }
     }
 
-    public Boolean isRepeatingTask() {
-        return isRepeatingTask;
+    public Boolean getIsBatchCreation() {
+        return isBatchCreation;
     }
 
-    public void setRepeatingTask(boolean repeatingTask) {
-        isRepeatingTask = repeatingTask;
+    public void setIsBatchCreation(boolean isBatchCreation) {
+        this.isBatchCreation = isBatchCreation;
     }
 
     public Group getSelectedGroup() {
@@ -311,5 +302,13 @@ public class CreateTaskActivity extends AppCompatActivity {
 
     public void setAdditionalDueDatesRepeating(HashMap<LocalDate, DayOfWeek> additionalDueDatesRepeating) {
         this.additionalDueDatesRepeating = additionalDueDatesRepeating;
+    }
+
+    public SubGroup getSelectedSubgroup() {
+        return selectedSubgroup;
+    }
+
+    public void setSelectedSubgroup(SubGroup subgroup) {
+        selectedSubgroup = subgroup;
     }
 }

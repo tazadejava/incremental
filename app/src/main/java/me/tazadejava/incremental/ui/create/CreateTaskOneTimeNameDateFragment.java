@@ -36,9 +36,9 @@ public class CreateTaskOneTimeNameDateFragment extends Fragment implements BackP
         TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         if(taskManager.getActiveEditTask() != null) {
-            act.setTitle("Edit one-time task");
+            act.setTitle("Edit task");
         } else {
-            act.setTitle("Create new one-time task");
+            act.setTitle("Create new task");
         }
         act.setBackPressedInterface(this);
 

@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
-import me.tazadejava.incremental.logic.taskmodifiers.TimePeriod;
+import me.tazadejava.incremental.logic.taskmodifiers.SubGroup;
 
 public class Task {
 
@@ -21,6 +21,7 @@ public class Task {
     private String name, taskNotes;
     private LocalDateTime dueDateTime;
     private transient Group group;
+    private transient SubGroup subgroup;
     private transient TimePeriod timePeriod;
     private int estimatedTotalMinutesToCompletion;
 
@@ -29,11 +30,12 @@ public class Task {
     private int totalLoggedMinutesOfWork, loggedMinutesOfWorkToday;
     private LocalDateTime lastTaskWorkEndTime, lastTaskWorkStartTime;
 
-    public Task(TaskGenerator parent, String name, LocalDateTime dueDateTime, Group group, TimePeriod timePeriod, int estimatedTotalMinutesToCompletion) {
+    public Task(TaskGenerator parent, String name, LocalDateTime dueDateTime, Group group, SubGroup subgroup, TimePeriod timePeriod, int estimatedTotalMinutesToCompletion) {
         this.parent = parent;
         this.name = name;
         this.dueDateTime = dueDateTime;
         this.group = group;
+        this.subgroup = subgroup;
         this.timePeriod = timePeriod;
         this.estimatedTotalMinutesToCompletion = estimatedTotalMinutesToCompletion;
 
@@ -52,6 +54,10 @@ public class Task {
         task.timePeriod = timePeriod;
         task.group = timePeriod.getGroupByName(data.get("group").getAsString());
 
+        if(data.has("subGroup")) {
+            task.subgroup = task.group.getSubGroupByName(data.get("subGroup").getAsString());
+        }
+
         if(task.lastTaskWorkStartTime != null && !task.lastTaskWorkStartTime.toLocalDate().equals(LocalDate.now())) {
             task.loggedMinutesOfWorkToday = 0;
         }
@@ -67,6 +73,10 @@ public class Task {
 
         data.addProperty("group", group.getGroupName());
         data.addProperty("parent", parent.getGeneratorID());
+
+        if(subgroup != null) {
+            data.addProperty("subGroup", subgroup.getName());
+        }
 
         return data;
     }
@@ -139,7 +149,13 @@ public class Task {
     }
 
     public float getTodaysTaskCompletionPercentage() {
-        float percentage = (float) Math.min(loggedMinutesOfWorkToday, lastTaskWorkStartTime == null || !isTaskCurrentlyWorkedOn ? Integer.MAX_VALUE : getCurrentWorkedMinutes()) / getDayMinutesOfWorkTotal(LocalDate.now());
+        float percentage;
+        if(isTaskCurrentlyWorkedOn) {
+            percentage = getCurrentWorkedMinutes();
+        } else {
+            percentage = loggedMinutesOfWorkToday;
+        }
+        percentage /= getDayMinutesOfWorkTotal(LocalDate.now());
 
         if (percentage > 1) {
             percentage = 1;
@@ -222,17 +238,17 @@ public class Task {
         parent.saveTaskToFile();
     }
 
+    public void setSubgroup(SubGroup subgroup) {
+        this.subgroup = subgroup;
+    }
+
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 
     public void setTaskNotes(String notes) {
-        if(parent instanceof RepeatingTask) {
-            ((RepeatingTask) parent).setTaskNotes(notes);
-        } else {
-            taskNotes = notes;
-            parent.saveTaskToFile();
-        }
+        taskNotes = notes;
+        parent.saveTaskToFile();
     }
 
     /**
@@ -242,10 +258,11 @@ public class Task {
      * @param group
      * @param estimatedTotalMinutesToCompletion
      */
-    public void editTask(String name, LocalDateTime dueDateTime, Group group, int estimatedTotalMinutesToCompletion) {
+    public void editTask(String name, LocalDateTime dueDateTime, Group group, SubGroup subGroup, int estimatedTotalMinutesToCompletion) {
         this.name = name;
         this.dueDateTime = dueDateTime;
         this.group = group;
+        this.subgroup = subGroup;
         this.estimatedTotalMinutesToCompletion = estimatedTotalMinutesToCompletion;
     }
 
@@ -261,12 +278,16 @@ public class Task {
         return group;
     }
 
+    public boolean isInSubGroup() {
+        return subgroup != null;
+    }
+
+    public SubGroup getSubgroup() {
+        return subgroup;
+    }
+
     public String getTaskNotes() {
-        if(parent instanceof RepeatingTask) {
-            return ((RepeatingTask) parent).getTaskNotes();
-        } else {
-            return taskNotes;
-        }
+        return taskNotes;
     }
 
     /**
@@ -290,10 +311,6 @@ public class Task {
     @Override
     public int hashCode() {
         return Objects.hash(name, dueDateTime, group, timePeriod);
-    }
-
-    public boolean isRepeatingTask() {
-        return parent instanceof RepeatingTask;
     }
 
     public TaskGenerator getParent() {

@@ -52,7 +52,7 @@
             android:layout_height="wrap_content"
             android:paddingTop="16dp"
             android:paddingBottom="16dp"
-            android:text="Routine task"
+            android:text="Batch-create new tasks"
             android:textSize="18sp" />
 
         <TextView
@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
-            android:text="Choose this option only if a task repeats regularly (consistent start/due dates)." />
+            android:text="Choose this option if you wish to create multiple tasks that generally repeat weekly." />
     </RadioGroup>
 
     <com.google.android.material.button.MaterialButton
