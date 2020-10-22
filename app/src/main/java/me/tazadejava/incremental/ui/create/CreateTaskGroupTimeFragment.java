@@ -67,7 +67,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(act.getIsBatchCreation()) {
+                if(act.getIsBatchCreation() != null && act.getIsBatchCreation()) {
                     act.getSupportFragmentManager().beginTransaction()
                             .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right, R.anim.slide_in_right, R.anim.slide_out_left)
                             .replace(R.id.createTaskFrame, new CreateTaskRepeatingNameDateFragment())

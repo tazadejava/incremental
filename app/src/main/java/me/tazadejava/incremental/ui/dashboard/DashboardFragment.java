@@ -297,11 +297,14 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         //refresh contents
 
+        //if new day, then reset the task manager
         if(!lastRefreshDate.equals(LocalDate.now())) {
             lastRefreshDate = LocalDate.now();
-            ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod().checkForPendingTasks();
+            ((IncrementalApplication) getActivity().getApplication()).reset();
+            adapter.reset(((IncrementalApplication) getActivity().getApplication()).getTaskManager());
+        } else {
+            dashboardView.setAdapter(adapter);
         }
-        dashboardView.setAdapter(adapter);
     }
 
     @Override

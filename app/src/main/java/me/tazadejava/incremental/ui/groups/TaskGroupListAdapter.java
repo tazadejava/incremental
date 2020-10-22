@@ -144,7 +144,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         });
 
         int tasksCount = taskManager.getCurrentTimePeriod().getTasksCountThisWeekByGroup(group);
-        int tasksTotal = taskManager.getCurrentTimePeriod().getAllTasksByGroup(group).size();
+        int tasksTotal = taskManager.getCurrentTimePeriod().getAllCurrentAndUpcomingTasksByGroup(group).size();
 
         int[] averageWorkload = getAverageMinutesWorkedPerWeek(group);
 

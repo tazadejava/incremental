@@ -1,10 +1,5 @@
 package me.tazadejava.incremental.logic.tasks;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.view.View;
-import android.widget.EditText;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -26,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -114,6 +110,62 @@ public class TimePeriod {
         }
 
         loadTaskData(taskManager, gson, dataFolder);
+    }
+
+    private LocalDate getStartDate(Task task) {
+        LocalDate startDate;
+        if(task.getStartDate() != null) {
+            startDate = task.getStartDate();
+        } else {
+            startDate = task.getParent().getStartDate();
+        }
+
+        return startDate;
+    }
+
+    public void DEBUG() {
+        HashMap<Group, List<SubGroup>> subGroups = new HashMap<>();
+
+        for(Group group : groups.values()) {
+            subGroups.putIfAbsent(group, new ArrayList<>());
+            subGroups.get(group).addAll(group.getAllSubgroups());
+        }
+
+        for(Group group : subGroups.keySet()) {
+            for(SubGroup subGroup : subGroups.get(group)) {
+                List<Task> tasks = new ArrayList<>();
+
+                for(Task task : getAllTasksByGroup(group)) {
+                    if(task.isInSubGroup() && task.getSubgroup().equals(subGroup)) {
+                        tasks.add(task);
+                    }
+                }
+
+                tasks.sort(new Comparator<Task>() {
+                    @Override
+                    public int compare(Task task, Task t1) {
+                        //sort by subgroup
+                        String subgroup1 = task.getSubgroup() == null ? "zzz" : task.getSubgroup().getName();
+                        String subgroup2 = t1.getSubgroup() == null ? "zzz" : t1.getSubgroup().getName();
+
+                        if (Objects.equals(task.getSubgroup(), t1.getSubgroup())) {
+                            LocalDate startTask1 = getStartDate(task);
+                            LocalDate startTask2 = getStartDate(t1);
+                            if (startTask1.equals(startTask2)) {
+                                return task.getDueDateTime().compareTo(t1.getDueDateTime());
+                            } else {
+                                return startTask1.compareTo(startTask2);
+                            }
+                        } else {
+                            return subgroup1.compareTo(subgroup2);
+                        }
+                    }
+                });
+
+                subGroup.REVISE(tasks);
+                updateSubGroupEstimatedTime(tasks.get(0));
+            }
+        }
     }
 
     /**
@@ -713,10 +765,34 @@ public class TimePeriod {
         return count;
     }
 
-    public Set<Task> getAllTasksByGroup(Group group) {
+    public Set<Task> getAllCurrentAndUpcomingTasksByGroup(Group group) {
         Set<Task> countedTasks = new HashSet<>();
 
         for(TaskGenerator generator : allTaskGenerators) {
+            for(Task task : generator.getAllTasks()) {
+                if(task == null) {
+                    continue;
+                }
+                if(!task.getGroup().equals(group)) {
+                    continue;
+                }
+
+                countedTasks.add(task);
+            }
+        }
+
+        return countedTasks;
+    }
+
+    public Set<Task> getAllTasksByGroup(Group group) {
+        Set<Task> countedTasks = new HashSet<>();
+
+        List<TaskGenerator> generators = new ArrayList<>();
+
+        generators.addAll(allTaskGenerators);
+        generators.addAll(allCompletedTaskGenerators);
+
+        for(TaskGenerator generator : generators) {
             for(Task task : generator.getAllTasks()) {
                 if(task == null) {
                     continue;

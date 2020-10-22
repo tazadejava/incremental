@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
@@ -41,10 +42,10 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
 
             taskGroupName = itemView.findViewById(R.id.timePeriodName);
-            startDate = itemView.findViewById(R.id.estimatedDailyTime);
+            startDate = itemView.findViewById(R.id.estimatedTotalTimeLeft);
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
 
-            workRemaining = itemView.findViewById(R.id.estimatedTotalTimeLeft);
+            workRemaining = itemView.findViewById(R.id.estimatedDailyTime);
             dueDate = itemView.findViewById(R.id.task_due_date);
         }
     }
@@ -65,12 +66,20 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         tasks.sort(new Comparator<Task>() {
             @Override
             public int compare(Task task, Task t1) {
-                LocalDate startTask1 = getStartDate(task);
-                LocalDate startTask2 = getStartDate(t1);
-                if(startTask1.equals(startTask2)) {
-                    return task.getDueDateTime().compareTo(t1.getDueDateTime());
+                //sort by subgroup
+                String subgroup1 = task.getSubgroup() == null ? "zzz" : task.getSubgroup().getName();
+                String subgroup2 = t1.getSubgroup() == null ? "zzz" : t1.getSubgroup().getName();
+
+                if(Objects.equals(task.getSubgroup(), t1.getSubgroup())) {
+                    LocalDate startTask1 = getStartDate(task);
+                    LocalDate startTask2 = getStartDate(t1);
+                    if (startTask1.equals(startTask2)) {
+                        return task.getDueDateTime().compareTo(t1.getDueDateTime());
+                    } else {
+                        return startTask1.compareTo(startTask2);
+                    }
                 } else {
-                    return startTask1.compareTo(startTask2);
+                    return subgroup1.compareTo(subgroup2);
                 }
             }
         });
@@ -98,48 +107,66 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Task task = tasks.get(position);
 
-        updateCardColor(task.getGroup(), holder);
+        if(task.isTaskComplete()) {
+            updateCardColor(task.getGroup(), holder, 1);
 
-        holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                taskManager.setActiveEditTask(task);
+            holder.taskCardConstraintLayout.setOnLongClickListener(null);
 
-                Intent editTask = new Intent(context, CreateTaskActivity.class);
-                context.startActivity(editTask);
-                return true;
+            if(task.getSubgroup() != null) {
+                holder.startDate.setText(task.getSubgroup().getName());
+            } else {
+                holder.startDate.setText("");
             }
-        });
 
-        holder.taskGroupName.setText(task.getName());
+            holder.dueDate.setText("Completed on " + Utils.formatLocalDateWithDayOfWeek(task.getLastTaskWorkedTime().toLocalDate()) + "\n@ " + Utils.formatLocalTime(task.getLastTaskWorkedTime().toLocalTime()));
 
-        LocalDate startDate = getStartDate(task);
+            holder.workRemaining.setText("Worked " + Utils.formatHourMinuteTime(task.getTotalLoggedMinutesOfWork()) + " total");
 
-        holder.startDate.setText("Task starts " + Utils.formatLocalDateWithDayOfWeek(startDate));
-
-        int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
-        holder.workRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
-
-        LocalDateTime dueDateTime = task.getDueDateTime();
-        if(dueDateTime.toLocalDate().equals(LocalDate.now())) {
-            holder.dueDate.setText("Due TODAY" + " @ " + Utils.formatLocalTime(dueDateTime));
+            holder.actionTaskText.setText("");
+            holder.actionTaskText.setOnClickListener(null);
         } else {
-            holder.dueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
+            updateCardColor(task.getGroup(), holder, task.getTaskCompletionPercentage());
+
+            holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    taskManager.setActiveEditTask(task);
+
+                    Intent editTask = new Intent(context, CreateTaskActivity.class);
+                    context.startActivity(editTask);
+                    return true;
+                }
+            });
+
+            LocalDate startDate = getStartDate(task);
+            holder.startDate.setText("Task starts " + Utils.formatLocalDateWithDayOfWeek(startDate));
+
+            int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
+            holder.workRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
+
+            holder.actionTaskText.setText("Edit Task");
+            holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    taskManager.setActiveEditTask(task);
+
+                    Intent editTask = new Intent(context, CreateTaskActivity.class);
+                    context.startActivity(editTask);
+                }
+            });
+
+            LocalDateTime dueDateTime = task.getDueDateTime();
+            if(dueDateTime.toLocalDate().equals(LocalDate.now())) {
+                holder.dueDate.setText("Due TODAY" + " @ " + Utils.formatLocalTime(dueDateTime));
+            } else {
+                holder.dueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
+            }
         }
 
-        holder.actionTaskText.setText("Edit Task");
-        holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                taskManager.setActiveEditTask(task);
-
-                Intent editTask = new Intent(context, CreateTaskActivity.class);
-                context.startActivity(editTask);
-            }
-        });
+        holder.taskGroupName.setText(task.getName());
     }
 
-    private void updateCardColor(Group group, ViewHolder viewHolder) {
+    private void updateCardColor(Group group, ViewHolder viewHolder, float percentage) {
         viewHolder.taskCardConstraintLayout.post(new Runnable() {
             @Override
             public void run() {
@@ -151,7 +178,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                 darkColor.setColor(group.getBeginColor());
                 lightColor.setColor(group.getEndColor());
 
-                unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * 0), unwrapped.getLayerHeight(1));
+                unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * percentage), unwrapped.getLayerHeight(1));
 
                 viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
             }

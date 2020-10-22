@@ -50,7 +50,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         private ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
         private TextView taskName, taskClass, totalTimeRemaining, dailyTimeRemaining, taskDueDate, actionTaskText,
-                secondaryActionTaskText, taskNotes, thirdActionTaskText;
+                secondaryActionTaskText, taskNotes, thirdActionTaskText, bottomLeftIndicator;
 
         private View horizontalLine;
 
@@ -69,6 +69,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
             secondaryActionTaskText = itemView.findViewById(R.id.secondaryActionTaskText);
             thirdActionTaskText = itemView.findViewById(R.id.thirdActionTaskText);
+
+            bottomLeftIndicator = itemView.findViewById(R.id.bottomLeftIndicator);
 
             taskNotes = itemView.findViewById(R.id.taskNotes);
 
@@ -170,6 +172,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         updateNotesView(task, holder);
         holder.taskNotes.setOnClickListener(getAddTaskNotesListener(task, holder));
+
+        if(task.getTaskNotes() == null || task.getTaskNotes().isEmpty()) {
+            holder.bottomLeftIndicator.setText("");
+        } else {
+            holder.bottomLeftIndicator.setText("*");
+        }
 
         taskLayout.put(task, holder);
 

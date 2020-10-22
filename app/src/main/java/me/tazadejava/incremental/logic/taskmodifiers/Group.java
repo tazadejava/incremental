@@ -8,10 +8,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class Group {
 
@@ -104,6 +106,10 @@ public class Group {
     public List<String> getAllCurrentSubgroupNames() {
         List<String> names = new ArrayList<>(subGroups.keySet());
         return names;
+    }
+
+    public Collection<SubGroup> getAllSubgroups() {
+        return subGroups.values();
     }
 
     @Override

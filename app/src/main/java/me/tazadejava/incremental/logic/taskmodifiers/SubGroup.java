@@ -2,7 +2,11 @@ package me.tazadejava.incremental.logic.taskmodifiers;
 
 import com.google.gson.JsonObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+
+import me.tazadejava.incremental.logic.tasks.Task;
 
 public class SubGroup {
 
@@ -23,6 +27,21 @@ public class SubGroup {
         originalEstimatedMinutesCompletion = data.get("originalEstimatedMinutesCompletion").getAsInt();
         totalMinutesWorked = data.get("totalMinutesWorked").getAsInt();
         hasMinutesBeenSet = data.get("hasMinutesBeenSet").getAsBoolean();
+    }
+
+    public void REVISE(List<Task> tasks) {
+        List<Task> inSubgroup = new ArrayList<>();
+
+        for(Task task : tasks) {
+            if(task.isInSubGroup() && task.getSubgroup().equals(this)) {
+                inSubgroup.add(task);
+            }
+        }
+
+        for(int i = 0; i < inSubgroup.size() - completedTasks; i++) {
+            completedTasks++;
+            totalMinutesWorked += inSubgroup.get(i).getTotalLoggedMinutesOfWork();
+        }
     }
 
     public JsonObject save() {
