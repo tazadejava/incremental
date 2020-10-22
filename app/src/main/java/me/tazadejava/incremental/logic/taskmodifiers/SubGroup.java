@@ -29,21 +29,6 @@ public class SubGroup {
         hasMinutesBeenSet = data.get("hasMinutesBeenSet").getAsBoolean();
     }
 
-    public void REVISE(List<Task> tasks) {
-        List<Task> inSubgroup = new ArrayList<>();
-
-        for(Task task : tasks) {
-            if(task.isInSubGroup() && task.getSubgroup().equals(this)) {
-                inSubgroup.add(task);
-            }
-        }
-
-        for(int i = 0; i < inSubgroup.size() - completedTasks; i++) {
-            completedTasks++;
-            totalMinutesWorked += inSubgroup.get(i).getTotalLoggedMinutesOfWork();
-        }
-    }
-
     public JsonObject save() {
         JsonObject data = new JsonObject();
 

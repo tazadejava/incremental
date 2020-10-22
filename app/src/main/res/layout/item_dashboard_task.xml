@@ -62,6 +62,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
                 android:text=""
+                android:textAlignment="textEnd"
                 android:textColor="@color/taskDarkTextColor"
                 app:layout_constraintBottom_toTopOf="@+id/task_due_date"
                 app:layout_constraintEnd_toStartOf="@+id/guideline3" />

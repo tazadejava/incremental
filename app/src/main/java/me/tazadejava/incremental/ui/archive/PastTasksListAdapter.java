@@ -48,10 +48,16 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 
     private List<Task> tasks;
 
-    public PastTasksListAdapter(TaskManager taskManager, Context context) {
+    public PastTasksListAdapter(Context context, List<Task> tasks) {
         this.context = context;
 
-        tasks = taskManager.getCurrentTimePeriod().getCompletedTasksHistory();
+        this.tasks = tasks;
+    }
+
+    public void setTasks(List<Task> tasks) {
+        this.tasks = tasks;
+
+        notifyDataSetChanged();
     }
 
     @NonNull

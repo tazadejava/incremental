@@ -123,8 +123,6 @@ public class TaskManager {
             timePeriods.add(new TimePeriod(this, fileDir, gson, "", LocalDate.now(), null));
             currentTimePeriod = timePeriods.get(0);
         }
-
-        currentTimePeriod.DEBUG();
     }
 
     public void addNewGeneratedTask(TaskGenerator taskGenerator) {

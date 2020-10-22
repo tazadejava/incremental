@@ -123,51 +123,6 @@ public class TimePeriod {
         return startDate;
     }
 
-    public void DEBUG() {
-        HashMap<Group, List<SubGroup>> subGroups = new HashMap<>();
-
-        for(Group group : groups.values()) {
-            subGroups.putIfAbsent(group, new ArrayList<>());
-            subGroups.get(group).addAll(group.getAllSubgroups());
-        }
-
-        for(Group group : subGroups.keySet()) {
-            for(SubGroup subGroup : subGroups.get(group)) {
-                List<Task> tasks = new ArrayList<>();
-
-                for(Task task : getAllTasksByGroup(group)) {
-                    if(task.isInSubGroup() && task.getSubgroup().equals(subGroup)) {
-                        tasks.add(task);
-                    }
-                }
-
-                tasks.sort(new Comparator<Task>() {
-                    @Override
-                    public int compare(Task task, Task t1) {
-                        //sort by subgroup
-                        String subgroup1 = task.getSubgroup() == null ? "zzz" : task.getSubgroup().getName();
-                        String subgroup2 = t1.getSubgroup() == null ? "zzz" : t1.getSubgroup().getName();
-
-                        if (Objects.equals(task.getSubgroup(), t1.getSubgroup())) {
-                            LocalDate startTask1 = getStartDate(task);
-                            LocalDate startTask2 = getStartDate(t1);
-                            if (startTask1.equals(startTask2)) {
-                                return task.getDueDateTime().compareTo(t1.getDueDateTime());
-                            } else {
-                                return startTask1.compareTo(startTask2);
-                            }
-                        } else {
-                            return subgroup1.compareTo(subgroup2);
-                        }
-                    }
-                });
-
-                subGroup.REVISE(tasks);
-                updateSubGroupEstimatedTime(tasks.get(0));
-            }
-        }
-    }
-
     /**
      * Run after all time periods have been defined
      * @param gson
