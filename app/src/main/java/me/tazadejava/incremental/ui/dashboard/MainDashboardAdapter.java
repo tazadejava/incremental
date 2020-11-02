@@ -60,11 +60,6 @@ public class MainDashboardAdapter extends RecyclerView.Adapter<MainDashboardAdap
         tasksToday = new HashSet<>(timePeriod.getTasksByDay(0));
     }
 
-    public void reset(TaskManager taskManager) {
-        this.taskManager = taskManager;
-        notifyDataSetChanged();
-    }
-
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

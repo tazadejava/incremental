@@ -301,7 +301,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         if(!lastRefreshDate.equals(LocalDate.now())) {
             lastRefreshDate = LocalDate.now();
             ((IncrementalApplication) getActivity().getApplication()).reset();
-            adapter.reset(((IncrementalApplication) getActivity().getApplication()).getTaskManager());
+
+            dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getActivity()));
         } else {
             dashboardView.setAdapter(adapter);
         }
