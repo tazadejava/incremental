@@ -21,5 +21,6 @@
     <color name="separatorGray">#b8c2c2</color>
     <color name="darkRed">#d90909</color>
 
-    <color name="gray">#424242</color>
+    <color name="gray">#343434</color>
+    <color name="lightGray">#545454</color>
 </resources>

@@ -167,7 +167,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 StatsManager.StatsGroupPacket packet = new StatsManager.StatsGroupPacket(taskManager.getCurrentTimePeriod().getStatsManager(), group);
 
                 group.randomizeColor();
-                Utils.setViewGradient(group, holder.sideCardAccent, 0.8);
+                Utils.setViewGradient(group, holder.sideCardAccent, 0.5);
                 holder.taskGroupName.setTextColor(group.getLightColor());
                 taskManager.saveData(true);
 

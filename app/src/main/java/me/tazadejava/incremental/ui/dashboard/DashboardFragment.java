@@ -36,7 +36,6 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -48,7 +47,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
     private BarChart workBarChart;
 
     private RecyclerView dashboardView;
-    private MainDashboardAdapter adapter;
+    private MainDashboardDayAdapter adapter;
 
     private Description description;
     private boolean isShowingHours;
@@ -90,7 +89,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         workBarChart.getAxisLeft().setTextColor(primaryTextColor);
 
         dashboardView = root.findViewById(R.id.dashboard_day_list);
-        dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getActivity()));
+        dashboardView.setAdapter(adapter = new MainDashboardDayAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, dashboardView, getActivity()));
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         lastRefreshDate = LocalDate.now();
@@ -303,7 +302,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             lastRefreshDate = LocalDate.now();
             ((IncrementalApplication) getActivity().getApplication()).reset();
 
-            dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getActivity()));
+            dashboardView.setAdapter(adapter = new MainDashboardDayAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, dashboardView, getActivity()));
 
             if(lastRefreshDate.getDayOfWeek() == DayOfWeek.MONDAY) {
                 currentDateOffset++;

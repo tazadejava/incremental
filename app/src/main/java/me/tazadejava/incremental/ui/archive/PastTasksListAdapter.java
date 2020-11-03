@@ -86,7 +86,6 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 
         holder.taskCompletionDate.setText("Completed on " + Utils.formatLocalDateWithDayOfWeek(task.getLastTaskWorkedTime().toLocalDate()) + "\n@ " + Utils.formatLocalTime(task.getLastTaskWorkedTime().toLocalTime()));
 
-
         holder.actionTaskText.setText("");
     }
 
