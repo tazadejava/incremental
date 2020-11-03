@@ -26,6 +26,7 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -303,6 +304,11 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             ((IncrementalApplication) getActivity().getApplication()).reset();
 
             dashboardView.setAdapter(adapter = new MainDashboardAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, getActivity()));
+
+            if(lastRefreshDate.getDayOfWeek() == DayOfWeek.MONDAY) {
+                currentDateOffset++;
+            }
+            refreshChartData();
         } else {
             dashboardView.setAdapter(adapter);
         }

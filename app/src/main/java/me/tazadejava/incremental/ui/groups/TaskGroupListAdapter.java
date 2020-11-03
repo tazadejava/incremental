@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +46,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         public ConstraintLayout taskCardConstraintLayout;
         public TextView taskGroupName, tasksCount, actionTaskText, timePeriodText;
 
+        public View sideCardAccent;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
@@ -55,6 +58,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
 
             timePeriodText = itemView.findViewById(R.id.task_due_date);
+
+            sideCardAccent = itemView.findViewById(R.id.sideCardAccent);
         }
     }
 
@@ -83,9 +88,10 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Group group = groups.get(position);
 
-        updateCardColor(group, holder);
+        Utils.setViewGradient(group, holder.sideCardAccent, 0.5);
 
         holder.taskGroupName.setText(group.getGroupName());
+        holder.taskGroupName.setTextColor(group.getLightColor());
 
         holder.taskGroupName.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -154,13 +160,15 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 + "\n\nAverage workload per week (" + averageWorkload[1] + "): " + Utils.formatHourMinuteTime(averageWorkload[0]));
 
         holder.actionTaskText.setText("Randomize Color");
+        holder.actionTaskText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 StatsManager.StatsGroupPacket packet = new StatsManager.StatsGroupPacket(taskManager.getCurrentTimePeriod().getStatsManager(), group);
 
                 group.randomizeColor();
-                updateCardColor(group, holder);
+                Utils.setViewGradient(group, holder.sideCardAccent, 0.8);
+                holder.taskGroupName.setTextColor(group.getLightColor());
                 taskManager.saveData(true);
 
                 packet.restore();
@@ -246,25 +254,6 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         }
 
         return minutesWorked;
-    }
-
-    private void updateCardColor(Group group, ViewHolder viewHolder) {
-        viewHolder.taskCardConstraintLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
-
-                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
-                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
-
-                darkColor.setColor(group.getBeginColor());
-                lightColor.setColor(group.getEndColor());
-
-                unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * 0.8), unwrapped.getLayerHeight(1));
-
-                viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
-            }
-        });
     }
 
     public void sortByAverageWeekHours() {

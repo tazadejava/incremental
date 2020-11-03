@@ -320,7 +320,7 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
         int[] colors = new int[groups.size()];
         for(int index = 0; index < colors.length; index++) {
-            colors[index] = groups.get(index).getBeginColor();
+            colors[index] = groups.get(index).getDarkColor();
         }
         barDataSet.setColors(colors);
 

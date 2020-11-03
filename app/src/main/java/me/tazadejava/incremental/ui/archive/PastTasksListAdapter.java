@@ -30,6 +30,8 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 
         public TextView taskName, taskDetails, taskGroup, taskCompletionDate, actionTaskText;
 
+        public View sideCardAccent;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
@@ -41,6 +43,8 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
             taskCompletionDate = itemView.findViewById(R.id.task_due_date);
 
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
+
+            sideCardAccent = itemView.findViewById(R.id.sideCardAccent);
         }
     }
 
@@ -71,10 +75,12 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Task task = tasks.get(position);
 
-        updateCardColor(task.getGroup(), holder);
+        Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, 1);
 
         holder.taskName.setText(task.getName());
         holder.taskGroup.setText(task.getGroupName());
+
+        holder.taskGroup.setTextColor(task.getGroup().getLightColor());
 
         holder.taskDetails.setText("Worked " + Utils.formatHourMinuteTime(task.getTotalLoggedMinutesOfWork()) + " total");
 
@@ -82,25 +88,6 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
 
 
         holder.actionTaskText.setText("");
-    }
-
-    private void updateCardColor(Group group, ViewHolder viewHolder) {
-        viewHolder.taskCardConstraintLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
-
-                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
-                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
-
-                darkColor.setColor(group.getBeginColor());
-                lightColor.setColor(group.getEndColor());
-
-                unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * 1), unwrapped.getLayerHeight(1));
-
-                viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
-            }
-        });
     }
 
     @Override

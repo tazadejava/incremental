@@ -36,6 +36,8 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         public ConstraintLayout taskCardConstraintLayout;
         public TextView taskGroupName, startDate, actionTaskText, workRemaining, dueDate;
 
+        public View sideCardAccent;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
@@ -47,6 +49,8 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
             workRemaining = itemView.findViewById(R.id.estimatedDailyTime);
             dueDate = itemView.findViewById(R.id.task_due_date);
+
+            sideCardAccent = itemView.findViewById(R.id.sideCardAccent);
         }
     }
 
@@ -108,7 +112,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         Task task = tasks.get(position);
 
         if(task.isTaskComplete()) {
-            updateCardColor(task.getGroup(), holder, 1);
+            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, 1);
 
             holder.taskCardConstraintLayout.setOnLongClickListener(null);
 
@@ -125,7 +129,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             holder.actionTaskText.setText("");
             holder.actionTaskText.setOnClickListener(null);
         } else {
-            updateCardColor(task.getGroup(), holder, task.getTaskCompletionPercentage());
+            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, task.getTaskCompletionPercentage());
 
             holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
@@ -164,25 +168,6 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         }
 
         holder.taskGroupName.setText(task.getName());
-    }
-
-    private void updateCardColor(Group group, ViewHolder viewHolder, float percentage) {
-        viewHolder.taskCardConstraintLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
-
-                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
-                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
-
-                darkColor.setColor(group.getBeginColor());
-                lightColor.setColor(group.getEndColor());
-
-                unwrapped.setLayerSize(1, (int) (viewHolder.taskCardConstraintLayout.getWidth() * percentage), unwrapped.getLayerHeight(1));
-
-                viewHolder.taskCardConstraintLayout.setBackground(unwrapped);
-            }
-        });
     }
 
     @Override

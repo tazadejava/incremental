@@ -13,14 +13,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public class Group {
 
     private String name;
     private double color;
 
-    private int beginColor, endColor;
+    private int darkColor, lightColor;
 
     private HashMap<String, SubGroup> subGroups = new HashMap<>();
 
@@ -79,20 +78,39 @@ public class Group {
 
         lch[2] = color;
 
-        beginColor = Color.parseColor(new Chroma(ColorSpace.LCH, lch[0], lch[1], lch[2], 255).hexString());
-        endColor = Color.parseColor(new Chroma(ColorSpace.LCH, 100, lch[1], lch[2], 255).hexString());
+        darkColor = Color.parseColor(new Chroma(ColorSpace.LCH, 50, lch[1], lch[2], 255).hexString());
+        lightColor = Color.parseColor(new Chroma(ColorSpace.LCH, 70, lch[1], lch[2], 255).hexString());
+
+        //new formula
+
+//        List<Integer> components = new ArrayList<>();
+//
+//        int uniqueColorPick = (int) ((color / 360d) * 151) + 50;
+//        components.add(200);
+//        components.add(50);
+//        components.add(uniqueColorPick);
+//
+//        Collections.shuffle(components);
+//
+//        System.out.println(components);
+//
+//        //dark
+//        endColor = Color.rgb(components.get(0), components.get(1), components.get(2));
+//
+//        //light
+//        beginColor = Color.rgb(components.get(0) - 40, components.get(1) - 40, components.get(2) - 40);
     }
 
     public String getGroupName() {
         return name;
     }
 
-    public int getBeginColor() {
-        return beginColor;
+    public int getDarkColor() {
+        return darkColor;
     }
 
-    public int getEndColor() {
-        return endColor;
+    public int getLightColor() {
+        return lightColor;
     }
 
     public void addNewSubgroup(String subGroupName) {

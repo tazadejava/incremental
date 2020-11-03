@@ -2,6 +2,8 @@ package me.tazadejava.incremental.ui.main;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -9,6 +11,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 
 import net.lingala.zip4j.ZipFile;
@@ -24,6 +27,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+
+import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
 
 public class Utils {
 
@@ -160,5 +166,24 @@ public class Utils {
         } else {
             v.vibrate(milliseconds);
         }
+    }
+
+    public static void setViewGradient(Group group, View view, double percentage) {
+        view.post(new Runnable() {
+            @Override
+            public void run() {
+                LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(view.getContext(), R.drawable.task_card_gradient).mutate();
+
+                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
+                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
+
+                lightColor.setColor(group.getDarkColor());
+                darkColor.setColor(group.getLightColor());
+
+                unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), (int) (view.getHeight() * percentage));
+
+                view.setBackground(unwrapped);
+            }
+        });
     }
 }

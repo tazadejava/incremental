@@ -52,7 +52,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         private TextView taskName, taskClass, totalTimeRemaining, dailyTimeRemaining, taskDueDate, actionTaskText,
                 secondaryActionTaskText, taskNotes, thirdActionTaskText, bottomLeftIndicator;
 
-        private View horizontalLine;
+        private View sideCardAccent, horizontalLine;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -75,6 +75,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             taskNotes = itemView.findViewById(R.id.taskNotes);
 
             horizontalLine = itemView.findViewById(R.id.horizontalLine);
+            sideCardAccent = itemView.findViewById(R.id.sideCardAccent);
         }
     }
 
@@ -184,6 +185,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskName.setText(task.getName());
         holder.taskClass.setText(task.getGroupName());
 
+        holder.taskClass.setTextColor(task.getGroup().getLightColor());
+
         int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
         holder.totalTimeRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
 
@@ -241,14 +244,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.actionTaskText.setVisibility(View.VISIBLE);
             holder.horizontalLine.setVisibility(View.VISIBLE);
             if (task.isTaskCurrentlyWorkedOn()) {
-                holder.actionTaskText.setText("Log Work");
+                holder.actionTaskText.setText("Log\nWork");
 
                 holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, holder.actionTaskText, holder.expandedOptionsLayout, true));
             } else {
                 if(dayPosition == 0) {
-                    holder.actionTaskText.setText("Start Task");
+                    holder.actionTaskText.setText("Start\nTask");
                 } else {
-                    holder.actionTaskText.setText("Start Task Early");
+                    holder.actionTaskText.setText("Start\nTask\nEarly");
                 }
 
                 holder.actionTaskText.setOnClickListener(getActionTaskListener(task, holder.actionTaskText, holder.taskCardConstraintLayout, holder.actionTaskText, holder.expandedOptionsLayout, false));
@@ -271,26 +274,25 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
         GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
         GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
-        darkColor.setColor(task.getGroup().getBeginColor());
-        lightColor.setColor(task.getGroup().getEndColor());
+        lightColor.setColor(task.getGroup().getDarkColor());
+        darkColor.setColor(task.getGroup().getLightColor());
 
-        holder.taskCardConstraintLayout.setBackground(lightColor);
+        holder.sideCardAccent.setBackground(lightColor);
 
         //the width needs to be set, so we have to wait until the constraint layout is set
-        holder.taskCardConstraintLayout.post(new Runnable() {
+        holder.sideCardAccent.post(new Runnable() {
             @Override
             public void run() {
-                unwrapped.setLayerSize(1, (int) ((double) holder.taskCardConstraintLayout.getWidth() *
-                        (date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage())),
-                        unwrapped.getLayerHeight(1));
+                double completionPercentage = date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage();
+                unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), (int) ((double) holder.sideCardAccent.getHeight() * completionPercentage));
 
                 if(animateCardChanges) {
                     TransitionDrawable transitionDrawable = new TransitionDrawable(new Drawable[]{lightColor, unwrapped});
-                    holder.taskCardConstraintLayout.setBackground(transitionDrawable);
+                    holder.sideCardAccent.setBackground(transitionDrawable);
 
                     transitionDrawable.startTransition(300);
                 } else {
-                    holder.taskCardConstraintLayout.setBackground(unwrapped);
+                    holder.sideCardAccent.setBackground(unwrapped);
                 }
             }
         });
@@ -326,9 +328,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                         }).start();
 
                         if(dayPosition == 0) {
-                            taskText.setText("Start Task");
+                            taskText.setText("Start\nTask");
                         } else {
-                            taskText.setText("Start Task Early");
+                            taskText.setText("Start\nTask\nEarly");
                         }
                         taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
                     }
@@ -453,9 +455,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         }).start();
 
                                         if(dayPosition == 0) {
-                                            taskText.setText("Start Task");
+                                            taskText.setText("Start\nTask");
                                         } else {
-                                            taskText.setText("Start Task Early");
+                                            taskText.setText("Start\nTask\nEarly");
                                         }
                                         taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
 
@@ -489,9 +491,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     }).start();
 
                                     if(dayPosition == 0) {
-                                        taskText.setText("Start Task");
+                                        taskText.setText("Start\nTask");
                                     } else {
-                                        taskText.setText("Start Task Early");
+                                        taskText.setText("Start\nTask\nEarly");
                                     }
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
 
@@ -505,15 +507,15 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     task.incrementTaskMinutes(minutesWorked, false);
 
                                     if(dayPosition == 0) {
-                                        taskText.setText("Start Task");
+                                        taskText.setText("Start\nTask");
                                     } else {
-                                        taskText.setText("Start Task Early");
+                                        taskText.setText("Start\nTask\nEarly");
                                     }
                                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
                                     mainDashboardAdapter.updateTaskCards(task);
                                     mainDashboardAdapter.updateDayLayouts(task);
 
-                                    hideKeyboard(taskCardConstraintLayout);
+                                    hideKeyboard(v);
                                 }
                             });
 
@@ -546,11 +548,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             return new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Utils.vibrate(context, 80);
+                    Utils.vibrate(context, 30);
 
                     task.startWorkingOnTask();
 
-                    taskText.setText("Log Work");
+                    taskText.setText("Log\nWork");
                     taskText.setOnClickListener(getActionTaskListener(task, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, true));
 
                     task.getParent().saveTaskToFile();
