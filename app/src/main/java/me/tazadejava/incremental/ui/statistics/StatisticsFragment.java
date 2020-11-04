@@ -103,7 +103,7 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
         Description description = new Description();
         description.setTextSize(12f);
-        description.setTextColor(Color.LTGRAY);
+        description.setTextColor(Utils.getThemeAttrColor(getContext(), R.attr.subtextColor));
         chart.setDescription(description);
 
         ValueFormatter xAxisFormatter = new IndexAxisValueFormatter(weeksFormatted);
@@ -133,7 +133,7 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
         //set colors
 
-        int primaryTextColor = Utils.getAttrColor(getActivity(), android.R.attr.textColorPrimary);
+        int primaryTextColor = Utils.getAndroidAttrColor(getActivity(), android.R.attr.textColorPrimary);
 
         chart.getXAxis().setTextColor(primaryTextColor);
         chart.getAxisLeft().setTextColor(primaryTextColor);

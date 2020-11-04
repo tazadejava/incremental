@@ -1,7 +1,6 @@
 package me.tazadejava.incremental.ui.create;
 
 import android.app.Activity;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -107,9 +106,9 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if(position % 2 == 0) {
-            holder.dayOfWeekLayout.setBackgroundColor(Utils.getAttrColor(activity, android.R.attr.colorBackground));
+            holder.dayOfWeekLayout.setBackgroundColor(Utils.getAndroidAttrColor(activity, android.R.attr.colorBackground));
         } else {
-            holder.dayOfWeekLayout.setBackgroundColor(Utils.getAttrColor(activity, android.R.attr.colorPrimary));
+            holder.dayOfWeekLayout.setBackgroundColor(Utils.getAndroidAttrColor(activity, android.R.attr.colorPrimary));
         }
 
         holder.enableStartDueDate.setOnCheckedChangeListener(null);

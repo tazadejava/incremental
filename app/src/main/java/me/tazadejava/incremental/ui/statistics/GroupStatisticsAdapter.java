@@ -203,7 +203,7 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
         Description description = new Description();
         description.setTextSize(12f);
-        description.setTextColor(Color.LTGRAY);
+        description.setTextColor(Utils.getThemeAttrColor(activity, R.attr.subtextColor));
         chart.setDescription(description);
 
         XAxis xAxis = chart.getXAxis();
@@ -228,7 +228,7 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
         //set text colors
 
-        int primaryTextColor = Utils.getAttrColor(activity, android.R.attr.textColorPrimary);
+        int primaryTextColor = Utils.getAndroidAttrColor(activity, android.R.attr.textColorPrimary);
 
         chart.getXAxis().setTextColor(primaryTextColor);
         chart.getAxisLeft().setTextColor(primaryTextColor);

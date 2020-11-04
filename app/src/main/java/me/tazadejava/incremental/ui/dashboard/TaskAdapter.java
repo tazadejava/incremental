@@ -140,9 +140,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         //update card color if active
         if(task.isTaskCurrentlyWorkedOn()) {
-            holder.taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.lightGray));
+            holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
         } else {
-            holder.taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.gray));
+            holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
         }
 
         holder.secondaryActionTaskText.setOnClickListener(new View.OnClickListener() {

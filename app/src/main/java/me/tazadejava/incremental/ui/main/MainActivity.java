@@ -4,9 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
@@ -16,7 +16,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -24,6 +23,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.navigation.NavigationView;
 
@@ -55,6 +55,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        boolean darkMode = prefs.getAll().containsKey("darkModeOn") && ((Boolean) (prefs.getAll().get("darkModeOn")));
+        setTheme(darkMode ? R.style.AppThemeDark : R.style.AppTheme);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -111,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
             SpannableString span = new SpannableString(item.getTitle());
 
-            span.setSpan(new ForegroundColorSpan(Utils.getAttrColor(this, android.R.attr.textColorPrimary)), 0, span.length(), 0);
+            span.setSpan(new ForegroundColorSpan(Utils.getAndroidAttrColor(this, android.R.attr.textColorPrimary)), 0, span.length(), 0);
 
             item.setTitle(span);
         }

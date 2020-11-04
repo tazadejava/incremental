@@ -152,10 +152,16 @@ public class Utils {
         file.delete();
     }
 
-    public static int getAttrColor(Activity activity, int attrID) {
+    public static int getAndroidAttrColor(Context context, int attrID) {
         TypedValue tv = new TypedValue();
-        activity.getTheme().resolveAttribute(attrID, tv, true);
-        return ContextCompat.getColor(activity, tv.resourceId);
+        context.getTheme().resolveAttribute(attrID, tv, true);
+        return ContextCompat.getColor(context, tv.resourceId);
+    }
+
+    public static int getThemeAttrColor(Context context, int attrID) {
+        TypedValue tv = new TypedValue();
+        context.getTheme().resolveAttribute(attrID, tv, true);
+        return tv.data;
     }
 
     public static void vibrate(Context context, int milliseconds) {

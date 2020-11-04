@@ -83,7 +83,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         //theme the work chart
 
-        int primaryTextColor = Utils.getAttrColor(getActivity(), android.R.attr.textColorPrimary);
+        int primaryTextColor = Utils.getAndroidAttrColor(getActivity(), android.R.attr.textColorPrimary);
 
         workBarChart.getXAxis().setTextColor(primaryTextColor);
         workBarChart.getAxisLeft().setTextColor(primaryTextColor);
@@ -167,7 +167,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         description = new Description();
         description.setTextSize(12f);
-        description.setTextColor(Color.LTGRAY);
+        description.setTextColor(Utils.getThemeAttrColor(getContext(), R.attr.subtextColor));
         workBarChart.setDescription(description);
 
         ValueFormatter xAxisFormatter = new IndexAxisValueFormatter(formatWorkDates());
@@ -214,7 +214,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         ((IndexAxisValueFormatter) workBarChart.getXAxis().getValueFormatter()).setValues(formatWorkDates());
 
         if(currentDateOffset == 0) {
-            int primaryTextColor = Utils.getAttrColor(getActivity(), android.R.attr.textColorPrimary);
+            int primaryTextColor = Utils.getAndroidAttrColor(getActivity(), android.R.attr.textColorPrimary);
             workBarChart.getXAxis().setTextColor(primaryTextColor);
         } else {
             workBarChart.getXAxis().setTextColor(ContextCompat.getColor(getContext(), R.color.primaryColor));

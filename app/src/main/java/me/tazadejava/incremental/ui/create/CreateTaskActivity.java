@@ -159,7 +159,7 @@ public class CreateTaskActivity extends AppCompatActivity {
 
             SpannableString span = new SpannableString(item.getTitle());
 
-            span.setSpan(new ForegroundColorSpan(Utils.getAttrColor(this, android.R.attr.textColorPrimary)), 0, span.length(), 0);
+            span.setSpan(new ForegroundColorSpan(Utils.getAndroidAttrColor(this, android.R.attr.textColorPrimary)), 0, span.length(), 0);
 
             item.setTitle(span);
         }
