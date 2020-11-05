@@ -8,9 +8,11 @@ import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
 import android.widget.FrameLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -61,6 +63,7 @@ public class CreateTaskActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_task);
+
         taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
 
         frame = findViewById(R.id.createTaskFrame);

@@ -58,9 +58,10 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         boolean darkMode = prefs.getAll().containsKey("darkModeOn") && ((Boolean) (prefs.getAll().get("darkModeOn")));
-        setTheme(darkMode ? R.style.AppThemeDark : R.style.AppTheme);
+        setTheme(darkMode ? R.style.AppThemeDarkNoActionBar : R.style.AppThemeNoActionBar);
 
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 

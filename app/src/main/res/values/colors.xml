@@ -15,8 +15,12 @@
     <color name="secondaryDarkColor">#0053a7</color>
     <color name="primaryTextColor">#333333</color>
     <color name="secondaryTextColor">#222222</color>
+    <color name="darkModeSubtextColor">#cccccc</color>
 
     <color name="taskDarkTextColor">#444444</color>
+
+    <color name="lightModeCardColor">#efefef</color>
+    <color name="lightModeCardColorActive">#cdcdcd</color>
 
     <color name="separatorGray">#b8c2c2</color>
     <color name="darkRed">#d90909</color>
