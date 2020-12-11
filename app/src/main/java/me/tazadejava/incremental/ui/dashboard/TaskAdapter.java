@@ -590,7 +590,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
                     task.getParent().saveTaskToFile();
 
-                    taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.lightGray));
+                    taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
 
                     //move to top
                     tasks.remove(task);

@@ -35,6 +35,7 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -71,6 +72,8 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
     }
 
     private void defineWorkloadTrends(BarChart chart) {
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+
         //define the graph
 
         chart.setPinchZoom(false);
@@ -85,9 +88,16 @@ public class StatisticsFragment extends Fragment implements BackPressedInterface
 
         int weekSize = 5;
 
+        LocalDate startDate;
+        if(taskManager.isCurrentTimePeriodActive()) {
+            startDate = LocalDate.now();
+        } else {
+            startDate = taskManager.getCurrentTimePeriod().getEndDate();
+        }
+
         List<LocalDate[]> weeks = new ArrayList<>();
         for(int i = 0; i < weekSize; i++) {
-            weeks.add(LogicalUtils.getWorkWeekDates(LocalDate.now().plusDays(7 * (i - 3))));
+            weeks.add(LogicalUtils.getWorkWeekDates(startDate.plusDays(7 * (i - 3))));
         }
 
         String[] weeksFormatted = new String[weekSize];

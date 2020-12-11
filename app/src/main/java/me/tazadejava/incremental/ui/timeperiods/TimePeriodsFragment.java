@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.ui.timeperiods;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
@@ -23,8 +25,16 @@ public class TimePeriodsFragment extends Fragment implements BackPressedInterfac
     private TimePeriodsListAdapter adapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        //change the FAB to create a new time period
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
-        addTaskButton.setVisibility(View.GONE);
+        addTaskButton.setVisibility(View.VISIBLE);
+        addTaskButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent newTimePeriod = new Intent(getContext(), CreateTimePeriodActivity.class);
+                startActivity(newTimePeriod);
+            }
+        });
 
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 

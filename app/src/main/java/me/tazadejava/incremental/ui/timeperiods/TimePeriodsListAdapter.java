@@ -1,6 +1,7 @@
 package me.tazadejava.incremental.ui.timeperiods;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
@@ -17,8 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsListAdapter.ViewHolder> {
 
@@ -26,6 +31,8 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
 
         public ConstraintLayout taskCardConstraintLayout;
         public TextView timePeriodName, timePeriodDatesText, timePeriodActiveText, actionTaskText;
+
+        public View sideCardAccent;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -38,6 +45,8 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
             timePeriodActiveText = itemView.findViewById(R.id.task_due_date);
 
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
+
+            sideCardAccent = itemView.findViewById(R.id.sideCardAccent);
         }
     }
 
@@ -72,8 +81,6 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
 
         holder.actionTaskText.setText("Edit Start/End Dates");
 
-//        updateCardColor(group, holder);
-
         holder.timePeriodName.setText(timePeriod.getName());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -82,13 +89,45 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
 
         holder.timePeriodDatesText.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
 
-        holder.timePeriodActiveText.setText(taskManager.getCurrentTimePeriod() == timePeriod ? "Active" : "");
+        if(timePeriod.isInTimePeriod(LocalDate.now())) {
+            holder.timePeriodActiveText.setText("Active");
+        } else {
+            holder.timePeriodActiveText.setText("");
+        }
+
+        if(taskManager.getCurrentTimePeriod() == timePeriod) {
+            Utils.setViewGradient(ContextCompat.getColor(context, R.color.primaryColor), ContextCompat.getColor(context, R.color.secondaryColor), holder.sideCardAccent, 0);
+            holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
+        } else {
+            Utils.setViewGradient(ContextCompat.getColor(context, R.color.primaryColor), ContextCompat.getColor(context, R.color.secondaryColor), holder.sideCardAccent, 1);
+            holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
+        }
 
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO: implement. needs a lot of rules to make sure other time periods are not being intruded on
-                Toast.makeText(context, "Coming soon...", Toast.LENGTH_SHORT).show();
+                Intent editTimePeriod = new Intent(context, CreateTimePeriodActivity.class);
+                editTimePeriod.putExtra("timePeriod", timePeriod.getName());
+                context.startActivity(editTimePeriod);
+            }
+        });
+
+        holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if(timePeriod != taskManager.getCurrentTimePeriod()) {
+                    taskManager.setCurrentTimePeriod(timePeriod);
+                    if (taskManager.isCurrentTimePeriodActive()) {
+                        Toast.makeText(context, "Switched to the current time period.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(context, "Switched to an inactive time period. Note that inactive time periods are read-only.", Toast.LENGTH_SHORT).show();
+                    }
+
+                    notifyDataSetChanged();
+                    return true;
+                }
+
+                return false;
             }
         });
     }

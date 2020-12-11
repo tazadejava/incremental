@@ -44,6 +44,8 @@ import me.tazadejava.incremental.ui.main.Utils;
 
 public class DashboardFragment extends Fragment implements BackPressedInterface {
 
+    private TaskManager taskManager;
+
     private BarChart workBarChart;
 
     private RecyclerView dashboardView;
@@ -59,19 +61,23 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new task
-        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+        taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
-        addTaskButton.setVisibility(View.VISIBLE);
-        addTaskButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                taskManager.setActiveEditTask(null);
+        if(taskManager.isCurrentTimePeriodActive()) {
+            addTaskButton.setVisibility(View.VISIBLE);
+            addTaskButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    taskManager.setActiveEditTask(null);
 
-                Intent createTask = new Intent(getContext(), CreateTaskActivity.class);
-                startActivity(createTask);
-            }
-        });
+                    Intent createTask = new Intent(getContext(), CreateTaskActivity.class);
+                    startActivity(createTask);
+                }
+            });
+        } else {
+            addTaskButton.setVisibility(View.GONE);
+        }
 
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
@@ -160,7 +166,12 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             }
         });
 
-        LocalDate[] dates = LogicalUtils.getWorkWeekDates();
+        LocalDate[] dates;
+        if(taskManager.isCurrentTimePeriodActive()) {
+            dates = LogicalUtils.getWorkWeekDates();
+        } else {
+            dates = LogicalUtils.getWorkWeekDates(taskManager.getCurrentTimePeriod().getEndDate().minusDays(7));
+        }
         currentDates = dates;
 
         //format the graph
@@ -209,6 +220,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
     }
 
     public void refreshChartData() {
+        LocalDate now = LocalDate.now();
+
         //refresh axes
 
         ((IndexAxisValueFormatter) workBarChart.getXAxis().getValueFormatter()).setValues(formatWorkDates());
@@ -248,8 +261,16 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
             int index = 0;
             for(LocalDate date : currentDates) {
-                float hours = stats.getMinutesWorked(date) / 60f;
+                float hours;
+                if(date.isAfter(now) || (date.isEqual(now) && stats.getMinutesWorked(date) == 0)) {
+                    //projection
+                    maxMinutes = Math.max(taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date), maxMinutes);
+                    hours = taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date) / 60f;
+                } else {
+                    hours = stats.getMinutesWorked(date) / 60f;
+                }
                 values.add(new BarEntry(index, hours));
+
                 index++;
             }
 
@@ -261,8 +282,16 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
             int index = 0;
             for(LocalDate date : currentDates) {
-                int minutes = stats.getMinutesWorked(date);
+                int minutes;
+                if(date.isAfter(now) || (date.isEqual(now) && stats.getMinutesWorked(date) == 0)) {
+                    //projection
+                    maxMinutes = Math.max(taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date), maxMinutes);
+                    minutes = taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date);
+                } else {
+                    minutes = stats.getMinutesWorked(date);
+                }
                 values.add(new BarEntry(index, minutes));
+
                 index++;
             }
 
@@ -275,10 +304,12 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         int[] colors = new int[currentDates.length];
         int index = 0;
         for(LocalDate date : currentDates) {
-            if(date.equals(LocalDate.now())) {
+            if(date.equals(now) && stats.getMinutesWorked(now) > 0) {
                 colors[index] = ContextCompat.getColor(getContext(), R.color.primaryColor);
-            } else {
+            } else if(date.isBefore(now)) {
                 colors[index] = ContextCompat.getColor(getContext(), R.color.secondaryColor);
+            } else {
+                colors[index] = Color.argb(0.5f, 0.7f, 0.7f, 0.7f);
             }
             index++;
         }

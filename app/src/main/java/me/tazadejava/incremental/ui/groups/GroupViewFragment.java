@@ -43,15 +43,22 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface,
     private Menu menu;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+
         //change the FAB to create a new group
-        FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
-        addTaskButton.setVisibility(View.VISIBLE);
-        addTaskButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                openCreateGroupDialog();
-            }
-        });
+        FloatingActionButton newGroupButton = getActivity().findViewById(R.id.fab);
+
+        if(taskManager.isCurrentTimePeriodActive()) {
+            newGroupButton.setVisibility(View.VISIBLE);
+            newGroupButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    openCreateGroupDialog();
+                }
+            });
+        } else {
+            newGroupButton.setVisibility(View.GONE);
+        }
 
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 

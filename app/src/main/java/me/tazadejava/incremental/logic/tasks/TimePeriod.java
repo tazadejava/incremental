@@ -112,6 +112,26 @@ public class TimePeriod {
         loadTaskData(taskManager, gson, dataFolder);
     }
 
+    public boolean setBeginDate(LocalDate date) {
+        if(date.isAfter(endDate)) {
+            return false;
+        }
+
+        beginDate = date;
+        taskManager.saveData(true, this);
+        return true;
+    }
+
+    public boolean setEndDate(LocalDate date) {
+        if(date.isBefore(beginDate)) {
+            return false;
+        }
+
+        endDate = date;
+        taskManager.saveData(true, this);
+        return true;
+    }
+
     private LocalDate getStartDate(Task task) {
         LocalDate startDate;
         if(task.getStartDate() != null) {

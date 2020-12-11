@@ -174,7 +174,7 @@ public class Utils {
         }
     }
 
-    public static void setViewGradient(Group group, View view, double percentage) {
+    public static void setViewGradient(int darkColorVal, int lightColorVal, View view, double percentage) {
         view.post(new Runnable() {
             @Override
             public void run() {
@@ -183,13 +183,17 @@ public class Utils {
                 GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
                 GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
 
-                lightColor.setColor(group.getDarkColor());
-                darkColor.setColor(group.getLightColor());
+                lightColor.setColor(darkColorVal);
+                darkColor.setColor(lightColorVal);
 
                 unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), (int) (view.getHeight() * percentage));
 
                 view.setBackground(unwrapped);
             }
         });
+    }
+
+    public static void setViewGradient(Group group, View view, double percentage) {
+        setViewGradient(group.getDarkColor(), group.getLightColor(), view, percentage);
     }
 }

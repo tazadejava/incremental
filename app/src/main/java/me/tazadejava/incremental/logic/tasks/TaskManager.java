@@ -330,6 +330,14 @@ public class TaskManager {
         return true;
     }
 
+    public void setCurrentTimePeriod(TimePeriod timePeriod) {
+        currentTimePeriod = timePeriod;
+    }
+
+    public boolean isCurrentTimePeriodActive() {
+        return currentTimePeriod.isInTimePeriod(LocalDate.now());
+    }
+
     public List<TimePeriod> getTimePeriods() {
         return timePeriods;
     }
