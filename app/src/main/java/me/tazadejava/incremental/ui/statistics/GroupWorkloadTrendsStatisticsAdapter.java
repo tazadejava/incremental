@@ -39,7 +39,7 @@ import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.Utils;
 
-public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatisticsAdapter.ViewHolder> {
+public class GroupWorkloadTrendsStatisticsAdapter extends RecyclerView.Adapter<GroupWorkloadTrendsStatisticsAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -53,6 +53,8 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
     }
 
     private Activity activity;
+
+    private TaskManager taskManager;
 
     private List<DayOfWeek> daysOfWeek;
     private int currentDayOfWeek;
@@ -72,8 +74,9 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 
     private boolean isViewingWeeklyAverage = true;
 
-    public GroupStatisticsAdapter(Activity activity, TaskManager taskManager) {
+    public GroupWorkloadTrendsStatisticsAdapter(Activity activity, TaskManager taskManager) {
         this.activity = activity;
+        this.taskManager = taskManager;
         timePeriod = taskManager.getCurrentTimePeriod();
 
         daysOfWeek = new ArrayList<>(Arrays.asList(DayOfWeek.values()));
@@ -101,8 +104,14 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
         List<LocalDate[]> dateWeeks = new ArrayList<>();
         LocalDate currentDate = timePeriod.getBeginDate();
 
-        int currentWeekNumber = LogicalUtils.getWeekNumber(LocalDate.now());
-        while (LogicalUtils.getWeekNumber(currentDate) <= currentWeekNumber) {
+        int finalWeekNumber;
+        if(taskManager.isCurrentTimePeriodActive()) {
+            finalWeekNumber = LogicalUtils.getWeekNumber(LocalDate.now());
+        } else {
+            finalWeekNumber = LogicalUtils.getWeekNumber(taskManager.getCurrentTimePeriod().getEndDate());
+        }
+
+        while (LogicalUtils.getWeekNumber(currentDate) <= finalWeekNumber) {
             dateWeeks.add(LogicalUtils.getWorkWeekDates(currentDate));
             currentDate = currentDate.plusDays(7);
         }
@@ -260,6 +269,14 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
 //        });
     }
 
+    private void setChartToWeeklyAverage(DayOfWeek dow, BarChart chart, Description description) {
+        setCustomDataChart(dow, chart, description, weeklyAverageMinutesByGroupAndDay);
+    }
+
+    private void setChartToCurrentWeek(DayOfWeek dow, BarChart chart, Description description) {
+        setCustomDataChart(dow, chart, description, currentWeekAveragesByGroupAndDay);
+    }
+
     private void setCustomDataChart(DayOfWeek dow, BarChart chart, Description description, HashMap<Group, List<Integer>> minuteValues) {
         int dowIndex = daysOfWeek.indexOf(dow);
 
@@ -328,19 +345,11 @@ public class GroupStatisticsAdapter extends RecyclerView.Adapter<GroupStatistics
         chart.setData(data);
     }
 
-    private void setChartToWeeklyAverage(DayOfWeek dow, BarChart chart, Description description) {
-        setCustomDataChart(dow, chart, description, weeklyAverageMinutesByGroupAndDay);
-    }
-
-    private void setChartToCurrentWeek(DayOfWeek dow, BarChart chart, Description description) {
-        setCustomDataChart(dow, chart, description, currentWeekAveragesByGroupAndDay);
-    }
-
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_graph_card, parent, false);
-        return new GroupStatisticsAdapter.ViewHolder(view);
+        return new GroupWorkloadTrendsStatisticsAdapter.ViewHolder(view);
     }
 
     @Override

@@ -151,6 +151,11 @@ public class IncrementalApplication extends android.app.Application implements L
         }
     }
 
+    public boolean isDarkModeOn() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        return prefs.getAll().containsKey("darkModeOn");
+    }
+
     public boolean isInForeground() {
         return isInForeground;
     }

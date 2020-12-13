@@ -41,6 +41,7 @@ import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 import me.tazadejava.incremental.ui.main.Utils;
+import me.tazadejava.incremental.ui.statistics.StatisticsCalendarHeatmapFragment;
 
 public class DashboardFragment extends Fragment implements BackPressedInterface {
 
@@ -99,6 +100,15 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         lastRefreshDate = LocalDate.now();
+
+        //TODO: TEMP, remove!!!
+//        dashboardView.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                getParentFragmentManager().beginTransaction().setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)
+//                        .replace(container.getId(), StatisticsCalendarHeatmapFragment.class, null).commit();
+//            }
+//        }, 10);
 
         return root;
     }

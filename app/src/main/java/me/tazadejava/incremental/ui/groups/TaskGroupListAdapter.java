@@ -157,7 +157,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
                 + "\n" + tasksTotal + " task" + (tasksTotal == 1 ? "" : "s") + " total (active and pending)"
                 + "\n\n" + Utils.formatHourMinuteTime(getMinutesWorkedThisWeek(group)) + " worked this week"
-                + "\n\nAverage workload per week (" + averageWorkload[1] + "): " + Utils.formatHourMinuteTime(averageWorkload[0]));
+                + "\nAverage workload per week (" + averageWorkload[1] + "): " + Utils.formatHourMinuteTime(averageWorkload[0]));
 
         holder.actionTaskText.setText("Randomize Color");
         holder.actionTaskText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
@@ -219,13 +219,20 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         int totalWeeksWorked = 0;
 
         LocalDate weekDate = taskManager.getCurrentTimePeriod().getBeginDate();
-        LocalDate now = LocalDate.now();
+
+        LocalDate finalDate;
+        if(taskManager.isCurrentTimePeriodActive()) {
+            finalDate = LocalDate.now();
+        } else {
+            finalDate = taskManager.getCurrentTimePeriod().getEndDate();
+        }
+
         WeekFields week = WeekFields.of(Locale.getDefault());
 
         //make the week start on a MONDAY not sunday, offset by one day
-        long nowWeek = now.plusDays(-1).get(week.weekOfWeekBasedYear());
+        long nowWeek = finalDate.plusDays(-1).get(week.weekOfWeekBasedYear());
 
-        while(weekDate.plusDays(-1).get(week.weekOfWeekBasedYear()) < nowWeek || weekDate.getYear() < now.getYear()) {
+        while(weekDate.plusDays(-1).get(week.weekOfWeekBasedYear()) < nowWeek || weekDate.getYear() < finalDate.getYear()) {
             boolean workedThisWeek = false;
             for(LocalDate date : LogicalUtils.getWorkWeekDates(weekDate)) {
                 if(!workedThisWeek) {
