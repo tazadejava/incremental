@@ -344,7 +344,15 @@ public class TaskManager {
     }
 
     public List<TimePeriod> getTimePeriods() {
-        return timePeriods;
+        List<TimePeriod> timePeriodsRevised = new ArrayList<>();
+
+        for(TimePeriod timePeriod : timePeriods) {
+            if(timePeriod.getEndDate() != null) {
+                timePeriodsRevised.add(timePeriod);
+            }
+        }
+
+        return timePeriodsRevised;
     }
 
     public void saveAllData() {

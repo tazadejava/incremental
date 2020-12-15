@@ -16,7 +16,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -49,6 +52,30 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
 
         View root = inflater.inflate(R.layout.fragment_create_task_group_time, container, false);
+
+        //init helping buttons
+
+        ImageView helpGroup = root.findViewById(R.id.helpGroup);
+        ImageView helpSubgroup = root.findViewById(R.id.helpSubgroup);
+
+        if(((IncrementalApplication) act.getApplication()).isDarkModeOn()) {
+            helpGroup.setImageResource(R.drawable.ic_help_outline_white_18dp);
+            helpSubgroup.setImageResource(R.drawable.ic_help_outline_white_18dp);
+        }
+
+        helpGroup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(act, "A group can be thought of as a separate class. (ex: Physics, Math, English...)", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        helpSubgroup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(act, "Optional, but useful when similar tasks are repeated. The estimated minutes for all tasks in the subgroup are automatically averaged over time.", Toast.LENGTH_LONG).show();
+            }
+        });
 
         Button backButton = root.findViewById(R.id.backButton);
         Button nextButton = root.findViewById(R.id.nextButton);

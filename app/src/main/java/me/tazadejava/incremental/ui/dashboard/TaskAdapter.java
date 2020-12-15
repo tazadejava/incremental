@@ -391,7 +391,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.taskNotes.setText(Html.fromHtml("<b>Minutes (" + timestamps.size() + "):</b><br>" + minutesNotes.toString()));
             holder.taskNotes.setLines(lines);
 
-            if(updateCardTextAnimation) {
+            if(updateCardTextAnimation && holder.expandedOptionsLayout.getVisibility() == View.VISIBLE) {
                 Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, true, task.getGroup(), holder.sideCardAccent);
             }
         }
@@ -416,7 +416,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     inputMinutes.setSelectAllOnFocus(true);
 
                     EditText inputNotes = new EditText(v.getContext());
-                    inputNotes.setHint("Optional notes: accomplishments, goals, etc.");
+                    inputNotes.setHint("Optional: accomplishments, goals, etc.");
                     inputNotes.setMaxLines(1);
                     inputNotes.setInputType(InputType.TYPE_CLASS_TEXT);
                     inputNotes.setSelectAllOnFocus(true);

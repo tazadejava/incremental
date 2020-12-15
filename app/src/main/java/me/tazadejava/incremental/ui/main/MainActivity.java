@@ -323,25 +323,18 @@ public class MainActivity extends AppCompatActivity {
         boolean defaultTimePeriod = taskManager.getCurrentTimePeriod().getName().isEmpty();
 
         if(defaultTimePeriod) {
-            builder.setTitle("Create a new time period?");
-            builder.setMessage("A time period is a good way to automatically partition your tasks into specific start and end dates.");
+            builder.setTitle("Hi! Time to create a new time period:");
+            builder.setMessage("A time period is a good way to separate your tasks into specific start/end dates.");
         } else {
-            builder.setTitle("Your time period has expired!");
-            builder.setMessage("Do you want to define a new time period?");
+            builder.setTitle("Your time period has expired:");
+            builder.setMessage("It's time to define a new time period!");
         }
 
-        builder.setPositiveButton("Define New Time Period", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Intent newTimePeriodAct = new Intent(MainActivity.this, CreateTimePeriodActivity.class);
                 startActivity(newTimePeriodAct);
-            }
-        });
-
-        builder.setNegativeButton("Dismiss", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
             }
         });
 

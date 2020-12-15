@@ -3,6 +3,7 @@ package me.tazadejava.incremental.ui.groups;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -156,12 +157,10 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         int[] averageWorkload = getAverageMinutesWorkedPerWeek(group);
 
         holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
-                + "\n" + tasksTotal + " task" + (tasksTotal == 1 ? "" : "s") + " total (active and pending)"
                 + "\n\n" + Utils.formatHourMinuteTime(getMinutesWorkedThisWeek(group)) + " worked this week"
                 + "\nAverage workload per week (" + averageWorkload[1] + "): " + Utils.formatHourMinuteTime(averageWorkload[0]));
 
         holder.actionTaskText.setText("View Tasks");
-//        holder.secondaryActionTaskText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -170,7 +169,6 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         });
 
         holder.secondaryActionTaskText.setText("Change Color");
-//        holder.secondaryActionTaskText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         holder.secondaryActionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -185,15 +183,39 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 View colorRight = root.findViewById(R.id.colorShowerRight);
                 SeekBar colorSlider = root.findViewById(R.id.colorSlider);
 
+                View[] colorGradients = new View[] {root.findViewById(R.id.gradient1), root.findViewById(R.id.gradient2), root.findViewById(R.id.gradient3),
+                        root.findViewById(R.id.gradient4), root.findViewById(R.id.gradient5), root.findViewById(R.id.gradient6)};
+
                 colorSlider.setMin(0);
-                colorSlider.setMax(3600);
+                colorSlider.setMax(359);
 
                 Group dummyGroup = new Group("DUMMY");
+
+                int val = 0;
+                for(View gradient : colorGradients) {
+                    dummyGroup.setColor(val);
+                    int beginColor = dummyGroup.getLightColor();
+                    dummyGroup.setColor(val + 59);
+                    int endColor = dummyGroup.getLightColor();
+
+                    GradientDrawable drawable = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[] {beginColor, endColor});
+                    gradient.setBackground(drawable);
+
+                    int finalVal = val;
+                    gradient.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            colorSlider.setProgress(finalVal);
+                        }
+                    });
+
+                    val += 60;
+                }
 
                 colorSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                     @Override
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                        dummyGroup.setColor(progress / 10d);
+                        dummyGroup.setColor(progress);
 
                         colorLeft.setBackgroundColor(dummyGroup.getDarkColor());
                         colorRight.setBackgroundColor(dummyGroup.getLightColor());
@@ -210,7 +232,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                     }
                 });
 
-                colorSlider.setProgress((int) (group.getColorValue() * 10), true);
+                colorSlider.setProgress((int) (group.getColorValue()), true);
 
                 dialog.setView(root);
 
@@ -226,7 +248,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                     public void onClick(DialogInterface dialog, int which) {
                         StatsManager.StatsGroupPacket packet = new StatsManager.StatsGroupPacket(taskManager.getCurrentTimePeriod().getStatsManager(), group);
 
-                        group.setColor(colorSlider.getProgress() / 10d);
+                        group.setColor(colorSlider.getProgress());
                         Utils.setViewGradient(group, holder.sideCardAccent, 0.5);
                         holder.taskGroupName.setTextColor(group.getLightColor());
                         taskManager.saveData(true);
@@ -321,6 +343,10 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             }
 
             weekDate = weekDate.plusDays(7);
+        }
+
+        if(totalWeeksWorked == 0) {
+            return new int[] {0, 0};
         }
 
         //find the average

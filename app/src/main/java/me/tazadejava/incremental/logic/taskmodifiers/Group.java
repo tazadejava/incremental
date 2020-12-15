@@ -9,10 +9,12 @@ import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 
 public class Group {
 
@@ -83,22 +85,42 @@ public class Group {
 
         //new formula
 
-//        List<Integer> components = new ArrayList<>();
-//
-//        int uniqueColorPick = (int) ((color / 360d) * 151) + 50;
-//        components.add(200);
-//        components.add(50);
-//        components.add(uniqueColorPick);
-//
-//        Collections.shuffle(components);
-//
-//        System.out.println(components);
-//
-//        //dark
-//        endColor = Color.rgb(components.get(0), components.get(1), components.get(2));
-//
-//        //light
-//        beginColor = Color.rgb(components.get(0) - 40, components.get(1) - 40, components.get(2) - 40);
+        List<Integer> components = new ArrayList<>();
+
+        int uniqueColorPick = (int) (((color % 60) / 60d) * 151) + 50;
+
+        int color1 = 180;
+        int color2 = 60;
+
+        if(color < 60) {
+            components.add(color1);
+            components.add(color2);
+            components.add(uniqueColorPick);
+        } else if(color < 120) {
+            components.add(color2);
+            components.add(color1);
+            components.add(uniqueColorPick);
+        } else if(color < 180) {
+            components.add(uniqueColorPick);
+            components.add(color2);
+            components.add(color1);
+        } else if(color < 240) {
+            components.add(uniqueColorPick);
+            components.add(color1);
+            components.add(color2);
+        } else if(color < 300) {
+            components.add(color1);
+            components.add(uniqueColorPick);
+            components.add(color2);
+        } else {
+            components.add(color2);
+            components.add(uniqueColorPick);
+            components.add(color1);
+        }
+
+        int darkSubtract = 30;
+        darkColor = Color.rgb(components.get(0) - darkSubtract, components.get(1) - darkSubtract, components.get(2) - darkSubtract);
+        lightColor = Color.rgb(components.get(0), components.get(1), components.get(2));
     }
 
     public String getGroupName() {

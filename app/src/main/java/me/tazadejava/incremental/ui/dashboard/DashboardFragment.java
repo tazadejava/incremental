@@ -189,7 +189,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         });
 
         LocalDate[] dates;
-        if(taskManager.isCurrentTimePeriodActive()) {
+        if(taskManager.isCurrentTimePeriodActive() || taskManager.getCurrentTimePeriod().getEndDate() == null) {
             dates = LogicalUtils.getWorkWeekDates();
         } else {
             dates = LogicalUtils.getWorkWeekDates(taskManager.getCurrentTimePeriod().getEndDate().minusDays(7));
