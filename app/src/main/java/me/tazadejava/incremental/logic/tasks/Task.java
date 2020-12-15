@@ -242,7 +242,7 @@ public class Task {
     public void incrementTaskMinutes(int loggedMinutes, String minutesNotes, boolean completedTask) {
         timePeriod.getStatsManager().appendMinutes(group, lastTaskWorkStartTime.toLocalDate(), loggedMinutes, completedTask);
 
-        if(!minutesNotes.isEmpty()) {
+        if(!minutesNotes.isEmpty() || loggedMinutes > 0) {
             minutesNotesManager.addNotes(lastTaskWorkStartTime, loggedMinutes, minutesNotes);
         }
 

@@ -3,21 +3,18 @@ package me.tazadejava.incremental.ui.groups;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.text.InputType;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -43,8 +40,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        public ConstraintLayout taskCardConstraintLayout;
-        public TextView taskGroupName, tasksCount, actionTaskText, timePeriodText;
+        public ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
+        public TextView taskGroupName, tasksCount, actionTaskText, timePeriodText, secondaryActionTaskText, thirdActionTaskText, taskNotes;
 
         public View sideCardAccent;
 
@@ -52,10 +49,14 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             super(itemView);
 
             taskCardConstraintLayout = itemView.findViewById(R.id.task_card_constraint_layout);
+            expandedOptionsLayout = itemView.findViewById(R.id.expandedOptionsLayout);
 
             taskGroupName = itemView.findViewById(R.id.timePeriodName);
             tasksCount = itemView.findViewById(R.id.estimatedDailyTime);
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
+            secondaryActionTaskText = itemView.findViewById(R.id.secondaryActionTaskText);
+            thirdActionTaskText = itemView.findViewById(R.id.thirdActionTaskText);
+            taskNotes = itemView.findViewById(R.id.taskNotes);
 
             timePeriodText = itemView.findViewById(R.id.task_due_date);
 
@@ -159,39 +160,99 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 + "\n\n" + Utils.formatHourMinuteTime(getMinutesWorkedThisWeek(group)) + " worked this week"
                 + "\nAverage workload per week (" + averageWorkload[1] + "): " + Utils.formatHourMinuteTime(averageWorkload[0]));
 
-        holder.actionTaskText.setText("Randomize Color");
-        holder.actionTaskText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        holder.actionTaskText.setText("View Tasks");
+//        holder.secondaryActionTaskText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
+            public void onClick(View v) {
+                navigateToGroupTasks(group);
+            }
+        });
+
+        holder.secondaryActionTaskText.setText("Change Color");
+//        holder.secondaryActionTaskText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        holder.secondaryActionTaskText.setOnClickListener(new View.OnClickListener() {
+            @Override
             public void onClick(View view) {
-                StatsManager.StatsGroupPacket packet = new StatsManager.StatsGroupPacket(taskManager.getCurrentTimePeriod().getStatsManager(), group);
+                AlertDialog.Builder dialog = new AlertDialog.Builder(context);
 
-                group.randomizeColor();
-                Utils.setViewGradient(group, holder.sideCardAccent, 0.5);
-                holder.taskGroupName.setTextColor(group.getLightColor());
-                taskManager.saveData(true);
+                dialog.setTitle("Pick a color:");
 
-                packet.restore();
+                LayoutInflater inflater = context.getLayoutInflater();
+                View root = inflater.inflate(R.layout.menu_group_color_picker, null);
+
+                View colorLeft = root.findViewById(R.id.colorShowerLeft);
+                View colorRight = root.findViewById(R.id.colorShowerRight);
+                SeekBar colorSlider = root.findViewById(R.id.colorSlider);
+
+                colorSlider.setMin(0);
+                colorSlider.setMax(3600);
+
+                Group dummyGroup = new Group("DUMMY");
+
+                colorSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        dummyGroup.setColor(progress / 10d);
+
+                        colorLeft.setBackgroundColor(dummyGroup.getDarkColor());
+                        colorRight.setBackgroundColor(dummyGroup.getLightColor());
+                    }
+
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+
+                    }
+
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+
+                    }
+                });
+
+                colorSlider.setProgress((int) (group.getColorValue() * 10), true);
+
+                dialog.setView(root);
+
+                dialog.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+
+                dialog.setPositiveButton("CONFIRM", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        StatsManager.StatsGroupPacket packet = new StatsManager.StatsGroupPacket(taskManager.getCurrentTimePeriod().getStatsManager(), group);
+
+                        group.setColor(colorSlider.getProgress() / 10d);
+                        Utils.setViewGradient(group, holder.sideCardAccent, 0.5);
+                        holder.taskGroupName.setTextColor(group.getLightColor());
+                        taskManager.saveData(true);
+
+                        packet.restore();
+                    }
+                });
+
+                dialog.show();
+            }
+        });
+
+        holder.taskNotes.setVisibility(View.GONE);
+        holder.thirdActionTaskText.setVisibility(View.GONE);
+
+        holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, group, holder.sideCardAccent);
             }
         });
 
         holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                NavController nav = Navigation.findNavController(context, R.id.nav_host_fragment);
-
-                Bundle bundle = new Bundle();
-
-                bundle.putString("group", group.getGroupName());
-
-                TimePeriod scope = taskManager.getGroupScope(group);
-                if (scope == null) {
-                    bundle.putString("scope", null);
-                } else {
-                    bundle.putString("scope", scope.getName());
-                }
-
-                nav.navigate(R.id.nav_specific_group, bundle);
+                navigateToGroupTasks(group);
                 return true;
             }
         });
@@ -203,6 +264,23 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         } else {
             holder.timePeriodText.setText(timePeriodScope.getName());
         }
+    }
+
+    private void navigateToGroupTasks(Group group) {
+        NavController nav = Navigation.findNavController(context, R.id.nav_host_fragment);
+
+        Bundle bundle = new Bundle();
+
+        bundle.putString("group", group.getGroupName());
+
+        TimePeriod scope = taskManager.getGroupScope(group);
+        if (scope == null) {
+            bundle.putString("scope", null);
+        } else {
+            bundle.putString("scope", scope.getName());
+        }
+
+        nav.navigate(R.id.nav_specific_group, bundle);
     }
 
     /**

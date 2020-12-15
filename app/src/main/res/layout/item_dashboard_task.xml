@@ -183,6 +183,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
+                    android:lines="1"
                     android:text="Notes:\nTap to add notes"
                     android:textColor="?cardTextColor"
                     app:layout_constraintEnd_toStartOf="@+id/guideline4"

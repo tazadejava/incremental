@@ -113,6 +113,10 @@ public class Group {
         return lightColor;
     }
 
+    public double getColorValue() {
+        return color;
+    }
+
     public void addNewSubgroup(String subGroupName) {
         subGroups.put(subGroupName, new SubGroup(subGroupName));
     }

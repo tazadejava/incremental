@@ -84,7 +84,7 @@ public class IncrementalApplication extends android.app.Application implements L
         //dark mode
 
         //enable dark mode by default if the system is dark mode
-        if(prefs.getAll().containsKey("darkModeOn")) {
+        if(!prefs.getAll().containsKey("darkModeOn")) {
             int nightModeFlags = getApplicationContext().getResources().getConfiguration().uiMode &
                             Configuration.UI_MODE_NIGHT_MASK;
 
@@ -127,7 +127,7 @@ public class IncrementalApplication extends android.app.Application implements L
 
     public boolean isDarkModeOn() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        return prefs.getAll().containsKey("darkModeOn");
+        return prefs.getBoolean("darkModeOn", false);
     }
 
     public boolean isInForeground() {

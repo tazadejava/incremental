@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -60,6 +61,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
     private LocalDate lastRefreshDate;
 
+    private ImageView leftNav, rightNav;
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new task
         taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
@@ -84,6 +87,9 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         View root = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
+        leftNav = root.findViewById(R.id.leftNavigation);
+        rightNav = root.findViewById(R.id.rightNavigation);
+
         workBarChart = root.findViewById(R.id.workBarChart);
 
         createWorkChart();
@@ -100,6 +106,14 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         lastRefreshDate = LocalDate.now();
+
+        if(((IncrementalApplication) getActivity().getApplication()).isDarkModeOn()) {
+            leftNav.setImageResource(R.drawable.ic_navigate_before_white_24dp);
+            rightNav.setImageResource(R.drawable.ic_navigate_next_white_24dp);
+        } else {
+            leftNav.setImageResource(R.drawable.ic_navigate_before_black_24dp);
+            rightNav.setImageResource(R.drawable.ic_navigate_next_black_24dp);
+        }
 
         return root;
     }
@@ -145,6 +159,31 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
                 }
 
                 currentDateOffset--;
+                refreshChartData();
+            }
+        });
+
+        leftNav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for(int i = 0; i < currentDates.length; i++) {
+                    currentDates[i] = currentDates[i].minusDays(7);
+                }
+
+                currentDateOffset--;
+                refreshChartData();
+            }
+        });
+
+
+        rightNav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for(int i = 0; i < currentDates.length; i++) {
+                    currentDates[i] = currentDates[i].plusDays(7);
+                }
+
+                currentDateOffset++;
                 refreshChartData();
             }
         });

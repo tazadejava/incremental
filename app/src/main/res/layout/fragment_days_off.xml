@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Select days to mark as days off this week. If possible, your daily task workload will account for the reduction in days worked. Your days off will reset every week."
+        android:text="Select days to mark as days off this week. Whenever possible, your daily task workload will be reduced for your days off. This will reset every week."
         android:textColor="?android:attr/textColorPrimary"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"

@@ -176,7 +176,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout);
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, task.getGroup(), holder.sideCardAccent);
             }
         });
 
@@ -378,16 +378,21 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 int minutes = task.getMinutesFromTimestamp(dateTime);
                 String notes = task.getNotesFromTimestamp(dateTime);
 
-                minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min:</b> <br>");
-                minutesNotes.append("<font color='lightgray'>" + notes + "</font><br>");
-                lines += 2;
+                if(notes.isEmpty()) {
+                    minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min.</b> <br>");
+                    lines += 1;
+                } else {
+                    minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min:</b> <br>");
+                    minutesNotes.append("<font color='lightgray'>" + notes + "</font><br>");
+                    lines += 2;
+                }
             }
 
             holder.taskNotes.setText(Html.fromHtml("<b>Minutes (" + timestamps.size() + "):</b><br>" + minutesNotes.toString()));
             holder.taskNotes.setLines(lines);
 
             if(updateCardTextAnimation) {
-                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, true);
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, true, task.getGroup(), holder.sideCardAccent);
             }
         }
     }
@@ -411,8 +416,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     inputMinutes.setSelectAllOnFocus(true);
 
                     EditText inputNotes = new EditText(v.getContext());
-                    inputNotes.setHint("Optional: add notes about what you accomplished, goals, etc.");
-                    inputNotes.setLines(2);
+                    inputNotes.setHint("Optional notes: accomplishments, goals, etc.");
+                    inputNotes.setMaxLines(1);
+                    inputNotes.setInputType(InputType.TYPE_CLASS_TEXT);
                     inputNotes.setSelectAllOnFocus(true);
 
                     inputMinutes.setId(1);

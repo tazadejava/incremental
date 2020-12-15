@@ -26,6 +26,7 @@ import net.lingala.zip4j.model.enums.EncryptionMethod;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.SQLOutput;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -197,27 +198,38 @@ public class Utils {
         });
     }
 
+    public static double getViewGradientPercentage(View view) {
+        return (double) ((LayerDrawable) view.getBackground()).getLayerHeight(1) / view.getHeight();
+    }
+
     public static void setViewGradient(Group group, View view, double percentage) {
         setViewGradient(group.getDarkColor(), group.getLightColor(), view, percentage);
     }
 
-    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, boolean forceVisible) {
+    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, boolean forceVisible, Group group, View sideCardAccent) {
         if(forceVisible) {
             expandedOptionsLayout.setVisibility(View.GONE);
         }
 
-        animateTaskCardOptionsLayout(expandedOptionsLayout);
+        animateTaskCardOptionsLayout(expandedOptionsLayout, group, sideCardAccent);
     }
 
-    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout) {
+    //todo: low priority: when repeatedly adjusting the taskgroups, the rounding error shows over time
+
+    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, Group group, View sideCardAccent) {
         if(expandedOptionsLayout.getVisibility() == View.VISIBLE) {
             int height = expandedOptionsLayout.getHeight();
+            double accentPercentage =  getViewGradientPercentage(sideCardAccent);
 
             Animation anim = new Animation() {
                 @Override
                 protected void applyTransformation(float interpolatedTime, Transformation t) {
                     expandedOptionsLayout.getLayoutParams().height = (int) (height * (1 - interpolatedTime));
                     expandedOptionsLayout.requestLayout();
+
+                    if(group != null) {
+                        setViewGradient(group, sideCardAccent, accentPercentage);
+                    }
                 }
             };
             anim.setDuration(300);
@@ -247,7 +259,7 @@ public class Utils {
                     View.MeasureSpec.makeMeasureSpec(expandedOptionsLayout.getMaxHeight(), View.MeasureSpec.AT_MOST));
 
             int measuredHeight = expandedOptionsLayout.getMeasuredHeight();
-            System.out.println("HEIGHT: " + measuredHeight + " AND " + expandedOptionsLayout.getMeasuredHeightAndState());
+            double accentPercentage =  getViewGradientPercentage(sideCardAccent);
 
             expandedOptionsLayout.getLayoutParams().height = 0;
 
@@ -256,6 +268,10 @@ public class Utils {
                 protected void applyTransformation(float interpolatedTime, Transformation t) {
                     expandedOptionsLayout.getLayoutParams().height = (int) (measuredHeight * interpolatedTime);
                     expandedOptionsLayout.requestLayout();
+
+                    if(group != null) {
+                        setViewGradient(group, sideCardAccent, accentPercentage);
+                    }
                 }
             };
             anim.setDuration(300);
