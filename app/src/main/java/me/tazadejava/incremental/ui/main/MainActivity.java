@@ -206,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder confirmSave = new AlertDialog.Builder(this);
 
         confirmSave.setTitle("Restore your data from an external backup?");
-        confirmSave.setMessage("You must select a valid .incremental file. WARNING: All current data will be overridden.");
+        confirmSave.setMessage("You must select a valid .incremental file.\nWARNING: All current data will be overridden.");
 
         confirmSave.setPositiveButton("YES", new DialogInterface.OnClickListener() {
             @Override

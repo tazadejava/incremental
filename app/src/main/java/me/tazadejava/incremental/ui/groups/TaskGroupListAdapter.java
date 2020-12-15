@@ -178,25 +178,21 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                if(tasksTotal > 0) {
-                    NavController nav = Navigation.findNavController(context, R.id.nav_host_fragment);
+                NavController nav = Navigation.findNavController(context, R.id.nav_host_fragment);
 
-                    Bundle bundle = new Bundle();
+                Bundle bundle = new Bundle();
 
-                    bundle.putString("group", group.getGroupName());
+                bundle.putString("group", group.getGroupName());
 
-                    TimePeriod scope = taskManager.getGroupScope(group);
-                    if (scope == null) {
-                        bundle.putString("scope", null);
-                    } else {
-                        bundle.putString("scope", scope.getName());
-                    }
-
-                    nav.navigate(R.id.nav_specific_group, bundle);
-                    return true;
+                TimePeriod scope = taskManager.getGroupScope(group);
+                if (scope == null) {
+                    bundle.putString("scope", null);
+                } else {
+                    bundle.putString("scope", scope.getName());
                 }
 
-                return false;
+                nav.navigate(R.id.nav_specific_group, bundle);
+                return true;
             }
         });
 

@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -62,7 +64,7 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface,
 
         ((MainActivity) getActivity()).setBackPressedInterface(this);
 
-        menu = ((MainActivity) getActivity()).getOptionsMenu();
+        menu = ((MainActivity) getActivity()).getOptionsMenu(); //todo: this should be revised to spec w/ grouptasksviewfragment way of adding options
 
         menu.getItem(3).setVisible(true);
         menu.getItem(4).setVisible(true);

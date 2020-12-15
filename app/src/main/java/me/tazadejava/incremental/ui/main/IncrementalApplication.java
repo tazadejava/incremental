@@ -32,46 +32,6 @@ import me.tazadejava.incremental.ui.reminder.NotificationWorker;
 
 public class IncrementalApplication extends android.app.Application implements LifecycleObserver {
 
-    private static class LastAccessFileUpdate extends AsyncTask<Void, Void, Void> {
-
-        private File dataFolder;
-
-        public LastAccessFileUpdate(File dataFolder) {
-            this.dataFolder = dataFolder;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            try {
-                if(!dataFolder.exists()) {
-                    dataFolder.mkdirs();
-                }
-
-                File lastAccessFile = new File(dataFolder.getAbsolutePath() + "/lastAccess.json");
-
-                if(!lastAccessFile.exists()) {
-                    lastAccessFile.createNewFile();
-                }
-
-                FileWriter writer = new FileWriter(lastAccessFile);
-
-                JsonObject data = new JsonObject();
-
-                data.addProperty("lastAccessTimestamp", LocalDateTime.now().toString());
-
-                new Gson().toJson(data, writer);
-
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            dataFolder = null;
-
-            return null;
-        }
-    }
-
     public final static String NOTIFICATION_MAIN_CHANNEL = "Reminder Notifications";
     public final static int PERSISTENT_NOTIFICATION_ID = 0;
 
@@ -95,6 +55,9 @@ public class IncrementalApplication extends android.app.Application implements L
     }
 
     public void reset() {
+        //first, reset taskManager and save changes
+        taskManager.verifyDayChangeReset();
+
         taskManager = new TaskManager(getFilesDir().getAbsolutePath());
     }
 
@@ -120,6 +83,20 @@ public class IncrementalApplication extends android.app.Application implements L
 
         //dark mode
 
+        //enable dark mode by default if the system is dark mode
+        if(prefs.getAll().containsKey("darkModeOn")) {
+            int nightModeFlags = getApplicationContext().getResources().getConfiguration().uiMode &
+                            Configuration.UI_MODE_NIGHT_MASK;
+
+            SharedPreferences.Editor edit = prefs.edit();
+            if(nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+                edit.putBoolean("darkModeOn", true);
+            } else {
+                edit.putBoolean("darkModeOn", false);
+            }
+            edit.apply();
+        }
+
         if(prefs.getAll().containsKey("darkModeOn")) {
             boolean darkModeOn = ((Boolean) prefs.getAll().get("darkModeOn"));
             AppCompatDelegate.setDefaultNightMode(darkModeOn ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
@@ -131,9 +108,6 @@ public class IncrementalApplication extends android.app.Application implements L
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     public void onAppForegrounded() {
         isInForeground = true;
-
-        //mark access time
-        new LastAccessFileUpdate(new File(getFilesDir().getAbsolutePath() + "/data/")).execute();
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)

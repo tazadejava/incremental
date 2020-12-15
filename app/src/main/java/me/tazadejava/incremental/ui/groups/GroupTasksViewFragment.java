@@ -2,10 +2,14 @@ package me.tazadejava.incremental.ui.groups;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -22,8 +26,18 @@ import me.tazadejava.incremental.ui.main.MainActivity;
 
 public class GroupTasksViewFragment extends Fragment implements BackPressedInterface {
 
+    public static final int DELETE_ID = 135;
+
     private RecyclerView groupView;
     private SpecificGroupTaskAdapter adapter;
+
+    private Menu menu;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
@@ -53,7 +67,7 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
                 Group group = timePeriod.getGroupByName(groupName);
 
                 groupView.setAdapter(adapter =
-                        new SpecificGroupTaskAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
+                        new SpecificGroupTaskAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this,
                                 getContext(), group, timePeriod));
             }
         } else {
@@ -61,13 +75,36 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
             Group group = taskManager.getPersistentGroupByName(groupName);
 
             groupView.setAdapter(adapter =
-                    new SpecificGroupTaskAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
+                    new SpecificGroupTaskAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this,
                             getContext(), group, taskManager.getCurrentTimePeriod()));
         }
 
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return root;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        this.menu = menu;
+
+        menu.add(DELETE_ID, DELETE_ID, 0, "Delete").setIcon(R.drawable.ic_delete_white_18dp).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        menu.setGroupVisible(DELETE_ID, false);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch(item.getItemId()) {
+            case DELETE_ID:
+                adapter.batchDeleteTasks();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void setBatchDeleteIconActive(boolean active) {
+        menu.setGroupVisible(DELETE_ID, active);
     }
 
     @Override

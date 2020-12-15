@@ -1,16 +1,42 @@
 package me.tazadejava.incremental.ui.statistics;
 
+import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class StatisticsFragment extends Fragment {
+import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.ui.main.BackPressedInterface;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.MainActivity;
+
+public class StatisticsFragment extends Fragment implements BackPressedInterface {
 
     private ImageButton leftNav, rightNav;
+
+    private ViewGroup container;
+
+    @Nullable
+    @Override
+    @CallSuper
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
+        addTaskButton.setVisibility(View.GONE);
+        ((MainActivity) getActivity()).setBackPressedInterface(this);
+
+        this.container = container;
+
+        //this shouldn't run; annotation prevents it
+        return null;
+    }
 
     protected void setupNav(View root, View container, Class<? extends Fragment> leftFragment, Class<? extends Fragment> rightFragment) {
         leftNav = root.findViewById(R.id.leftNavigation);
@@ -39,5 +65,12 @@ public class StatisticsFragment extends Fragment {
                         .replace(container.getId(), rightFragment, null).commit();
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        //removes the statistics from the background before returning to the dashboard
+        container.removeAllViewsInLayout();
+        ((MainActivity) getActivity()).getNavController().popBackStack();
     }
 }

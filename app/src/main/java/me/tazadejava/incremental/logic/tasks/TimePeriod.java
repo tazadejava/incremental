@@ -144,6 +144,15 @@ public class TimePeriod {
     }
 
     /**
+     * Reset task minutes for all active tasks for today
+     */
+    public void verifyDayChangeReset() {
+        for(Task task : allActiveTasks) {
+            task.verifyDayChangeReset();
+        }
+    }
+
+    /**
      * Run after all time periods have been defined
      * @param gson
      */
@@ -381,6 +390,8 @@ public class TimePeriod {
 
         removeActiveTasksByParent(generator);
         allTaskGenerators.remove(generator);
+
+        allCompletedTaskGenerators.remove(generator);
     }
 
     public List<Task> removeActiveTasksByParent(TaskGenerator parent) {

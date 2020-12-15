@@ -48,10 +48,7 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
     private TextView dailyGroupTrends;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
-        addTaskButton.setVisibility(View.GONE);
-
-        ((MainActivity) getActivity()).setBackPressedInterface(this);
+        super.onCreateView(inflater, container, savedInstanceState);
 
         View root = inflater.inflate(R.layout.fragment_statistics_workload_trends, container, false);
 
@@ -291,10 +288,5 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
                 return false;
             }
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        ((MainActivity) getActivity()).getNavController().popBackStack();
     }
 }

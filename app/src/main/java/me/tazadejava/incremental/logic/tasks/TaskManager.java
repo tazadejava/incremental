@@ -330,6 +330,11 @@ public class TaskManager {
         return true;
     }
 
+    public void verifyDayChangeReset() {
+        currentTimePeriod.verifyDayChangeReset();
+        saveData(true, currentTimePeriod);
+    }
+
     public void setCurrentTimePeriod(TimePeriod timePeriod) {
         currentTimePeriod = timePeriod;
     }

@@ -238,6 +238,15 @@ public class Task {
         parent.saveTaskToFile();
     }
 
+    /**
+     * Resets the minutes worked today if workday is different
+     */
+    public void verifyDayChangeReset() {
+        if(!lastTaskWorkStartTime.toLocalDate().equals(LocalDate.now())) {
+            loggedMinutesOfWorkToday = 0;
+        }
+    }
+
     public void setSubgroup(SubGroup subgroup) {
         this.subgroup = subgroup;
     }

@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashMap;
 
@@ -38,13 +39,14 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
     private YearMonth yearMonth;
     private float[] heatmap;
     private int[] minutesWorkedPerDay;
+    private int firstDayIndex;
 
     public CalendarWeekAdapter(Activity activity, HashMap<DayOfWeek, Integer> dowIndices, YearMonth yearMonth) {
         this.activity = activity;
         this.yearMonth = yearMonth;
 
         DayOfWeek firstDay = yearMonth.atDay(1).getDayOfWeek();
-        int firstDayIndex = dowIndices.get(firstDay);
+        firstDayIndex = dowIndices.get(firstDay);
 
         int monthLength = yearMonth.lengthOfMonth() + firstDayIndex;
 
@@ -110,7 +112,8 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
                 holder.dayButtons[i].setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Toast.makeText(activity, "Worked " + Utils.formatHourMinuteTime(minutesWorkedPerDay[heatmapPosition]), Toast.LENGTH_SHORT).show();
+                        LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
+                        Toast.makeText(activity, date.getMonth().toString() + " " + date.getDayOfMonth() + ": worked " + Utils.formatHourMinuteTime(minutesWorkedPerDay[heatmapPosition]), Toast.LENGTH_SHORT).show();
                     }
                 });
             }

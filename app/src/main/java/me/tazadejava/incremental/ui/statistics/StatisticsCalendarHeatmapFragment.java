@@ -23,13 +23,10 @@ import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 
-public class StatisticsCalendarHeatmapFragment extends StatisticsFragment implements BackPressedInterface {
+public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        FloatingActionButton addTaskButton = getActivity().findViewById(R.id.fab);
-        addTaskButton.setVisibility(View.GONE);
-
-        ((MainActivity) getActivity()).setBackPressedInterface(this);
+        super.onCreateView(inflater, container, savedInstanceState);
 
         ConstraintLayout root = (ConstraintLayout) inflater.inflate(R.layout.fragment_statistics_calendar_heatmap, container, false);
 
@@ -56,10 +53,5 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment implem
         } while(currentYearMonth.isBefore(now) || currentYearMonth.equals(now));
 
         calendarLayout.setAdapter(new CalendarMonthsAdapter(getActivity(), yearMonths.toArray(new YearMonth[0])));
-    }
-
-    @Override
-    public void onBackPressed() {
-        ((MainActivity) getActivity()).getNavController().popBackStack();
     }
 }
