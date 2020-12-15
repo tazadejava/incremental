@@ -118,7 +118,7 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
     public void updateTaskCards(Task task) {
         for(TaskAdapter adapter : taskAdapters.keySet()) {
             if(adapter.hasTask(task)) {
-                adapter.updateTaskCards(task);
+                adapter.updateTaskCardsAndAnimation(task);
             }
         }
 

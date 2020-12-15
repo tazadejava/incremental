@@ -9,9 +9,13 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Transformation;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import net.lingala.zip4j.ZipFile;
@@ -195,5 +199,69 @@ public class Utils {
 
     public static void setViewGradient(Group group, View view, double percentage) {
         setViewGradient(group.getDarkColor(), group.getLightColor(), view, percentage);
+    }
+
+    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, boolean forceVisible) {
+        if(forceVisible) {
+            expandedOptionsLayout.setVisibility(View.GONE);
+        }
+
+        animateTaskCardOptionsLayout(expandedOptionsLayout);
+    }
+
+    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout) {
+        if(expandedOptionsLayout.getVisibility() == View.VISIBLE) {
+            int height = expandedOptionsLayout.getHeight();
+
+            Animation anim = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    expandedOptionsLayout.getLayoutParams().height = (int) (height * (1 - interpolatedTime));
+                    expandedOptionsLayout.requestLayout();
+                }
+            };
+            anim.setDuration(300);
+            anim.setInterpolator(new DecelerateInterpolator());
+            anim.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    expandedOptionsLayout.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+
+            expandedOptionsLayout.startAnimation(anim);
+        } else {
+            expandedOptionsLayout.setVisibility(View.VISIBLE);
+
+            expandedOptionsLayout.measure(View.MeasureSpec.makeMeasureSpec(expandedOptionsLayout.getMaxWidth(), View.MeasureSpec.AT_MOST),
+                    View.MeasureSpec.makeMeasureSpec(expandedOptionsLayout.getMaxHeight(), View.MeasureSpec.AT_MOST));
+
+            int measuredHeight = expandedOptionsLayout.getMeasuredHeight();
+            System.out.println("HEIGHT: " + measuredHeight + " AND " + expandedOptionsLayout.getMeasuredHeightAndState());
+
+            expandedOptionsLayout.getLayoutParams().height = 0;
+
+            Animation anim = new Animation() {
+                @Override
+                protected void applyTransformation(float interpolatedTime, Transformation t) {
+                    expandedOptionsLayout.getLayoutParams().height = (int) (measuredHeight * interpolatedTime);
+                    expandedOptionsLayout.requestLayout();
+                }
+            };
+            anim.setDuration(300);
+            anim.setInterpolator(new DecelerateInterpolator());
+
+            expandedOptionsLayout.startAnimation(anim);
+        }
     }
 }

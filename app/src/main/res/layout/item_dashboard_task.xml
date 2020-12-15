@@ -181,17 +181,14 @@
                 <TextView
                     android:id="@+id/taskNotes"
                     android:layout_width="0dp"
-                    android:layout_height="0dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:text="Notes:\nTap to add notes"
                     android:textColor="?cardTextColor"
-                    android:visibility="visible"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/guideline4"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_creator="@+id/expandedOptionsLayout"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="visible" />
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
                     android:id="@+id/secondaryActionTaskText"
@@ -228,11 +225,12 @@
                 android:id="@+id/bottomLeftIndicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="16dp"
                 android:textColor="?cardTextColor"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/estimatedDailyTime" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

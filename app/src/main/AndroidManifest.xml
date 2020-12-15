@@ -25,14 +25,17 @@
         <activity
             android:name="me.tazadejava.incremental.ui.create.CreateTaskActivity"
             android:label="Create a task..."
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name="me.tazadejava.incremental.ui.create.CreateTimePeriodActivity"
             android:label="Create a new time period..."
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name="me.tazadejava.incremental.ui.main.SettingsActivity"
             android:label="Settings"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name="me.tazadejava.incremental.ui.main.MainActivity"

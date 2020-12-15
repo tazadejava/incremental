@@ -11,8 +11,9 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.text.Html;
 import android.text.InputType;
-import android.transition.TransitionManager;
+import android.text.SpannableString;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import android.view.animation.AnticipateOvershootInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -174,34 +176,18 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                TransitionManager.beginDelayedTransition(holder.expandedOptionsLayout);
-                if(holder.expandedOptionsLayout.getVisibility() == View.VISIBLE) {
-                    holder.expandedOptionsLayout.setVisibility(View.GONE);
-                } else {
-                    holder.expandedOptionsLayout.setVisibility(View.VISIBLE);
-                    //TODO: how to expand animation
-//                    holder.expandedOptionsLayout.setLayoutParams(new ConstraintLayout.LayoutParams(0, 0));
-//                    for(int i = 0; i < 5; i++) {
-//                        int finalI = i;
-//                        new Handler().postDelayed(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                holder.expandedOptionsLayout.setMaxHeight((int) (maxHeight / 5d * (1 + finalI)));
-//                            }
-//                        }, i * 200);
-//                    }
-                }
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout);
             }
         });
 
-        updateNotesView(task, holder);
-        holder.taskNotes.setOnClickListener(getAddTaskNotesListener(task, holder));
+        updateMinutesNotesView(task, holder);
 
-        if(task.getTaskNotes() == null || task.getTaskNotes().isEmpty()) {
-            holder.bottomLeftIndicator.setText("");
-        } else {
-            holder.bottomLeftIndicator.setText("*");
-        }
+        //todo: temp disabled because unsure if the design benefits from the addition of a star
+//        if(task.getMinutesNotesTimestamps().isEmpty()) {
+//            holder.bottomLeftIndicator.setText("");
+//        } else {
+//            holder.bottomLeftIndicator.setText("*");
+//        }
 
         taskLayout.put(task, holder);
 
@@ -285,14 +271,18 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
-    protected void updateTaskCards(Task task) {
+    protected void updateTaskCardsAndAnimation(Task task) {
         if(taskLayout.containsKey(task)) {
-            updateTaskCards(task, taskLayout.get(task));
+            updateTaskCards(task, taskLayout.get(task), true);
         }
     }
 
     private void updateTaskCards(Task task, ViewHolder holder) {
-        updateNotesView(task, holder);
+        updateTaskCards(task, holder, false);
+    }
+
+    private void updateTaskCards(Task task, ViewHolder holder, boolean updateAnimation) {
+        updateMinutesNotesView(task, holder, updateAnimation);
 
         LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
         GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
@@ -339,7 +329,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             @Override
                             public void run() {
                                 task.startWorkingOnTask();
-                                task.incrementTaskMinutes(0, false);
+                                task.incrementTaskMinutes(0, "", false);
                                 task.completeTaskForTheDay();
                                 mainDashboardDayAdapter.updateTaskCards(task);
                                 mainDashboardDayAdapter.updateDayLayouts(task);
@@ -370,59 +360,42 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         };
     }
 
-    private View.OnClickListener getAddTaskNotesListener(Task task, ViewHolder holder) {
-        return new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                builder.setTitle("Notes:");
-
-                EditText input = new EditText(v.getContext());
-                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-                input.setSelectAllOnFocus(false);
-                builder.setView(input);
-
-                if(task.getTaskNotes() != null) {
-                    input.setText(task.getTaskNotes());
-                }
-
-                builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        task.setTaskNotes(input.getText().toString());
-                        mainDashboardDayAdapter.updateTaskCards(task);
-
-                        hideKeyboard(v);
-                    }
-                });
-
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        hideKeyboard(v);
-                    }
-                });
-
-                builder.show();
-                input.requestFocus();
-
-                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-            }
-        };
+    private void updateMinutesNotesView(Task task, ViewHolder holder) {
+        updateMinutesNotesView(task, holder, false);
     }
 
-    private void updateNotesView(Task task, ViewHolder holder) {
-        if(task.getTaskNotes() == null) {
-            holder.taskNotes.setText("Notes:\nTap to add notes");
+    private void updateMinutesNotesView(Task task, ViewHolder holder, boolean updateCardTextAnimation) {
+        List<LocalDateTime> timestamps = task.getMinutesNotesTimestamps();
+        if(timestamps.isEmpty()) {
+            holder.taskNotes.setLines(2);
+            holder.taskNotes.setText(Html.fromHtml("<b>Minutes:</b><br>Nothing here yet!"));
         } else {
-            holder.taskNotes.setText("Notes:\n" + task.getTaskNotes());
+            StringBuilder minutesNotes = new StringBuilder();
+
+            int lines = 1;
+            for(int i = timestamps.size() - 1; i >= (timestamps.size() >= 3 ? timestamps.size() - 3 : 0); i--) {
+                LocalDateTime dateTime = timestamps.get(i);
+                int minutes = task.getMinutesFromTimestamp(dateTime);
+                String notes = task.getNotesFromTimestamp(dateTime);
+
+                minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min:</b> <br>");
+                minutesNotes.append("<font color='lightgray'>" + notes + "</font><br>");
+                lines += 2;
+            }
+
+            holder.taskNotes.setText(Html.fromHtml("<b>Minutes (" + timestamps.size() + "):</b><br>" + minutesNotes.toString()));
+            holder.taskNotes.setLines(lines);
+
+            if(updateCardTextAnimation) {
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, true);
+            }
         }
     }
 
     private View.OnClickListener getActionTaskListener(Task task, int position, TextView taskText, ConstraintLayout taskCardConstraintLayout, TextView actionTaskText, ConstraintLayout expandedOptionsLayout, boolean hasTaskStarted) {
         if(hasTaskStarted) {
             return new View.OnClickListener() {
+                @SuppressLint("ResourceType")
                 @Override
                 public void onClick(View v) {
                     Utils.vibrate(context, 20);
@@ -430,12 +403,27 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
                     builder.setTitle("For how many minutes did you work on this task?");
 
-                    EditText input = new EditText(v.getContext());
-                    input.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    RelativeLayout inputLayout = new RelativeLayout(v.getContext());
 
-                    input.setText(String.valueOf(task.getCurrentWorkedMinutes()));
-                    input.setSelectAllOnFocus(true);
-                    builder.setView(input);
+                    EditText inputMinutes = new EditText(v.getContext());
+                    inputMinutes.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    inputMinutes.setText(String.valueOf(task.getCurrentWorkedMinutes()));
+                    inputMinutes.setSelectAllOnFocus(true);
+
+                    EditText inputNotes = new EditText(v.getContext());
+                    inputNotes.setHint("Optional: add notes about what you accomplished, goals, etc.");
+                    inputNotes.setLines(2);
+                    inputNotes.setSelectAllOnFocus(true);
+
+                    inputMinutes.setId(1);
+                    RelativeLayout.LayoutParams relativeParamsMinutes = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                    RelativeLayout.LayoutParams relativeParamsNotes = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                    relativeParamsNotes.addRule(RelativeLayout.BELOW, 1);
+
+                    inputLayout.addView(inputMinutes, relativeParamsMinutes);
+                    inputLayout.addView(inputNotes, relativeParamsNotes);
+
+                    builder.setView(inputLayout);
 
                     builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
                         @Override
@@ -445,10 +433,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setTitle("Did you finish the task?");
 
                             int minutesWorked;
-                            if(input.getText().length() == 0) {
+                            if(inputMinutes.getText().length() == 0) {
                                 minutesWorked = 0;
                             } else {
-                                minutesWorked = Integer.parseInt(input.getText().toString());
+                                minutesWorked = Integer.parseInt(inputMinutes.getText().toString());
                             }
 
                             if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate()) && dayPosition == 0) {
@@ -467,7 +455,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             @Override
                                             public void run() {
                                                 task.completeTaskForTheDay();
-                                                task.incrementTaskMinutes(minutesWorked, false);
+                                                task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false);
                                                 mainDashboardDayAdapter.updateTaskCards(task);
                                                 mainDashboardDayAdapter.updateDayLayouts(task);
 
@@ -504,7 +492,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             .translationXBy(width).setStartDelay(200).setDuration(800).setInterpolator(new AnticipateOvershootInterpolator()).withEndAction(new Runnable() {
                                         @Override
                                         public void run() {
-                                            task.incrementTaskMinutes(minutesWorked, true);
+                                            task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), true);
                                             mainDashboardDayAdapter.updateTaskCards(task);
                                             mainDashboardDayAdapter.updateDayLayouts(task);
 
@@ -529,7 +517,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setNegativeButton("Not done yet!", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    task.incrementTaskMinutes(minutesWorked, false);
+                                    task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false);
 
                                     taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.gray));
                                     if(dayPosition == 0) {
@@ -571,7 +559,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     });
 
                     builder.show();
-                    input.requestFocus();
+                    inputMinutes.requestFocus();
 
                     InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);

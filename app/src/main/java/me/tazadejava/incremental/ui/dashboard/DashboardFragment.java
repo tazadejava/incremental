@@ -101,35 +101,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         lastRefreshDate = LocalDate.now();
 
-        //TODO: TEMP, remove!!!
-//        dashboardView.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                getParentFragmentManager().beginTransaction().setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left)
-//                        .replace(container.getId(), StatisticsCalendarHeatmapFragment.class, null).commit();
-//            }
-//        }, 10);
-
         return root;
     }
-//
-//    @Override
-//    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-//        super.onConfigurationChanged(newConfig);
-//
-//        int currentNightMode = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
-//        applyThemeConfig(currentNightMode == Configuration.UI_MODE_NIGHT_YES);
-//    }
-//
-//    private void applyThemeConfig(boolean nightMode) {
-//        if(nightMode) {
-//            TypedValue tv = new TypedValue();
-//            getActivity().getTheme().resolveAttribute(android.R.attr.textColorPrimary, tv, true);
-//            workBarChart.getXAxis().setTextColor(ContextCompat.getColor(getContext(), tv.resourceId));
-//        } else {
-//            workBarChart.setBackgroundColor(Color.RED);
-//        }
-//    }
 
     private String[] formatWorkDates() {
         String[] datesFormatted = new String[currentDates.length];

@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
@@ -18,12 +19,14 @@ public class Task {
 
     private LocalDate startDate;
 
-    private String name, taskNotes;
+    private String name;
     private LocalDateTime dueDateTime;
     private transient Group group;
     private transient SubGroup subgroup;
     private transient TimePeriod timePeriod;
     private int estimatedTotalMinutesToCompletion;
+
+    private MinutesNotes minutesNotesManager;
 
     private boolean isTaskComplete, isTaskCurrentlyWorkedOn, isDoneWithTaskToday;
 
@@ -39,6 +42,8 @@ public class Task {
         this.timePeriod = timePeriod;
         this.estimatedTotalMinutesToCompletion = estimatedTotalMinutesToCompletion;
 
+        minutesNotesManager = new MinutesNotes();
+
         isTaskComplete = false;
         isTaskCurrentlyWorkedOn = false;
         isDoneWithTaskToday = false;
@@ -49,6 +54,11 @@ public class Task {
     //load data from file
     public static Task createInstance(Gson gson, JsonObject data, TaskGenerator parent, TimePeriod timePeriod) {
         Task task = gson.fromJson(data.get("serialized"), Task.class);
+
+        //if not yet initialized for the first time
+        if(task.minutesNotesManager == null) {
+            task.minutesNotesManager = new MinutesNotes();
+        }
 
         task.parent = parent;
         task.timePeriod = timePeriod;
@@ -63,6 +73,18 @@ public class Task {
         }
 
         return task;
+    }
+
+    public List<LocalDateTime> getMinutesNotesTimestamps() {
+        return minutesNotesManager.getMinutesNotesTimestamps();
+    }
+
+    public int getMinutesFromTimestamp(LocalDateTime dateTime) {
+        return minutesNotesManager.getMinutesFromTimestamp(dateTime);
+    }
+
+    public String getNotesFromTimestamp(LocalDateTime dateTime) {
+        return minutesNotesManager.getNotesFromTimestamp(dateTime);
     }
 
     public JsonObject save(Gson gson) {
@@ -217,8 +239,12 @@ public class Task {
         isDoneWithTaskToday = true;
     }
 
-    public void incrementTaskMinutes(int loggedMinutes, boolean completedTask) {
+    public void incrementTaskMinutes(int loggedMinutes, String minutesNotes, boolean completedTask) {
         timePeriod.getStatsManager().appendMinutes(group, lastTaskWorkStartTime.toLocalDate(), loggedMinutes, completedTask);
+
+        if(!minutesNotes.isEmpty()) {
+            minutesNotesManager.addNotes(lastTaskWorkStartTime, loggedMinutes, minutesNotes);
+        }
 
         isTaskCurrentlyWorkedOn = false;
 
@@ -255,11 +281,6 @@ public class Task {
         this.startDate = startDate;
     }
 
-    public void setTaskNotes(String notes) {
-        taskNotes = notes;
-        parent.saveTaskToFile();
-    }
-
     /**
      * Edit the current task. Does not change any generator information. DOES NOT save data. MUST SAVE afterwards to apply to files.
      * @param name
@@ -293,10 +314,6 @@ public class Task {
 
     public SubGroup getSubgroup() {
         return subgroup;
-    }
-
-    public String getTaskNotes() {
-        return taskNotes;
     }
 
     /**
