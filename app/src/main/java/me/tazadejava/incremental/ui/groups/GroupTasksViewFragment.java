@@ -27,6 +27,7 @@ import me.tazadejava.incremental.ui.main.MainActivity;
 public class GroupTasksViewFragment extends Fragment implements BackPressedInterface {
 
     public static final int DELETE_ID = 135;
+    public static final int SELECT_INCOMPLETE_TASKS_POS = 6;
 
     private RecyclerView groupView;
     private SpecificGroupTaskAdapter adapter;
@@ -90,6 +91,8 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
 
         menu.add(DELETE_ID, DELETE_ID, 0, "Delete").setIcon(R.drawable.ic_delete_white_18dp).setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         menu.setGroupVisible(DELETE_ID, false);
+
+        menu.getItem(SELECT_INCOMPLETE_TASKS_POS).setVisible(true);
     }
 
     @Override
@@ -98,12 +101,15 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
             case DELETE_ID:
                 adapter.batchDeleteTasks();
                 return true;
+            case R.id.action_select_incomplete_tasks:
+                adapter.selectAllIncompleteTasks();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    public void setBatchDeleteIconActive(boolean active) {
+    public void setBatchDeleteIconAndOptionsActive(boolean active) {
         menu.setGroupVisible(DELETE_ID, active);
     }
 
@@ -113,6 +119,13 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
 
         //refresh contents
         groupView.setAdapter(adapter);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        menu.getItem(SELECT_INCOMPLETE_TASKS_POS).setVisible(false);
     }
 
     @Override

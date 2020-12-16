@@ -4,26 +4,27 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
-import me.tazadejava.incremental.ui.main.MainActivity;
 
 public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
+
+    private CalendarMonthAdapter monthAdapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -38,12 +39,40 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
     }
 
     private void setupCalendar(ConstraintLayout root) {
+        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+
+        Spinner heatmapGroupSpinner = root.findViewById(R.id.heatmapGroupSpinner);
+
+        List<String> items = new ArrayList<>();
+        items.add("All groups");
+        items.addAll(taskManager.getAllCurrentGroupNames());
+
+        ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
+        heatmapGroupSpinner.setAdapter(groupSpinnerAdapter);
+
+        heatmapGroupSpinner.setSelection(0, false);
+        heatmapGroupSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position == 0) {
+                    monthAdapter.setHeatmapGroup(null);
+                } else {
+                    Group group = taskManager.getCurrentGroupByName(heatmapGroupSpinner.getSelectedItem().toString());
+                    monthAdapter.setHeatmapGroup(group);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
         RecyclerView calendarLayout = root.findViewById(R.id.calendarLayout);
 
         calendarLayout.setLayoutManager(new LinearLayoutManager(getContext()));
 
         List<YearMonth> yearMonths = new ArrayList<>();
-        TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
         YearMonth now = YearMonth.now();
 
         YearMonth currentYearMonth = YearMonth.from(taskManager.getCurrentTimePeriod().getBeginDate());
@@ -52,6 +81,6 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
             currentYearMonth = YearMonth.from(currentYearMonth.atEndOfMonth().plusDays(1));
         } while(currentYearMonth.isBefore(now) || currentYearMonth.equals(now));
 
-        calendarLayout.setAdapter(new CalendarMonthsAdapter(getActivity(), yearMonths.toArray(new YearMonth[0])));
+        calendarLayout.setAdapter(monthAdapter = new CalendarMonthAdapter(getActivity(), yearMonths.toArray(new YearMonth[0])));
     }
 }

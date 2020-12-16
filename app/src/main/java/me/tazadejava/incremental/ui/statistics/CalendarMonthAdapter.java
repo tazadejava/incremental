@@ -1,7 +1,6 @@
 package me.tazadejava.incremental.ui.statistics;
 
 import android.app.Activity;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,10 +15,9 @@ import java.time.YearMonth;
 import java.util.HashMap;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.statistics.StatsManager;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.logic.taskmodifiers.Group;
 
-public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAdapter.ViewHolder> {
+public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -39,7 +37,10 @@ public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAd
 
     private YearMonth[] yearMonths;
 
-    public CalendarMonthsAdapter(Activity activity, YearMonth[] yearMonths) {
+    //TODO: this is not very good if the time period lasts for large numbers, but this is the temporary solution in order to create animations
+    private CalendarWeekAdapter[] weekAdapters;
+
+    public CalendarMonthAdapter(Activity activity, YearMonth[] yearMonths) {
         this.activity = activity;
         this.yearMonths = yearMonths;
 
@@ -51,13 +52,23 @@ public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAd
         dowIndices.put(DayOfWeek.FRIDAY, 4);
         dowIndices.put(DayOfWeek.SATURDAY, 5);
         dowIndices.put(DayOfWeek.SUNDAY, 6);
+
+        weekAdapters = new CalendarWeekAdapter[yearMonths.length];
+        int daysTotal = 0;
+        for(int i = 0; i < yearMonths.length; i++) {
+            if(i > 0) {
+                daysTotal += yearMonths[i - 1].lengthOfMonth();
+            }
+
+            weekAdapters[i] = new CalendarWeekAdapter(activity, daysTotal, null, dowIndices, yearMonths[i]);
+        }
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_calendar_month, parent, false);
-        ViewHolder vh = new CalendarMonthsAdapter.ViewHolder(view);
+        ViewHolder vh = new CalendarMonthAdapter.ViewHolder(view);
 
         vh.monthCalendar.setLayoutManager(new LinearLayoutManager(activity));
 
@@ -69,7 +80,13 @@ public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAd
         YearMonth yearMonth = yearMonths[position];
 
         holder.monthName.setText(yearMonth.getMonth().toString());
-        holder.monthCalendar.setAdapter(new CalendarWeekAdapter(activity, dowIndices, yearMonth));
+        holder.monthCalendar.setAdapter(weekAdapters[position]);
+    }
+
+    public void setHeatmapGroup(Group group) {
+        for(CalendarWeekAdapter adapter : weekAdapters) {
+            adapter.setHeatmapGroup(group);
+        }
     }
 
     @Override

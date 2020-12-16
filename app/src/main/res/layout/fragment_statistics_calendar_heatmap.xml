@@ -46,6 +46,7 @@
         android:id="@+id/button14"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:layout_marginTop="8dp"
         android:gravity="center"
         android:text="M"
         android:textColor="?android:attr/textColorPrimary"
@@ -53,7 +54,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/guideline1"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/horizontalGuideline" />
+        app:layout_constraintTop_toBottomOf="@+id/heatmapGroupSpinner" />
 
     <TextView
         android:id="@+id/button15"
@@ -66,7 +67,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/guideline2"
         app:layout_constraintStart_toStartOf="@+id/guideline1"
-        app:layout_constraintTop_toTopOf="@+id/horizontalGuideline" />
+        app:layout_constraintTop_toTopOf="@+id/button14" />
 
     <TextView
         android:id="@+id/button16"
@@ -79,7 +80,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/guideline3"
         app:layout_constraintStart_toStartOf="@+id/guideline2"
-        app:layout_constraintTop_toTopOf="@+id/horizontalGuideline" />
+        app:layout_constraintTop_toTopOf="@+id/button14" />
 
     <TextView
         android:id="@+id/button17"
@@ -92,7 +93,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/guideline4"
         app:layout_constraintStart_toStartOf="@+id/guideline3"
-        app:layout_constraintTop_toTopOf="@+id/horizontalGuideline" />
+        app:layout_constraintTop_toTopOf="@+id/button14" />
 
     <TextView
         android:id="@+id/button18"
@@ -105,7 +106,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/guideline5"
         app:layout_constraintStart_toStartOf="@+id/guideline4"
-        app:layout_constraintTop_toTopOf="@+id/horizontalGuideline" />
+        app:layout_constraintTop_toTopOf="@+id/button14" />
 
     <TextView
         android:id="@+id/button19"
@@ -118,7 +119,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/guideline6"
         app:layout_constraintStart_toStartOf="@+id/guideline5"
-        app:layout_constraintTop_toTopOf="@+id/horizontalGuideline" />
+        app:layout_constraintTop_toTopOf="@+id/button14" />
 
     <TextView
         android:id="@+id/button20"
@@ -131,7 +132,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
-        app:layout_constraintTop_toTopOf="@+id/horizontalGuideline" />
+        app:layout_constraintTop_toTopOf="@+id/button14" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline1"
@@ -175,13 +176,6 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent=".858" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/horizontalGuideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_begin="32dp" />
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/calendarLayout"
         android:layout_width="0dp"
@@ -193,5 +187,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button17" />
+
+    <Spinner
+        android:id="@+id/heatmapGroupSpinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/daysOffText" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

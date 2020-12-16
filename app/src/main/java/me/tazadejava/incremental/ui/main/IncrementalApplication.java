@@ -55,8 +55,14 @@ public class IncrementalApplication extends android.app.Application implements L
     }
 
     public void reset() {
+        reset(true);
+    }
+
+    public void reset(boolean verifyDayChangeAndSave) {
         //first, reset taskManager and save changes
-        taskManager.verifyDayChangeReset();
+        if(verifyDayChangeAndSave) {
+            taskManager.verifyDayChangeReset();
+        }
 
         taskManager = new TaskManager(getFilesDir().getAbsolutePath());
     }

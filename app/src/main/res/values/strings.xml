@@ -10,6 +10,7 @@
     <string name="action_load_backup">Load Backup File</string>
     <string name="action_sort_by_average_week_hours">Sort by Average Week Hours</string>
     <string name="action_sort_by_current_week_hours">Sort by Current Week Hours</string>
+    <string name="action_select_incomplete_tasks">Select All Incomplete Tasks</string>
     <string name="action_delete_task">Delete Task</string>
 
     <string name="menu_dashboard">Dashboard</string>

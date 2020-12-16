@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
@@ -54,7 +56,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         private ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
         private TextView taskName, taskClass, totalTimeRemaining, dailyTimeRemaining, taskDueDate, actionTaskText,
-                secondaryActionTaskText, taskNotes, thirdActionTaskText, bottomLeftIndicator;
+                secondaryActionTaskText, taskNotes, thirdActionTaskText;
 
         private View sideCardAccent, horizontalLine;
 
@@ -73,8 +75,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             actionTaskText = itemView.findViewById(R.id.actionTaskText);
             secondaryActionTaskText = itemView.findViewById(R.id.secondaryActionTaskText);
             thirdActionTaskText = itemView.findViewById(R.id.thirdActionTaskText);
-
-            bottomLeftIndicator = itemView.findViewById(R.id.bottomLeftIndicator);
 
             taskNotes = itemView.findViewById(R.id.taskNotes);
 
@@ -180,7 +180,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
         });
 
-        updateMinutesNotesView(task, holder);
+        holder.dailyTimeRemaining.post(new Runnable() {
+            @Override
+            public void run() {
+                updateMinutesNotesView(task, holder);
+            }
+        });
 
         //todo: temp disabled because unsure if the design benefits from the addition of a star
 //        if(task.getMinutesNotesTimestamps().isEmpty()) {
@@ -384,7 +389,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 } else {
                     minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min:</b> <br>");
                     minutesNotes.append("<font color='lightgray'>" + notes + "</font><br>");
-                    lines += 2;
+
+                    Paint paint = new Paint();
+                    paint.setTextSize(holder.taskNotes.getTextSize());
+                    Rect bounds = new Rect();
+                    paint.getTextBounds(notes, 0, notes.length(), bounds);
+
+                    lines += 1 + Math.ceil((double) bounds.width() / holder.dailyTimeRemaining.getWidth());
                 }
             }
 

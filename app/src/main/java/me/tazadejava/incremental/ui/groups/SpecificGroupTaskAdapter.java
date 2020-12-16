@@ -4,15 +4,12 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,10 +18,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
@@ -32,7 +27,6 @@ import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
-import me.tazadejava.incremental.ui.main.MainActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroupTaskAdapter.ViewHolder> {
@@ -190,12 +184,12 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                         selectedTaskLayouts.get(taskPosition).setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                     }
 
-                    groupFragment.setBatchDeleteIconActive(false);
+                    groupFragment.setBatchDeleteIconAndOptionsActive(false);
                     isSelectingTasks = false;
                     selectedTasks.clear();
                     selectedTaskLayouts.clear();
                 } else {
-                    groupFragment.setBatchDeleteIconActive(true);
+                    groupFragment.setBatchDeleteIconAndOptionsActive(true);
                     isSelectingTasks = true;
                     holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
                     selectedTasks.put(position, task);
@@ -214,7 +208,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                         selectedTaskLayouts.remove(position);
                         if (selectedTasks.isEmpty()) {
                             isSelectingTasks = false;
-                            groupFragment.setBatchDeleteIconActive(false);
+                            groupFragment.setBatchDeleteIconAndOptionsActive(false);
                         }
 
                         holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
@@ -229,6 +223,10 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
         if(isSelectingTasks) {
             holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, selectedTasks.containsKey(position) ? R.attr.cardColorActive : R.attr.cardColor));
+
+            if(selectedTasks.containsKey(position) && !selectedTaskLayouts.containsKey(position)) {
+                selectedTaskLayouts.put(position, holder.taskCardConstraintLayout);
+            }
         }
     }
 
@@ -250,10 +248,12 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                     taskManager.saveData(true, taskManager.getCurrentTimePeriod());
 
                     for(int taskPosition : selectedTasks.keySet()) {
-                        selectedTaskLayouts.get(taskPosition).setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
+                        if(selectedTaskLayouts.get(taskPosition) != null) {
+                            selectedTaskLayouts.get(taskPosition).setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
+                        }
                     }
 
-                    groupFragment.setBatchDeleteIconActive(true);
+                    groupFragment.setBatchDeleteIconAndOptionsActive(false);
                     isSelectingTasks = false;
                     selectedTasks.clear();
                     selectedTaskLayouts.clear();
@@ -264,6 +264,23 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
             confirmation.show();
         }
+    }
+
+    public void selectAllIncompleteTasks() {
+        for(int i = 0; i < tasks.size(); i++) {
+            Task task = tasks.get(i);
+
+            if(!task.isTaskComplete()) {
+                selectedTasks.put(i, task);
+            }
+        }
+
+        if(!selectedTasks.isEmpty()) {
+            isSelectingTasks = true;
+            groupFragment.setBatchDeleteIconAndOptionsActive(true);
+        }
+
+        notifyDataSetChanged();
     }
 
     @Override
