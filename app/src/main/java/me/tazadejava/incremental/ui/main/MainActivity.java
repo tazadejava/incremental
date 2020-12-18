@@ -323,10 +323,10 @@ public class MainActivity extends AppCompatActivity {
         boolean defaultTimePeriod = taskManager.getCurrentTimePeriod().getName().isEmpty();
 
         if(defaultTimePeriod) {
-            builder.setTitle("Hi! Time to create a new time period:");
+            builder.setTitle("Hi! Time to create a new time period.");
             builder.setMessage("A time period is a good way to separate your tasks into specific start/end dates.");
         } else {
-            builder.setTitle("Your time period has expired:");
+            builder.setTitle("Your time period has expired.");
             builder.setMessage("It's time to define a new time period!");
         }
 

@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,7 +51,7 @@ public class TaskManager {
                 }
 
                 if(savePersistentData) {
-                    File file = new File(dataFolder.getAbsolutePath() + "/" + "persistentData.json");
+                    File file = new File(dataFolder.getAbsolutePath() + "/" + "persistentData.json.TMP");
 
                     if(!file.exists()) {
                         file.createNewFile();
@@ -82,6 +84,11 @@ public class TaskManager {
                     taskManager.gson.toJson(main, writer);
 
                     writer.close();
+
+                    //create temp file just in case something fails
+                    File permFile = new File(dataFolder.getAbsolutePath() + "/" + "persistentData.json");
+                    Files.copy(file.toPath(), permFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    file.delete();
                 }
 
                 for(TimePeriod saveTimePeriod : saveTimePeriods) {

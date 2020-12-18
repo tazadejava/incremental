@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.time.LocalDate;
 import java.util.Calendar;
+import java.util.List;
 import java.util.TimeZone;
 
 import me.tazadejava.incremental.R;
@@ -35,6 +36,7 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
     private TimePeriod editingTimePeriod;
 
     private long minDate = 0;
+    private long startMaxDate = Long.MAX_VALUE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +56,8 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
             }
         }
 
-        for(TimePeriod timePeriod : taskManager.getTimePeriods()) {
+        List<TimePeriod> timePeriods = taskManager.getTimePeriods();
+        for(TimePeriod timePeriod : timePeriods) {
             if(timePeriod == editingTimePeriod) {
                 continue;
             }
@@ -64,6 +67,11 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
 
             System.out.println(timePeriod.getName() + " " + timePeriod.getBeginDate() + " AND " + timePeriod.getEndDate());
             minDate = Math.max(minDate, dateToMilliseconds(timePeriod.getEndDate().plusDays(1)));
+        }
+
+        if(timePeriods.isEmpty()) {
+            //if empty, then is creating first, and must have a minDate of today
+            startMaxDate = dateToMilliseconds(LocalDate.now());
         }
 
         nameOfTimePeriod = findViewById(R.id.nameOfTimePeriod);
@@ -94,6 +102,7 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
                 DatePickerDialog datePicker = new DatePickerDialog(CreateTimePeriodActivity.this);
 
                 datePicker.getDatePicker().setMinDate(minDate);
+                datePicker.getDatePicker().setMaxDate(startMaxDate);
 
                 if(startDateFormatted != null) {
                     datePicker.updateDate(startDateFormatted.getYear(), startDateFormatted.getMonthValue() - 1, startDateFormatted.getDayOfMonth());
@@ -162,6 +171,9 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
                 if(editingTimePeriod != null) {
                     editingTimePeriod.setBeginDate(startDateFormatted);
                     editingTimePeriod.setEndDate(endDateFormatted);
+
+                    Intent returnToMain = new Intent(CreateTimePeriodActivity.this, MainActivity.class);
+                    startActivity(returnToMain);
                 } else {
                     if(taskManager.addNewTimePeriod(nameOfTimePeriod.getText().toString(), startDateFormatted, endDateFormatted)) {
                         Intent returnToMain = new Intent(CreateTimePeriodActivity.this, MainActivity.class);
