@@ -15,7 +15,6 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.text.Html;
 import android.text.InputType;
-import android.text.SpannableString;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +24,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -418,12 +418,17 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
                     builder.setTitle("For how many minutes did you work on this task?");
+                    if(task.hasCarryoverSeconds()) {
+                        Toast.makeText(context, "An extra minute has been added to make up for leftover seconds from previous logs.", Toast.LENGTH_LONG).show();
+                    }
 
                     RelativeLayout inputLayout = new RelativeLayout(v.getContext());
 
                     EditText inputMinutes = new EditText(v.getContext());
                     inputMinutes.setInputType(InputType.TYPE_CLASS_NUMBER);
-                    inputMinutes.setText(String.valueOf(task.getCurrentWorkedMinutes()));
+                    final LocalDateTime estimateTimestamp = task.getLastTaskWorkStartTime();
+                    final String currentMinutes = String.valueOf(task.getCurrentWorkedMinutesWithCarryover());
+                    inputMinutes.setText(currentMinutes);
                     inputMinutes.setSelectAllOnFocus(true);
 
                     EditText inputNotes = new EditText(v.getContext());
@@ -449,6 +454,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setCancelable(false);
                             finishedTaskBuilder.setTitle("Did you finish the task?");
 
+                            boolean usedEstimatedTime = currentMinutes.equals(inputMinutes.getText().toString());
+
                             int minutesWorked;
                             if(inputMinutes.getText().length() == 0) {
                                 minutesWorked = 0;
@@ -472,7 +479,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             @Override
                                             public void run() {
                                                 task.completeTaskForTheDay();
-                                                task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false);
+                                                task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
                                                 mainDashboardDayAdapter.updateTaskCards(task);
                                                 mainDashboardDayAdapter.updateDayLayouts(task);
 
@@ -509,7 +516,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             .translationXBy(width).setStartDelay(200).setDuration(800).setInterpolator(new AnticipateOvershootInterpolator()).withEndAction(new Runnable() {
                                         @Override
                                         public void run() {
-                                            task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), true);
+                                            task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), true, usedEstimatedTime, estimateTimestamp);
                                             mainDashboardDayAdapter.updateTaskCards(task);
                                             mainDashboardDayAdapter.updateDayLayouts(task);
 
@@ -534,7 +541,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setNegativeButton("Not done yet!", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false);
+                                    task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
 
                                     taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.gray));
                                     if(dayPosition == 0) {

@@ -30,7 +30,8 @@ public class Task {
 
     private boolean isTaskComplete, isTaskCurrentlyWorkedOn, isDoneWithTaskToday;
 
-    private int totalLoggedMinutesOfWork, loggedMinutesOfWorkToday;
+    //carryOverSeconds are used to account for rounding error when logging time from previous tasks
+    private int totalLoggedMinutesOfWork, loggedMinutesOfWorkToday, carryOverSeconds;
     private LocalDateTime lastTaskWorkEndTime, lastTaskWorkStartTime;
 
     public Task(TaskGenerator parent, String name, LocalDateTime dueDateTime, Group group, SubGroup subgroup, TimePeriod timePeriod, int estimatedTotalMinutesToCompletion) {
@@ -173,7 +174,7 @@ public class Task {
     public float getTodaysTaskCompletionPercentage() {
         float percentage;
         if(isTaskCurrentlyWorkedOn) {
-            percentage = getCurrentWorkedMinutes();
+            percentage = getCurrentWorkedMinutesWithCarryover();
         } else {
             percentage = loggedMinutesOfWorkToday;
         }
@@ -196,7 +197,7 @@ public class Task {
 
     public int getTodaysMinutesLeftIncludingCurrentWork() {
         return Math.max(0, Math.min(getDayMinutesOfWorkTotal(LocalDate.now()) - loggedMinutesOfWorkToday, lastTaskWorkStartTime == null
-                || !isTaskCurrentlyWorkedOn ? Integer.MAX_VALUE : getDayMinutesOfWorkTotal(LocalDate.now()) - getCurrentWorkedMinutes()));
+                || !isTaskCurrentlyWorkedOn ? Integer.MAX_VALUE : getDayMinutesOfWorkTotal(LocalDate.now()) - getCurrentWorkedMinutesWithCarryover()));
     }
 
     public String getName() {
@@ -227,8 +228,20 @@ public class Task {
         return (int) ChronoUnit.DAYS.between(dueDateTime.toLocalDate(), LocalDate.now());
     }
 
-    public int getCurrentWorkedMinutes() {
-        return (int) lastTaskWorkStartTime.until(LocalDateTime.now(), ChronoUnit.MINUTES);
+    /**
+     * Includes carryover minutes
+     * @return
+     */
+    public int getCurrentWorkedMinutesWithCarryover() {
+        return (int) lastTaskWorkStartTime.minusSeconds(carryOverSeconds).until(LocalDateTime.now(), ChronoUnit.MINUTES);
+    }
+
+    public boolean hasCarryoverSeconds() {
+        return carryOverSeconds >= 60;
+    }
+
+    public LocalDateTime getLastTaskWorkStartTime() {
+        return lastTaskWorkStartTime;
     }
 
     public void setEstimatedTotalMinutesToCompletion(int estimatedTotalMinutesToCompletion) {
@@ -240,6 +253,10 @@ public class Task {
     }
 
     public void incrementTaskMinutes(int loggedMinutes, String minutesNotes, boolean completedTask) {
+        incrementTaskMinutes(loggedMinutes, minutesNotes, completedTask, false, null);
+    }
+
+    public void incrementTaskMinutes(int loggedMinutes, String minutesNotes, boolean completedTask, boolean usedEstimatedTime, LocalDateTime estimatedStartTime) {
         timePeriod.getStatsManager().appendMinutes(group, lastTaskWorkStartTime.toLocalDate(), loggedMinutes, completedTask);
 
         if(!minutesNotes.isEmpty() || loggedMinutes > 0) {
@@ -255,6 +272,14 @@ public class Task {
             loggedMinutesOfWorkToday = 0;
         }
         loggedMinutesOfWorkToday += loggedMinutes;
+
+        if(usedEstimatedTime) {
+            carryOverSeconds %= 60;
+
+            int seconds = ((int) estimatedStartTime.until(LocalDateTime.now(), ChronoUnit.SECONDS)) % 60;
+            carryOverSeconds += seconds;
+            System.out.println("SECONDS NOW: " + carryOverSeconds);
+        }
 
         if(completedTask) {
             isTaskComplete = true;
