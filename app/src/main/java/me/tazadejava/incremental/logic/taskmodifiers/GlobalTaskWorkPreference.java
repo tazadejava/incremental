@@ -7,35 +7,38 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.IsoFields;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public class GlobalTaskWorkPreference {
 
-    private int currentWeekNumber;
-    private Set<DayOfWeek> blackedOutDaysOfWeek = new HashSet<>();
+    private Set<LocalDate> blackedOutDays = new HashSet<>();
 
-    public GlobalTaskWorkPreference() {
-        currentWeekNumber = getWeekNumber(Instant.now());
-    }
+    public boolean updateData() {
+        boolean updated = false;
+        //remove old dates from the set
+        if(!blackedOutDays.isEmpty()) {
+            LocalDate now = LocalDate.now();
 
-    //monday is a new week
-    private int getWeekNumber(Instant instant) {
-        return ZonedDateTime.ofInstant(instant, ZoneId.systemDefault()).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
-    }
+            Iterator<LocalDate> days = blackedOutDays.iterator();
+            while(days.hasNext()) {
+                LocalDate next = days.next();
 
-    public boolean checkForWeekChanges() {
-        if(getWeekNumber(Instant.now()) != currentWeekNumber) {
-            currentWeekNumber = getWeekNumber(Instant.now());
-            blackedOutDaysOfWeek.clear();
-            return true;
+                if(now.isAfter(next)) {
+                    days.remove();
+                    updated = true;
+                }
+            }
         }
 
-        return false;
+        return updated;
     }
 
     public int countBlackedOutDaysBetween(LocalDate begin, LocalDate end) {
-        if(blackedOutDaysOfWeek.isEmpty()) {
+        if(blackedOutDays.isEmpty()) {
             return 0;
         }
         if(begin.isAfter(end)) {
@@ -46,7 +49,7 @@ public class GlobalTaskWorkPreference {
 
         LocalDate currentDate = begin;
         for(int i = 0; i < 7; i++) {
-            if(blackedOutDaysOfWeek.contains(currentDate.getDayOfWeek())) {
+            if(blackedOutDays.contains(currentDate)) {
                 count++;
             }
 
@@ -55,27 +58,20 @@ public class GlobalTaskWorkPreference {
             if(currentDate.isAfter(end)) {
                 break;
             }
-            if(currentWeekNumber != getWeekNumber(currentDate.atTime(12, 0).toInstant(ZoneOffset.UTC))) {
-                break;
-            }
         }
 
         return count;
     }
 
     public boolean isBlackedOutDay(LocalDate date) {
-        return blackedOutDaysOfWeek.contains(date.getDayOfWeek()) && getWeekNumber(date.atTime(12, 0).toInstant(ZoneOffset.UTC)) == currentWeekNumber;
+        return blackedOutDays.contains(date);
     }
 
-    public boolean isBlackedOutDayOfWeek(DayOfWeek day) {
-        return blackedOutDaysOfWeek.contains(day);
+    public void addBlackedOutDay(LocalDate date) {
+        blackedOutDays.add(date);
     }
 
-    public void addBlackedOutDayOfWeek(DayOfWeek day) {
-        blackedOutDaysOfWeek.add(day);
-    }
-
-    public void removeBlackedOutDayOfWeek(DayOfWeek day) {
-        blackedOutDaysOfWeek.remove(day);
+    public void removeBlackedOutDay(LocalDate date) {
+        blackedOutDays.remove(date);
     }
 }

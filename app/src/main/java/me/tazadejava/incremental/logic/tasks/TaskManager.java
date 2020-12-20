@@ -312,7 +312,7 @@ public class TaskManager {
                     timePeriod.initializeStatsManager(gson, fileDir);
                 }
 
-                if(currentTimePeriod.getWorkPreferences().checkForWeekChanges()) {
+                if(currentTimePeriod.getWorkPreferences().updateData()) {
                     saveData(true);
                 }
             }

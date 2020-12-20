@@ -37,47 +37,41 @@ public class DaysOffFragment extends Fragment implements BackPressedInterface {
 
         Switch[] daysOff = new Switch[] {root.findViewById(R.id.takeMondayOff), root.findViewById(R.id.takeTuesdayOff), root.findViewById(R.id.takeWednesdayOff),
                 root.findViewById(R.id.takeThursdayOff),root.findViewById(R.id.takeFridayOff),root.findViewById(R.id.takeSaturdayOff),root.findViewById(R.id.takeSundayOff)};
-        DayOfWeek[] correspondingDaysOfWeek = new DayOfWeek[] {DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY};
 
         TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
         GlobalTaskWorkPreference workPreferences = taskManager.getCurrentTimePeriod().getWorkPreferences();
 
-        LocalDate monday = LocalDate.now();
-
-        while(monday.getDayOfWeek() != DayOfWeek.MONDAY) {
-            monday = monday.minusDays(1);
-        }
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE (MM/dd)");
 
         TextView daysOffText = root.findViewById(R.id.daysOffText);
 
-        daysOffText.setText("Days off during week of " + monday.format(formatter) + " to " + monday.plusDays(6).format(formatter));
+        daysOffText.setText("Scheduled days off");
 
+        LocalDate currentDate = LocalDate.now();
         for(int i = 0; i < 7; i++) {
-            final int dayIndex = i;
+            LocalDate indexDate = currentDate.plusDays(i);
 
-            daysOff[i].setText(daysOff[i].getText().toString() + " (" + monday.plusDays(i).format(formatter) + ")");
+            daysOff[i].setText(indexDate.format(formatter));
 
-            if(monday.plusDays(i).equals(LocalDate.now())) {
+            if(indexDate.equals(LocalDate.now())) {
                 daysOff[i].setTypeface(daysOff[i].getTypeface(), Typeface.BOLD);
-            } else if (monday.plusDays(i).isBefore(LocalDate.now())) {
+            } else if (indexDate.isBefore(LocalDate.now())) {
                 daysOff[i].setTypeface(daysOff[i].getTypeface());
                 daysOff[i].setEnabled(false);
             } else {
                 daysOff[i].setTypeface(daysOff[i].getTypeface());
             }
 
-            daysOff[i].setChecked(workPreferences.isBlackedOutDayOfWeek(correspondingDaysOfWeek[i]));
+            daysOff[i].setChecked(workPreferences.isBlackedOutDay(indexDate));
 
             daysOff[i].setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                     if(b) {
-                        workPreferences.addBlackedOutDayOfWeek(correspondingDaysOfWeek[dayIndex]);
+                        workPreferences.addBlackedOutDay(indexDate);
                     } else {
-                        workPreferences.removeBlackedOutDayOfWeek(correspondingDaysOfWeek[dayIndex]);
+                        workPreferences.removeBlackedOutDay(indexDate);
                     }
 
                     taskManager.saveData(true);
