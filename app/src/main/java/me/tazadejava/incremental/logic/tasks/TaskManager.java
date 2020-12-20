@@ -299,7 +299,7 @@ public class TaskManager {
                 for(JsonElement timePeriod : timePeriodData) {
                     JsonObject timePeriodObject = timePeriod.getAsJsonObject();
 
-                    TimePeriod period = new TimePeriod(this, timePeriodObject, gson, dataFolder);
+                    TimePeriod period = new TimePeriod(this, timePeriodObject, gson, dataFolder, timePeriodObject.has("current"));
 
                     if(timePeriodObject.has("current")) {
                         currentTimePeriod = period;
@@ -343,6 +343,10 @@ public class TaskManager {
     }
 
     public void setCurrentTimePeriod(TimePeriod timePeriod) {
+        if(!timePeriod.hasLoadedTaskData()) {
+            timePeriod.loadInactiveTimePeriodTaskData();
+        }
+
         currentTimePeriod = timePeriod;
     }
 

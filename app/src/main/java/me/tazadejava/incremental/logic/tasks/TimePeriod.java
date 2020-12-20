@@ -36,6 +36,10 @@ public class TimePeriod {
     public static final int DAILY_LOGS_AHEAD_COUNT_SHOW = 6;
 
     private TaskManager taskManager;
+    private Gson gson;
+    private File dataFolder;
+
+    private boolean hasLoadedTaskData;
 
     private StatsManager statsManager;
 
@@ -78,8 +82,7 @@ public class TimePeriod {
     }
 
     //load from file
-    //TODO: DON'T ALWAYS LOAD THE TASKS IF NOT THE CURRENT TASK
-    public TimePeriod(TaskManager taskManager, JsonObject data, Gson gson, File dataFolder) {
+    public TimePeriod(TaskManager taskManager, JsonObject data, Gson gson, File dataFolder, boolean loadTaskData) {
         this(taskManager);
 
         //load time period info
@@ -108,7 +111,12 @@ public class TimePeriod {
             workPreferences = new GlobalTaskWorkPreference();
         }
 
-        loadTaskData(taskManager, gson, dataFolder);
+        if(loadTaskData) {
+            loadTaskData(taskManager, gson, dataFolder);
+        } else {
+            this.gson = gson;
+            this.dataFolder = dataFolder;
+        }
     }
 
     public boolean setBeginDate(LocalDate date) {
@@ -168,7 +176,17 @@ public class TimePeriod {
 //        statsManager.saveData();
     }
 
-    //TODO: DON"T ALWAYS LOAD THE OLD TASKS
+    public void loadInactiveTimePeriodTaskData() {
+        if(hasLoadedTaskData) {
+            return;
+        }
+
+        loadTaskData(taskManager, gson, dataFolder);
+
+        gson = null;
+        dataFolder = null;
+    }
+
     private void loadTaskData(TaskManager taskManager, Gson gson, File dataFolder) {
         try {
             File timePeriodFolder = new File(dataFolder.getAbsolutePath() + "/" + timePeriodID + "/");
@@ -189,6 +207,8 @@ public class TimePeriod {
 
                 File completedTasksFile = new File(timePeriodFolder + "/completedTasks.json");
                 loadTasksFromFile(taskManager, gson, completedTasksFile, allCompletedTaskGenerators, null);
+
+                hasLoadedTaskData = true;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -840,5 +860,9 @@ public class TimePeriod {
 
     public GlobalTaskWorkPreference getWorkPreferences() {
         return workPreferences;
+    }
+
+    public boolean hasLoadedTaskData() {
+        return hasLoadedTaskData;
     }
 }

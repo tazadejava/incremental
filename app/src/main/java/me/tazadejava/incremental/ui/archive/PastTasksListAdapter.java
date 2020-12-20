@@ -139,7 +139,7 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
                 String notes = task.getNotesFromTimestamp(dateTime);
 
                 if(notes.isEmpty()) {
-                    minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min.</b> <br>"); //todo: assumption: this takes only one line
+                    minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min.</b> <br>");
                     lines += 1;
                 } else {
                     minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min:</b> <br>");

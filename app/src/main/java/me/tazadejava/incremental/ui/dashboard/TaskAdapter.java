@@ -489,7 +489,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             }
                                         }).start();
 
-                                        taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.gray));
+                                        taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                                         if(dayPosition == 0) {
                                             taskText.setText("Start\nTask");
                                         } else {
@@ -526,7 +526,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         }
                                     }).start();
 
-                                    taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.gray));
+                                    taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                                     if(dayPosition == 0) {
                                         taskText.setText("Start\nTask");
                                     } else {
@@ -543,7 +543,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 public void onClick(DialogInterface dialog, int which) {
                                     task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
 
-                                    taskCardConstraintLayout.setBackgroundColor(ContextCompat.getColor(context, R.color.gray));
+                                    taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                                     if(dayPosition == 0) {
                                         taskText.setText("Start\nTask");
                                     } else {
