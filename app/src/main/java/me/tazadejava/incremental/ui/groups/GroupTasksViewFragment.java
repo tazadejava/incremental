@@ -69,7 +69,7 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
 
                 groupView.setAdapter(adapter =
                         new SpecificGroupTaskAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this,
-                                getContext(), group, timePeriod));
+                                getActivity(), group, timePeriod));
             }
         } else {
             String groupName = getArguments().getString("group");
@@ -77,7 +77,7 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
 
             groupView.setAdapter(adapter =
                     new SpecificGroupTaskAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this,
-                            getContext(), group, taskManager.getCurrentTimePeriod()));
+                            getActivity(), group, taskManager.getCurrentTimePeriod()));
         }
 
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -124,8 +124,6 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        menu.getItem(SELECT_INCOMPLETE_TASKS_POS).setVisible(false);
     }
 
     @Override

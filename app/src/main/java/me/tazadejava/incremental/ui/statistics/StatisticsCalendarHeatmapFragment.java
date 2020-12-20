@@ -73,13 +73,19 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
         calendarLayout.setLayoutManager(new LinearLayoutManager(getContext()));
 
         List<YearMonth> yearMonths = new ArrayList<>();
-        YearMonth now = YearMonth.now();
+        YearMonth endDate;
+
+        if(taskManager.isCurrentTimePeriodActive()) {
+            endDate = YearMonth.now();
+        } else {
+            endDate = YearMonth.from(taskManager.getCurrentTimePeriod().getEndDate());
+        }
 
         YearMonth currentYearMonth = YearMonth.from(taskManager.getCurrentTimePeriod().getBeginDate());
         do {
             yearMonths.add(currentYearMonth);
             currentYearMonth = YearMonth.from(currentYearMonth.atEndOfMonth().plusDays(1));
-        } while(currentYearMonth.isBefore(now) || currentYearMonth.equals(now));
+        } while(currentYearMonth.isBefore(endDate) || currentYearMonth.equals(endDate));
 
         calendarLayout.setAdapter(monthAdapter = new CalendarMonthAdapter(getActivity(), yearMonths.toArray(new YearMonth[0])));
     }

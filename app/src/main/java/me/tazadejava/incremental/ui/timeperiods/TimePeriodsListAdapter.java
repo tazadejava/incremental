@@ -23,6 +23,7 @@ import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.create.CreateTimePeriodActivity;
+import me.tazadejava.incremental.ui.main.MainActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsListAdapter.ViewHolder> {
@@ -51,11 +52,11 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
     }
 
     private TaskManager taskManager;
-    private Context context;
+    private MainActivity context;
 
     private List<TimePeriod> timePeriods;
 
-    public TimePeriodsListAdapter(TaskManager taskManager, Context context) {
+    public TimePeriodsListAdapter(TaskManager taskManager, MainActivity context) {
         this.taskManager = taskManager;
         this.context = context;
 
@@ -122,6 +123,8 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
                     } else {
                         Toast.makeText(context, "Switched to an inactive time period. Note that inactive time periods are read-only.", Toast.LENGTH_SHORT).show();
                     }
+
+                    context.updateNavBarTimePeriod();
 
                     notifyDataSetChanged();
                     return true;

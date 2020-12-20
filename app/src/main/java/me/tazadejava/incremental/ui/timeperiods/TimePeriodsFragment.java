@@ -41,7 +41,7 @@ public class TimePeriodsFragment extends Fragment implements BackPressedInterfac
         View root = inflater.inflate(R.layout.fragment_dashboard_nochart, container, false);
 
         groupView = root.findViewById(R.id.dashboard_day_list);
-        groupView.setAdapter(adapter = new TimePeriodsListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), getContext()));
+        groupView.setAdapter(adapter = new TimePeriodsListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), (MainActivity) getActivity()));
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         return root;

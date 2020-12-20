@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -157,7 +156,7 @@ public class TimePeriod {
      * @param gson
      */
     public void initializeStatsManager(Gson gson, String fileDir) {
-        statsManager = new StatsManager(gson, fileDir, this, taskManager.getAllCurrentGroupsHashed());
+        statsManager = new StatsManager(gson, fileDir, this, taskManager.getAllGroupsHashed(this));
     }
 
     /**

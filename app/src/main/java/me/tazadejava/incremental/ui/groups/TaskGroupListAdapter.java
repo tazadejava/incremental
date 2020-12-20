@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -74,7 +75,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         this.context = context;
         this.taskManager = taskManager;
 
-        groups = new ArrayList<>(taskManager.getAllCurrentGroups());
+        groups = new ArrayList<>(taskManager.getAllCurrentGroups(taskManager.getCurrentTimePeriod()));
 
         sortByCurrentWeekHours();
     }
@@ -302,7 +303,14 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             bundle.putString("scope", scope.getName());
         }
 
-        nav.navigate(R.id.nav_specific_group, bundle);
+        NavOptions navOptions = new NavOptions.Builder()
+                .setEnterAnim(R.anim.slide_in_left)
+                .setExitAnim(R.anim.slide_out_right)
+                .setPopEnterAnim(R.anim.slide_in_right)
+                .setPopExitAnim(R.anim.slide_out_left)
+                .build();
+
+        nav.navigate(R.id.nav_specific_group, bundle, navOptions);
     }
 
     /**

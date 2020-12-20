@@ -196,14 +196,14 @@ public class TaskManager {
         return names;
     }
 
-    public Collection<Group> getAllCurrentGroups() {
-        return getAllCurrentGroupsHashed().values();
+    public Collection<Group> getAllCurrentGroups(TimePeriod timePeriod) {
+        return getAllGroupsHashed(timePeriod).values();
     }
 
-    public HashMap<String, Group> getAllCurrentGroupsHashed() {
+    public HashMap<String, Group> getAllGroupsHashed(TimePeriod timePeriod) {
         HashMap<String, Group> groups = new HashMap<>();
 
-        groups.putAll(currentTimePeriod.getAllGroupsHashed());
+        groups.putAll(timePeriod.getAllGroupsHashed());
         groups.putAll(allPersistentGroups);
 
         return groups;

@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
     private BackPressedInterface backPressedInterface;
 
+    private NavigationView navigationView;
     private NavController navController;
 
     private Menu menu;
@@ -68,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         TaskManager taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView = findViewById(R.id.nav_view);
 
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_dashboard, R.id.nav_days_off, R.id.nav_time_periods, R.id.nav_task_groups, R.id.nav_statistics, R.id.nav_archive)
@@ -81,16 +82,8 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navigationView, navController);
 
         currentTimePeriod = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriod);
-        currentTimePeriod.setText(taskManager.getCurrentTimePeriod().getName());
 
-        if(taskManager.getCurrentTimePeriod().getBeginDate() != null && taskManager.getCurrentTimePeriod().getEndDate() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-            LocalDate beginDate = taskManager.getCurrentTimePeriod().getBeginDate();
-            LocalDate endDate = taskManager.getCurrentTimePeriod().getEndDate();
-
-            TextView currentTimePeriodDates = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriodDates);
-            currentTimePeriodDates.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
-        }
+        updateNavBarTimePeriod();
 
         //check if need new time period
         if(taskManager.hasTimePeriodExpired()) {
@@ -104,6 +97,21 @@ public class MainActivity extends AppCompatActivity {
                 imm.hideSoftInputFromWindow(currentTimePeriod.getWindowToken(), 0);
             }
         }, 50);
+    }
+
+    public void updateNavBarTimePeriod() {
+        TaskManager taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
+
+        currentTimePeriod.setText(taskManager.getCurrentTimePeriod().getName());
+
+        if(taskManager.getCurrentTimePeriod().getBeginDate() != null && taskManager.getCurrentTimePeriod().getEndDate() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+            LocalDate beginDate = taskManager.getCurrentTimePeriod().getBeginDate();
+            LocalDate endDate = taskManager.getCurrentTimePeriod().getEndDate();
+
+            TextView currentTimePeriodDates = navigationView.getHeaderView(0).findViewById(R.id.currentTimePeriodDates);
+            currentTimePeriodDates.setText(beginDate.format(formatter) + " to " + endDate.format(formatter));
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.ui.groups;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -54,7 +55,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         }
     }
 
-    private Context context;
+    private Activity context;
     private GroupTasksViewFragment groupFragment;
     private TaskManager taskManager;
 
@@ -65,7 +66,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
     private HashMap<Integer, ConstraintLayout> selectedTaskLayouts = new HashMap<>();
     private boolean isSelectingTasks;
 
-    public SpecificGroupTaskAdapter(TaskManager taskManager, GroupTasksViewFragment groupFragment, Context context, Group group, TimePeriod timePeriod) {
+    public SpecificGroupTaskAdapter(TaskManager taskManager, GroupTasksViewFragment groupFragment, Activity context, Group group, TimePeriod timePeriod) {
         this.context = context;
         this.groupFragment = groupFragment;
         this.taskManager = taskManager;

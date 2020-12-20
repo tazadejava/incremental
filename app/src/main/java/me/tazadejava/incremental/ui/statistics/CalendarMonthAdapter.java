@@ -79,7 +79,7 @@ public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdap
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         YearMonth yearMonth = yearMonths[position];
 
-        holder.monthName.setText(yearMonth.getMonth().toString());
+        holder.monthName.setText(yearMonth.getMonth().toString() + " " + yearMonth.getYear());
         holder.monthCalendar.setAdapter(weekAdapters[position]);
     }
 
