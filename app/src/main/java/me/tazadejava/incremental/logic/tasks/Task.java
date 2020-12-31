@@ -159,7 +159,10 @@ public class Task {
         double dailyWorkloadMinutes = estimatedTotalMinutesToCompletion - totalLoggedMinutesOfWork;
 
         if(ignoreTodayWorkTime && date.equals(startDate)) {
-            dailyWorkloadMinutes += loggedMinutesOfWorkToday;
+            //only ignore today's work time if today we still have the task active
+            if(timePeriod.getTasksByDay(LocalDate.now()).contains(this)) {
+                dailyWorkloadMinutes += loggedMinutesOfWorkToday;
+            }
         }
 
         dailyWorkloadMinutes /= daysBetweenStartAndDueDate + 1;
