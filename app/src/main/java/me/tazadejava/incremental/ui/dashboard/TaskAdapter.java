@@ -18,8 +18,11 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.view.animation.AnticipateOvershootInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.view.animation.Transformation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -39,6 +42,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -96,8 +100,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     private HashMap<Task, ViewHolder> taskLayout;
 
-    private boolean animateCardChanges = true;
-
     public TaskAdapter(TaskManager taskManager, Activity context, TimePeriod timePeriod, int dayPosition, LocalDate date, Set<Task> tasksToday, List<Task> tasks, MainDashboardDayAdapter mainDashboardDayAdapter) {
         this.taskManager = taskManager;
         this.context = context;
@@ -138,7 +140,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         final Task task = tasks.get(position);
 
-        updateTaskCards(task, holder);
+        updateTaskCards(task, holder, true);
 
         //update card color if active
         if(task.isTaskCurrentlyWorkedOn()) {
@@ -176,7 +178,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, task.getGroup(), holder.sideCardAccent);
+                double completionPercentage = date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage();
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, task.getGroup(), holder.sideCardAccent, completionPercentage);
             }
         });
 
@@ -243,17 +246,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.taskDueDate.setText("Due " + dueDateTime.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.US) + ", " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
         }
 
-        boolean containsTaskAndIsNotDoneToday = false;
-
-        for(Task taskToday : tasksToday) {
-            if(taskToday.equals(task)) {
-                if(!task.isDoneWithTaskToday()) {
-                    containsTaskAndIsNotDoneToday = true;
-                }
-                break;
-            }
-        }
-
+        boolean containsTaskAndIsNotDoneToday = tasksToday.contains(task) && !task.isDoneWithTaskToday();
         if(dayPosition == 0 || !containsTaskAndIsNotDoneToday) {
             holder.actionTaskText.setVisibility(View.VISIBLE);
             holder.horizontalLine.setVisibility(View.VISIBLE);
@@ -282,6 +275,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
+    /**
+     * Update task cards no animation
+     * @param task
+     * @param holder
+     */
     private void updateTaskCards(Task task, ViewHolder holder) {
         updateTaskCards(task, holder, false);
     }
@@ -289,31 +287,42 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private void updateTaskCards(Task task, ViewHolder holder, boolean updateAnimation) {
         updateMinutesNotesView(task, holder, updateAnimation);
 
+        //first, init a baseline drawable
         LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
-        GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
-        GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
-        lightColor.setColor(task.getGroup().getDarkColor());
-        darkColor.setColor(task.getGroup().getLightColor());
+        GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(0);
+        GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(1);
+        darkColor.setColor(task.getGroup().getDarkColor());
+        lightColor.setColor(task.getGroup().getLightColor());
 
-        holder.sideCardAccent.setBackground(lightColor);
+        unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), 0);
 
-        //the width needs to be set, so we have to wait until the constraint layout is set
-        holder.sideCardAccent.post(new Runnable() {
-            @Override
-            public void run() {
-                double completionPercentage = date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage();
-                unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), (int) ((double) holder.sideCardAccent.getHeight() * completionPercentage));
+        //init baseline colors before setting later
+        holder.sideCardAccent.setBackground(darkColor);
 
-                if(animateCardChanges) {
-                    TransitionDrawable transitionDrawable = new TransitionDrawable(new Drawable[]{lightColor, unwrapped});
-                    holder.sideCardAccent.setBackground(transitionDrawable);
+        double completionPercentage = date.equals(LocalDate.now()) ? task.getTodaysTaskCompletionPercentage() : task.getTaskCompletionPercentage();
+        if(updateAnimation && completionPercentage != 0 && !mainDashboardDayAdapter.hasTaskBeenAnimated(task)) {
+            mainDashboardDayAdapter.markTaskAsAnimated(task);
+            //need to update completion percentage over time
+            holder.sideCardAccent.post(new Runnable() {
+                @Override
+                public void run() {
+                    Animation anim = new Animation() {
+                        @Override
+                        protected void applyTransformation(float interpolatedTime, Transformation t) {
+                            LayerDrawable unwrapped2 = (LayerDrawable) unwrapped.getConstantState().newDrawable();
+                            unwrapped2.setLayerSize(1, unwrapped2.getLayerWidth(1), (int) ((double) holder.sideCardAccent.getHeight() * (completionPercentage * interpolatedTime)));
+                            holder.sideCardAccent.setBackground(unwrapped2);
+                        }
+                    };
+                    anim.setDuration(1000);
+                    anim.setInterpolator(new DecelerateInterpolator());
 
-                    transitionDrawable.startTransition(300);
-                } else {
-                    holder.sideCardAccent.setBackground(unwrapped);
+                    holder.sideCardAccent.startAnimation(anim);
                 }
-            }
-        });
+            });
+        } else {
+            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, completionPercentage);
+        }
     }
 
     private View.OnClickListener getDelayTaskClickListener(Task task, int position, TextView taskText, ConstraintLayout taskCardConstraintLayout, TextView actionTaskText, ConstraintLayout expandedOptionsLayout) {
@@ -334,7 +343,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             @Override
                             public void run() {
                                 task.startWorkingOnTask();
-                                task.incrementTaskMinutes(0, "", false);
+                                task.logMinutes(0, "", false);
                                 task.completeTaskForTheDay();
                                 mainDashboardDayAdapter.updateTaskCards(task);
                                 mainDashboardDayAdapter.updateDayLayouts(task);
@@ -403,7 +412,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             holder.taskNotes.setLines(lines);
 
             if(updateCardTextAnimation && holder.expandedOptionsLayout.getVisibility() == View.VISIBLE) {
-                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, true, task.getGroup(), holder.sideCardAccent);
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, true, task.getGroup(), holder.sideCardAccent, Utils.getViewGradientPercentage(holder.sideCardAccent));
             }
         }
     }
@@ -479,7 +488,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             @Override
                                             public void run() {
                                                 task.completeTaskForTheDay();
-                                                task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
+                                                task.logMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
                                                 mainDashboardDayAdapter.updateTaskCards(task);
                                                 mainDashboardDayAdapter.updateDayLayouts(task);
 
@@ -516,7 +525,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             .translationXBy(width).setStartDelay(200).setDuration(800).setInterpolator(new AnticipateOvershootInterpolator()).withEndAction(new Runnable() {
                                         @Override
                                         public void run() {
-                                            task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), true, usedEstimatedTime, estimateTimestamp);
+                                            task.logMinutes(minutesWorked, inputNotes.getText().toString(), true, usedEstimatedTime, estimateTimestamp);
                                             mainDashboardDayAdapter.updateTaskCards(task);
                                             mainDashboardDayAdapter.updateDayLayouts(task);
 
@@ -541,7 +550,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setNegativeButton("Not done yet!", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    task.incrementTaskMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
+                                    task.logMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
 
                                     taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                                     if(dayPosition == 0) {

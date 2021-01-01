@@ -48,7 +48,7 @@ public class ArchiveFragment extends Fragment implements BackPressedInterface {
         List<Task> tasks = new ArrayList<>(taskManager.getCurrentTimePeriod().getCompletedTasksHistory());
 
         groupView = root.findViewById(R.id.dashboard_day_list);
-        groupView.setAdapter(adapter = new PastTasksListAdapter(getContext(), tasks));
+        groupView.setAdapter(adapter = new PastTasksListAdapter(tasks));
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         EditText searchTaskEdit = root.findViewById(R.id.searchTaskEdit);

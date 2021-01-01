@@ -268,7 +268,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, group, holder.sideCardAccent);
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, group, holder.sideCardAccent, 0.5);
             }
         });
 

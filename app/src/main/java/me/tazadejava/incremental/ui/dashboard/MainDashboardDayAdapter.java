@@ -26,14 +26,14 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView taskName, estimatedTime, tasksCount;
+        private TextView dashboardDate, estimatedTime, tasksCount;
         private RecyclerView taskList;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
             taskList = itemView.findViewById(R.id.dashboard_tasks_list);
-            taskName = itemView.findViewById(R.id.timePeriodName);
+            dashboardDate = itemView.findViewById(R.id.timePeriodName);
             estimatedTime = itemView.findViewById(R.id.dashoboard_estimated_time);
             tasksCount = itemView.findViewById(R.id.dashboard_tasks_count);
         }
@@ -46,9 +46,11 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
     private TimePeriod timePeriod;
 
+    //store the task adapters since a small constant amount exists
+    private HashMap<Integer, TaskAdapter> taskAdaptersByPosition = new HashMap<>();
     private HashMap<TaskAdapter, ViewHolder> taskAdapters;
 
-    private Set<Task> tasksToday;
+    private Set<Task> tasksToday, alreadyAnimatedTasks;
 
     public MainDashboardDayAdapter(TaskManager taskManager, DashboardFragment fragment, RecyclerView recyclerView, Activity context) {
         this.taskManager = taskManager;
@@ -57,6 +59,7 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
         this.context = context;
 
         taskAdapters = new HashMap<>();
+        alreadyAnimatedTasks = new HashSet<>();
 
         timePeriod = taskManager.getCurrentTimePeriod();
         tasksToday = new HashSet<>(timePeriod.getTasksByDay(0));
@@ -66,6 +69,10 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_dashboard, parent, false);
+        ViewHolder holder = new ViewHolder(view);
+
+        holder.taskList.setLayoutManager(new LinearLayoutManager(context));
+
         return new ViewHolder(view);
     }
 
@@ -75,14 +82,16 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
         List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
-        TaskAdapter adapter;
-        holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, tasksToday, dayTasks, this));
-        holder.taskList.setLayoutManager(new LinearLayoutManager(context));
+        if(taskAdaptersByPosition.containsKey(position)) {
+            holder.taskList.setAdapter(taskAdaptersByPosition.get(position));
+        } else {
+            TaskAdapter adapter;
+            holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, tasksToday, dayTasks, this));
+            taskAdapters.put(adapter, holder);
+            taskAdaptersByPosition.put(position, adapter);
+        }
 
-        taskAdapters.put(adapter, holder);
-
-        holder.taskName.setText(dayToTitleFormat(date));
-
+        holder.dashboardDate.setText(dayToTitleFormat(date));
         refreshEstimatedTime(holder, dayTasks, date);
     }
 
@@ -142,6 +151,14 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
         }
 
         recyclerView.smoothScrollToPosition(position);
+    }
+
+    public boolean hasTaskBeenAnimated(Task task) {
+        return alreadyAnimatedTasks.contains(task);
+    }
+
+    public void markTaskAsAnimated(Task task) {
+        alreadyAnimatedTasks.add(task);
     }
 
     @Override

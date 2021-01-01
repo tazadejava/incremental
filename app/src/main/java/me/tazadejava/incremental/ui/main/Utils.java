@@ -185,11 +185,11 @@ public class Utils {
             public void run() {
                 LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(view.getContext(), R.drawable.task_card_gradient).mutate();
 
-                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
-                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
+                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(0);
+                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(1);
 
-                lightColor.setColor(darkColorVal);
-                darkColor.setColor(lightColorVal);
+                darkColor.setColor(darkColorVal);
+                lightColor.setColor(lightColorVal);
 
                 unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), (int) (view.getHeight() * percentage));
 
@@ -206,20 +206,17 @@ public class Utils {
         setViewGradient(group.getDarkColor(), group.getLightColor(), view, percentage);
     }
 
-    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, boolean forceVisible, Group group, View sideCardAccent) {
+    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, boolean forceVisible, Group group, View sideCardAccent, double accentPercentage) {
         if(forceVisible) {
             expandedOptionsLayout.setVisibility(View.GONE);
         }
 
-        animateTaskCardOptionsLayout(expandedOptionsLayout, group, sideCardAccent);
+        animateTaskCardOptionsLayout(expandedOptionsLayout, group, sideCardAccent, accentPercentage);
     }
 
-    //todo: low priority: when repeatedly adjusting the taskgroups, the rounding error shows over time
-
-    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, Group group, View sideCardAccent) {
+    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, Group group, View sideCardAccent, double accentPercentage) {
         if(expandedOptionsLayout.getVisibility() == View.VISIBLE) {
             int height = expandedOptionsLayout.getHeight();
-            double accentPercentage =  getViewGradientPercentage(sideCardAccent);
 
             Animation anim = new Animation() {
                 @Override
@@ -259,7 +256,6 @@ public class Utils {
                     View.MeasureSpec.makeMeasureSpec(expandedOptionsLayout.getMaxHeight(), View.MeasureSpec.AT_MOST));
 
             int measuredHeight = expandedOptionsLayout.getMeasuredHeight();
-            double accentPercentage =  getViewGradientPercentage(sideCardAccent);
 
             expandedOptionsLayout.getLayoutParams().height = 0;
 

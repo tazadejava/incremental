@@ -1,5 +1,7 @@
 package me.tazadejava.incremental.logic.tasks;
 
+import androidx.annotation.Nullable;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -14,7 +16,7 @@ public class NonrepeatingTask extends TaskGenerator {
 
     private boolean hasTaskStarted;
 
-    public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, SubGroup subgroup, int estimatedMinutesToCompletion) {
+    public NonrepeatingTask(TaskManager taskManager, LocalDate startDate, TimePeriod timePeriod, String taskName, LocalDateTime dueDateTime, Group taskGroup, @Nullable SubGroup subgroup, int estimatedMinutesToCompletion) {
         super(taskManager, startDate, timePeriod);
 
         hasTaskStarted = false;

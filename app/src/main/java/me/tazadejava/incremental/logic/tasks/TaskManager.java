@@ -132,6 +132,10 @@ public class TaskManager {
         }
     }
 
+    /**
+     * Adds generated task and processes it for activation, if relevant
+     * @param taskGenerator
+     */
     public void addNewGeneratedTask(TaskGenerator taskGenerator) {
         currentTimePeriod.addNewTaskGenerator(taskGenerator);
 

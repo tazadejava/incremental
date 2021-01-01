@@ -129,7 +129,11 @@ public class Task {
         }
         if(date.isAfter(dueDate)) {
             if(isOverdue()) {
-                return getTotalMinutesLeftOfWork();
+                if(ignoreTodayWorkTime) {
+                    return getTotalMinutesLeftOfWork() + loggedMinutesOfWorkToday;
+                } else {
+                    return getTotalMinutesLeftOfWork();
+                }
             } else {
                 return 0;
             }
@@ -255,11 +259,17 @@ public class Task {
         isDoneWithTaskToday = true;
     }
 
-    public void incrementTaskMinutes(int loggedMinutes, String minutesNotes, boolean completedTask) {
-        incrementTaskMinutes(loggedMinutes, minutesNotes, completedTask, false, null);
+    /**
+     * Must be called AFTER the task has been started
+     * @param loggedMinutes
+     * @param minutesNotes
+     * @param completedTask
+     */
+    public void logMinutes(int loggedMinutes, String minutesNotes, boolean completedTask) {
+        logMinutes(loggedMinutes, minutesNotes, completedTask, false, null);
     }
 
-    public void incrementTaskMinutes(int loggedMinutes, String minutesNotes, boolean completedTask, boolean usedEstimatedTime, LocalDateTime estimatedStartTime) {
+    public void logMinutes(int loggedMinutes, String minutesNotes, boolean completedTask, boolean usedEstimatedTime, LocalDateTime estimatedStartTime) {
         timePeriod.getStatsManager().appendMinutes(group, lastTaskWorkStartTime.toLocalDate(), loggedMinutes, completedTask);
 
         if(!minutesNotes.isEmpty() || loggedMinutes > 0) {

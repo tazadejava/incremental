@@ -62,13 +62,9 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
         }
     }
 
-    private Context context;
-
     private List<Task> tasks;
 
-    public PastTasksListAdapter(Context context, List<Task> tasks) {
-        this.context = context;
-
+    public PastTasksListAdapter(List<Task> tasks) {
         this.tasks = tasks;
     }
 
@@ -118,7 +114,7 @@ public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdap
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, task.getGroup(), holder.sideCardAccent);
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, task.getGroup(), holder.sideCardAccent, 1);
             }
         });
     }
