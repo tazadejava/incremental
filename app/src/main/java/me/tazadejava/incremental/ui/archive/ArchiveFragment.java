@@ -86,18 +86,25 @@ public class ArchiveFragment extends Fragment implements BackPressedInterface {
                     HashMap<Task, Integer> occurrencePosition = new HashMap<>();
 
                     for(Task task : tasksList) {
-                        int index = task.getName().toLowerCase().indexOf(text);
+                        String searchString = task.getName().toLowerCase() + " " + task.getGroupName().toLowerCase();
+                        int index = searchString.indexOf(text);
                         if(index != -1) {
                             occurrencePosition.put(task, index);
 
                             if(newTasks.isEmpty()) {
                                 newTasks.add(task);
                             } else {
+                                boolean added = false;
                                 for (int i = 0; i < newTasks.size(); i++) {
                                     if (occurrencePosition.get(newTasks.get(i)) >= index) {
                                         newTasks.add(i, task);
+                                        added = true;
                                         break;
                                     }
+                                }
+                                
+                                if(!added) {
+                                    newTasks.add(task);
                                 }
                             }
                         }

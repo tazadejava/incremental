@@ -23,6 +23,7 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
+import java.time.temporal.IsoFields;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -322,23 +323,22 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         int averageMinutesWorked = 0;
         int totalWeeksWorked = 0;
 
-        LocalDate weekDate = taskManager.getCurrentTimePeriod().getBeginDate();
+        LocalDate currentLoopDate = taskManager.getCurrentTimePeriod().getBeginDate();
 
-        LocalDate finalDate;
+        LocalDate endLoopDate;
         if(taskManager.isCurrentTimePeriodActive()) {
-            finalDate = LocalDate.now();
+            endLoopDate = LocalDate.now();
         } else {
-            finalDate = taskManager.getCurrentTimePeriod().getEndDate();
+            endLoopDate = taskManager.getCurrentTimePeriod().getEndDate();
         }
 
-        WeekFields week = WeekFields.of(Locale.getDefault());
-
         //make the week start on a MONDAY not sunday, offset by one day
-        long nowWeek = finalDate.plusDays(-1).get(week.weekOfWeekBasedYear());
+        long currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        long endWeekValue = endLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
 
-        while(weekDate.plusDays(-1).get(week.weekOfWeekBasedYear()) < nowWeek || weekDate.getYear() < finalDate.getYear()) {
+        while(currentWeekValue <= endWeekValue && currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
             boolean workedThisWeek = false;
-            for(LocalDate date : LogicalUtils.getWorkWeekDates(weekDate)) {
+            for(LocalDate date : LogicalUtils.getWorkWeekDates(currentLoopDate)) {
                 if(!workedThisWeek) {
                     workedThisWeek = true;
                 }
@@ -350,7 +350,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                 totalWeeksWorked++;
             }
 
-            weekDate = weekDate.plusDays(7);
+            currentLoopDate = currentLoopDate.plusDays(7);
+            currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         }
 
         if(totalWeeksWorked == 0) {

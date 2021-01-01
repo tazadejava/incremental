@@ -262,6 +262,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         int maxMinutes = 0;
         int totalMinutes = 0;
         int totalNonzeroDays = 0;
+        //calculate maxes and determine whether to show hours or minutes as y axis
         for(LocalDate date : currentDates) {
             int minutes = stats.getMinutesWorked(date);
 

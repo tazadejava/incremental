@@ -4,9 +4,11 @@ import org.junit.Test;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 
 import static org.junit.Assert.*;
@@ -124,5 +126,60 @@ public class TaskManagerTest {
         assertEquals(task.isTaskCurrentlyWorkedOn(), false);
         assertEquals(taskGenerator.getNextUpcomingTask(), task);
         assertArrayEquals(taskGenerator.getPendingTasks(), new Task[0]);
+    }
+
+    @Test
+    public void testMisc() {
+        TaskManager taskManager = getTaskManager();
+        TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
+        Group group = taskManager.getPersistentGroupByName("My Group");
+
+        int[] results = getAverageMinutesWorkedPerWeek(taskManager, group);
+
+        assertArrayEquals(results, new int[] {0, 0});
+
+
+    }
+
+    private int[] getAverageMinutesWorkedPerWeek(TaskManager taskManager, Group group) {
+        int averageMinutesWorked = 0;
+        int totalWeeksWorked = 0;
+
+        LocalDate weekDate = taskManager.getCurrentTimePeriod().getBeginDate();
+
+        LocalDate finalDate;
+        if(taskManager.isCurrentTimePeriodActive()) {
+            finalDate = LocalDate.now();
+        } else {
+            finalDate = taskManager.getCurrentTimePeriod().getEndDate();
+        }
+
+        //make the week start on a MONDAY not sunday, offset by one day
+        long nowWeek = finalDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+
+        while(weekDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) <= nowWeek || weekDate.getYear() < finalDate.getYear()) {
+            boolean workedThisWeek = false;
+            for(LocalDate date : LogicalUtils.getWorkWeekDates(weekDate)) {
+                if(!workedThisWeek) {
+                    workedThisWeek = true;
+                }
+
+                averageMinutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
+            }
+
+            if(workedThisWeek) {
+                totalWeeksWorked++;
+            }
+
+            LocalDate newWeekDate = weekDate.plusDays(7);
+            weekDate = newWeekDate;
+        }
+
+        if(totalWeeksWorked == 0) {
+            return new int[] {0, 0};
+        }
+
+        //find the average
+        return new int[] {averageMinutesWorked / totalWeeksWorked, totalWeeksWorked};
     }
 }

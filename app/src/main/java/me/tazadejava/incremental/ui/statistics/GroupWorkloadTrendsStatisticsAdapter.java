@@ -104,14 +104,14 @@ public class GroupWorkloadTrendsStatisticsAdapter extends RecyclerView.Adapter<G
         List<LocalDate[]> dateWeeks = new ArrayList<>();
         LocalDate currentDate = timePeriod.getBeginDate();
 
-        int finalWeekNumber;
+        LocalDate finalDate;
         if(taskManager.isCurrentTimePeriodActive()) {
-            finalWeekNumber = LogicalUtils.getWeekNumber(LocalDate.now());
+            finalDate = LocalDate.now();
         } else {
-            finalWeekNumber = LogicalUtils.getWeekNumber(taskManager.getCurrentTimePeriod().getEndDate());
+            finalDate = taskManager.getCurrentTimePeriod().getEndDate();
         }
 
-        while (LogicalUtils.getWeekNumber(currentDate) <= finalWeekNumber) {
+        while (currentDate.plusDays(-1).isBefore(finalDate)) {
             dateWeeks.add(LogicalUtils.getWorkWeekDates(currentDate));
             currentDate = currentDate.plusDays(7);
         }
