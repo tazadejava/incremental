@@ -72,7 +72,7 @@ public class TaskManager {
                     for(TimePeriod period : taskManager.timePeriods) {
                         JsonObject data = period.saveTimePeriodInfo(taskManager.gson);
 
-                        if(period == taskManager.currentTimePeriod) {
+                        if(period.isInTimePeriod(LocalDate.now())) {
                             data.addProperty("current", true);
                         }
 

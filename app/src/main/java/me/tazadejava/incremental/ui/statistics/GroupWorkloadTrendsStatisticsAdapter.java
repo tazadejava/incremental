@@ -17,6 +17,7 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.formatter.DefaultAxisValueFormatter;
 import com.github.mikephil.charting.formatter.DefaultValueFormatter;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
@@ -322,6 +323,11 @@ public class GroupWorkloadTrendsStatisticsAdapter extends RecyclerView.Adapter<G
         XAxis xAxis = chart.getXAxis();
         xAxis.setLabelCount(groups.size());
         xAxis.setValueFormatter(xAxisFormatter);
+        xAxis.setGranularity(1);
+
+        if(groups.size() > 4) {
+            xAxis.setLabelRotationAngle(-25);
+        }
 
         //setup y axis
 
