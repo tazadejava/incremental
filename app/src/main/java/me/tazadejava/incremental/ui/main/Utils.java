@@ -28,9 +28,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.SQLOutput;
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 import me.tazadejava.incremental.R;
@@ -118,7 +120,7 @@ public class Utils {
 
     public static boolean unzipFile(File zippedFile) {
         try {
-            ZipFile zip = new ZipFile(zippedFile, ZipCredentials.getZipPassword().toCharArray());
+            ZipFile zip = new ZipFile(zippedFile, ZipCredentials.getZipPassword(Instant.ofEpochMilli(zippedFile.lastModified()).atZone(ZoneId.systemDefault()).toLocalDate()).toCharArray());
 
             if(zip.isEncrypted() || !zip.isValidZipFile()) {
                 return false;
@@ -139,7 +141,7 @@ public class Utils {
             zipParameters.setEncryptFiles(true);
             zipParameters.setEncryptionMethod(EncryptionMethod.AES);
 
-            ZipFile zipFile = new ZipFile(destinationFile, ZipCredentials.getZipPassword().toCharArray());
+            ZipFile zipFile = new ZipFile(destinationFile, ZipCredentials.getZipPassword(LocalDate.now()).toCharArray());
             zipFile.addFolder(sourceFile, zipParameters);
 
             return true;
