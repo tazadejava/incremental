@@ -118,7 +118,14 @@ public class Utils {
 
     public static boolean unzipFile(File zippedFile) {
         try {
-            new ZipFile(zippedFile, "ac9fc946-3a12-4081-aa54-712a0cb7a809".toCharArray()).extractAll(zippedFile.getParent());
+            ZipFile zip = new ZipFile(zippedFile, ZipCredentials.getZipPassword().toCharArray());
+
+            if(zip.isEncrypted() || !zip.isValidZipFile()) {
+                return false;
+            }
+
+            zip.extractAll(zippedFile.getParent());
+
             return true;
         } catch (ZipException e) {
             e.printStackTrace();
@@ -132,7 +139,7 @@ public class Utils {
             zipParameters.setEncryptFiles(true);
             zipParameters.setEncryptionMethod(EncryptionMethod.AES);
 
-            ZipFile zipFile = new ZipFile(destinationFile, "ac9fc946-3a12-4081-aa54-712a0cb7a809".toCharArray());
+            ZipFile zipFile = new ZipFile(destinationFile, ZipCredentials.getZipPassword().toCharArray());
             zipFile.addFolder(sourceFile, zipParameters);
 
             return true;
@@ -222,6 +229,7 @@ public class Utils {
                 @Override
                 protected void applyTransformation(float interpolatedTime, Transformation t) {
                     expandedOptionsLayout.getLayoutParams().height = (int) (height * (1 - interpolatedTime));
+                    expandedOptionsLayout.setAlpha((1f - interpolatedTime));
                     expandedOptionsLayout.requestLayout();
 
                     if(group != null) {
@@ -233,9 +241,7 @@ public class Utils {
             anim.setInterpolator(new DecelerateInterpolator());
             anim.setAnimationListener(new Animation.AnimationListener() {
                 @Override
-                public void onAnimationStart(Animation animation) {
-
-                }
+                public void onAnimationStart(Animation animation) {}
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
@@ -243,14 +249,13 @@ public class Utils {
                 }
 
                 @Override
-                public void onAnimationRepeat(Animation animation) {
-
-                }
+                public void onAnimationRepeat(Animation animation) {}
             });
 
             expandedOptionsLayout.startAnimation(anim);
         } else {
             expandedOptionsLayout.setVisibility(View.VISIBLE);
+            expandedOptionsLayout.setAlpha(1);
 
             expandedOptionsLayout.measure(View.MeasureSpec.makeMeasureSpec(expandedOptionsLayout.getMaxWidth(), View.MeasureSpec.AT_MOST),
                     View.MeasureSpec.makeMeasureSpec(expandedOptionsLayout.getMaxHeight(), View.MeasureSpec.AT_MOST));

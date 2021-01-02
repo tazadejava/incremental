@@ -1,5 +1,6 @@
 package me.tazadejava.incremental.ui.statistics;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -69,7 +70,6 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
         });
 
         RecyclerView calendarLayout = root.findViewById(R.id.calendarLayout);
-
         calendarLayout.setLayoutManager(new LinearLayoutManager(getContext()));
 
         List<YearMonth> yearMonths = new ArrayList<>();

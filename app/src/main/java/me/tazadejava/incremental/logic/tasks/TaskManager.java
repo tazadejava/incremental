@@ -312,6 +312,10 @@ public class TaskManager {
                     timePeriods.add(period);
                 }
 
+                if(currentTimePeriod == null) {
+                    currentTimePeriod = timePeriods.get(timePeriods.size() - 1);
+                }
+
                 for(TimePeriod timePeriod : timePeriods) {
                     timePeriod.initializeStatsManager(gson, fileDir);
                 }

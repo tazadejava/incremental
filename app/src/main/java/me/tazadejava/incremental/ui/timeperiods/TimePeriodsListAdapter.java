@@ -113,6 +113,15 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
             }
         });
 
+        holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(taskManager.getCurrentTimePeriod() != timePeriod) {
+                    Toast.makeText(context, "Long press the card to switch time periods.", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {

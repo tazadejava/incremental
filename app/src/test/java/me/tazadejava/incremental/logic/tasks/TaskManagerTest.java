@@ -15,6 +15,13 @@ import static org.junit.Assert.*;
 
 public class TaskManagerTest {
 
+    /*
+    Unit tests TODO:
+
+    - make sure groups combination of both IN GROUP and OUT OF GROUP are consistent
+    -
+     */
+
     private TaskManager getTaskManager() {
         TaskManager taskManager = new TaskManager("");
         taskManager.addNewPersistentGroup("My Group");

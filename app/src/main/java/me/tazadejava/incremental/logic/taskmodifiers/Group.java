@@ -75,16 +75,6 @@ public class Group {
     }
 
     private void recomputeColorValues() {
-        Chroma originalColor = new Chroma("#1d98cb");
-        double[] lch = originalColor.getLCH();
-
-        lch[2] = color;
-
-        darkColor = Color.parseColor(new Chroma(ColorSpace.LCH, 50, lch[1], lch[2], 255).hexString());
-        lightColor = Color.parseColor(new Chroma(ColorSpace.LCH, 70, lch[1], lch[2], 255).hexString());
-
-        //new formula
-
         List<Integer> components = new ArrayList<>();
 
         int uniqueColorPick = (int) (((color % 60) / 60d) * 151) + 50;
@@ -95,26 +85,26 @@ public class Group {
         if(color < 60) {
             components.add(color1);
             components.add(color2);
-            components.add(uniqueColorPick);
+            components.add(255 - uniqueColorPick);
         } else if(color < 120) {
-            components.add(color2);
             components.add(color1);
             components.add(uniqueColorPick);
+            components.add(color2);
         } else if(color < 180) {
-            components.add(uniqueColorPick);
-            components.add(color2);
+            components.add(255 - uniqueColorPick);
             components.add(color1);
+            components.add(color2);
         } else if(color < 240) {
-            components.add(uniqueColorPick);
-            components.add(color1);
             components.add(color2);
+            components.add(color1);
+            components.add(uniqueColorPick);
         } else if(color < 300) {
+            components.add(color2);
+            components.add(255 - uniqueColorPick);
             components.add(color1);
-            components.add(uniqueColorPick);
-            components.add(color2);
         } else {
-            components.add(color2);
             components.add(uniqueColorPick);
+            components.add(color2);
             components.add(color1);
         }
 

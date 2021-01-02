@@ -11,8 +11,10 @@ import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -53,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
 
     private Menu menu;
 
+    private TaskManager taskManager;
+    private boolean creatingNewTimePeriod;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        TaskManager taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
+        taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
@@ -87,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
 
         //check if need new time period
         if(taskManager.hasTimePeriodExpired()) {
-            showRenewalTimePeriodDialog(taskManager);
+            creatingNewTimePeriod = true;
+            showRenewalTimePeriodDialog();
         }
 
         currentTimePeriod.postDelayed(new Runnable() {
@@ -271,7 +277,33 @@ public class MainActivity extends AppCompatActivity {
 
                             //finally, replace the data folder with the new one!
 
-                            Utils.unzipFile(destinationFile);
+                            if(!Utils.unzipFile(destinationFile)) {
+                                AlertDialog.Builder failed = new AlertDialog.Builder(MainActivity.this);
+                                failed.setTitle("The restoration file is invalid!");
+                                failed.setMessage("Something went wrong. The restoration could not be completed.");
+
+                                failed.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        if(creatingNewTimePeriod) {
+                                            showRenewalTimePeriodDialog();
+                                        }
+                                    }
+                                });
+
+                                failed.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                    @Override
+                                    public void onDismiss(DialogInterface dialog) {
+                                        if(creatingNewTimePeriod) {
+                                            showRenewalTimePeriodDialog();
+                                        }
+                                    }
+                                });
+
+                                failed.show();
+
+                                return;
+                            }
 
                             destinationFile.delete();
 
@@ -298,6 +330,14 @@ public class MainActivity extends AppCompatActivity {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                    } else {
+                        if(creatingNewTimePeriod) {
+                            showRenewalTimePeriodDialog();
+                        }
+                    }
+                } else {
+                    if(creatingNewTimePeriod) {
+                        showRenewalTimePeriodDialog();
                     }
                 }
                 break;
@@ -325,14 +365,14 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-    private void showRenewalTimePeriodDialog(TaskManager taskManager) {
+    private void showRenewalTimePeriodDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         boolean defaultTimePeriod = taskManager.getCurrentTimePeriod().getName().isEmpty();
 
         if(defaultTimePeriod) {
             builder.setTitle("Hi! Time to create a new time period.");
-            builder.setMessage("A time period is a good way to separate your tasks into specific start/end dates.");
+            builder.setMessage("A time period is a good way to separate your assignments/tasks into specific start/end dates.");
         } else {
             builder.setTitle("Your time period has expired.");
             builder.setMessage("It's time to define a new time period!");
@@ -346,6 +386,42 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        if(defaultTimePeriod) {
+            builder.setNeutralButton("LOAD FROM BACKUP", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    AlertDialog.Builder confirmSave = new AlertDialog.Builder(MainActivity.this);
+
+                    confirmSave.setTitle("Restore your data from an external backup?");
+                    confirmSave.setMessage("You must select a valid .incremental file.");
+
+                    confirmSave.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
+                            intent.setType("application/zip");
+
+                            intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+                            startActivityForResult(intent, 1001);
+                        }
+                    });
+
+                    confirmSave.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            showRenewalTimePeriodDialog();
+                        }
+                    });
+
+                    confirmSave.setCancelable(false);
+                    confirmSave.show();
+                }
+            });
+        }
+
+        builder.setCancelable(false);
         builder.show();
     }
 

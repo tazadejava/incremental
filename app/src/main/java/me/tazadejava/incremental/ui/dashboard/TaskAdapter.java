@@ -52,6 +52,7 @@ import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
@@ -386,6 +387,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         } else {
             StringBuilder minutesNotes = new StringBuilder();
 
+            boolean darkModeOn = ((IncrementalApplication) context.getApplication()).isDarkModeOn();
+
             int lines = 1;
             for(int i = timestamps.size() - 1; i >= (timestamps.size() >= 3 ? timestamps.size() - 3 : 0); i--) {
                 LocalDateTime dateTime = timestamps.get(i);
@@ -397,7 +400,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     lines += 1;
                 } else {
                     minutesNotes.append("<b>" + dateTime.getMonthValue() + "/" + dateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dateTime) + ", worked " + minutes + " min:</b> <br>");
-                    minutesNotes.append("<font color='lightgray'>" + notes + "</font><br>");
+
+                    if(darkModeOn) {
+                        minutesNotes.append("<font color='lightgray'>" + notes + "</font><br>");
+                    } else {
+                        minutesNotes.append("<font color='gray'>" + notes + "</font><br>");
+                    }
 
                     Paint paint = new Paint();
                     paint.setTextSize(holder.taskNotes.getTextSize());
@@ -506,7 +514,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         }
                                         taskText.setOnClickListener(getActionTaskListener(task, position, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
 
-                                        hideKeyboard(taskText);
+                                        Utils.hideKeyboard(taskText);
                                     }
                                 });
                             }
@@ -543,7 +551,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     }
                                     taskText.setOnClickListener(getActionTaskListener(task, position, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
 
-                                    hideKeyboard(taskCardConstraintLayout);
+                                    Utils.hideKeyboard(taskCardConstraintLayout);
                                 }
                             });
 
@@ -560,7 +568,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     }
                                     taskText.setOnClickListener(getActionTaskListener(task, position, taskText, taskCardConstraintLayout, actionTaskText, expandedOptionsLayout, false));
 
-                                    hideKeyboard(actionTaskText);
+                                    Utils.hideKeyboard(actionTaskText);
 
                                     //delayed so that the keyboard can go away first
                                     v.postDelayed(new Runnable() {
@@ -580,14 +588,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            hideKeyboard(taskText);
+                            Utils.hideKeyboard(taskText);
                         }
                     });
 
                     builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialogInterface) {
-                            hideKeyboard(taskText);
+                            Utils.hideKeyboard(taskText);
                         }
                     });
 
@@ -621,16 +629,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 }
             };
         }
-    }
-
-    private void hideKeyboard(View v) {
-        v.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-            }
-        }, 50);
     }
 
     public void refreshLayout() {

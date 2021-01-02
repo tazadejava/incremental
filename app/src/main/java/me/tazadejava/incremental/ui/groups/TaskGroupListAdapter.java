@@ -128,20 +128,14 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                             }
                         }
 
-                        input.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                                imm.hideSoftInputFromWindow(holder.taskGroupName.getWindowToken(), 0);
-                            }
-                        }, 50);
+                        Utils.hideKeyboard(input);
                     }
                 });
 
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-
+                        Utils.hideKeyboard(input);
                     }
                 });
 

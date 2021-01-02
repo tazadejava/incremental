@@ -239,4 +239,13 @@ public class CreateTimePeriodActivity extends AppCompatActivity {
 
         saveButton.setEnabled(true);
     }
+
+    @Override
+    public void onBackPressed() {
+        TaskManager taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
+
+        if(taskManager.getCurrentTimePeriod().getEndDate() != null) {
+            super.onBackPressed();
+        }
+    }
 }
