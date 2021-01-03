@@ -280,6 +280,12 @@ public class MainActivity extends AppCompatActivity {
                             //replace the data folder with the new one!
 
                             if(!Utils.unzipFile(destinationFile)) {
+                                //if failed, restore the original data structure
+                                Utils.moveDirectory(backupFolder, new File(getFilesDir().getAbsolutePath() + "/data/"));
+                                backupFolder.delete();
+
+                                //send failed notification
+
                                 AlertDialog.Builder failed = new AlertDialog.Builder(MainActivity.this);
                                 failed.setTitle("The restoration file is invalid!");
                                 failed.setMessage("Something went wrong. The restoration could not be completed.");

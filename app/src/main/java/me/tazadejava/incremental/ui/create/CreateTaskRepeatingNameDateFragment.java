@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -147,14 +148,21 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
             @Override
             public void afterTextChanged(Editable editable) {
                 if(editable.length() > 0) {
-                    int amount = Integer.parseInt(repeatingWeeksInput.getText().toString());
+                    try {
+                        int amount = Integer.parseInt(repeatingWeeksInput.getText().toString());
 
-                    if(amount > 0) {
-                        repeatingTaskNamesAdapter.setRepeatSize(amount);
-                        repeatingTaskNamesAdapter.notifyDataSetChanged();
+                        if (amount > 0) {
+                            repeatingTaskNamesAdapter.setRepeatSize(amount);
+                            repeatingTaskNamesAdapter.notifyDataSetChanged();
+                        }
+
+                        updateNextButton(repeatingTaskNamesAdapter, act);
+                    } catch(NumberFormatException ex) {
+                        String shortenedTime = editable.toString().substring(0, editable.length() - 1);
+                        act.setMinutesToCompletion(Integer.parseInt(shortenedTime));
+                        repeatingWeeksInput.setText(shortenedTime);
+                        Toast.makeText(act, "Invalid amount of weeks specified!", Toast.LENGTH_SHORT).show();
                     }
-
-                    updateNextButton(repeatingTaskNamesAdapter, act);
                 }
             }
         });

@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,7 +113,12 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface,
         List<String> groupScope = new ArrayList<>();
 
         groupScope.add("Global Group (no expiration date)");
+        LocalDate now = LocalDate.now();
         for(TimePeriod period : taskManager.getTimePeriods()) {
+            if(!period.isInTimePeriod(now)) {
+                continue;
+            }
+
             String beginDateFormatted = period.getBeginDate() != null ? period.getBeginDate().getMonthValue() + "/" + period.getBeginDate().getDayOfMonth() : "";
             String endDateFormatted = period.getEndDate() != null ? period.getEndDate().getMonthValue() + "/" + period.getEndDate().getDayOfMonth() : "";
             groupScope.add(period.getName() + " (" + beginDateFormatted + " - " + endDateFormatted + ")");
@@ -135,20 +141,26 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface,
                     String groupName = input.getText().toString();
                     if(taskManager.doesPersistentGroupExist(groupName) || taskManager.getCurrentTimePeriod().doesGroupExist(groupName)) {
                         AlertDialog.Builder error = new AlertDialog.Builder(getContext());
-                        error.setTitle("A group under that name already exists!");
+                        error.setTitle("Failed to create group");
+                        error.setMessage("A group with that name already exists!");
+
+                        error.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+
                         error.show();
                     } else {
                         if(groupScopeSpinner.getSelectedItemPosition() == 0) {
                             taskManager.addNewPersistentGroup(groupName);
                         } else {
-                            taskManager.getTimePeriods().get(groupScopeSpinner.getSelectedItemPosition() - 1).addNewGroup(groupName);
+                            taskManager.getCurrentTimePeriod().addNewGroup(groupName);
                         }
 
                         groupView.setAdapter(adapter =
                                 new TaskGroupListAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
                                         (AppCompatActivity) getActivity()));
-
-                        Utils.hideKeyboard(input);
                     }
                 }
             }
@@ -157,21 +169,19 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface,
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Utils.hideKeyboard(input);
-            }
-        });
 
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialogInterface) {
-                Utils.hideKeyboard(input);
             }
         });
 
         builder.show();
 
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        input.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(input, 0);
+            }
+        }, 50);
 
         input.requestFocus();
     }

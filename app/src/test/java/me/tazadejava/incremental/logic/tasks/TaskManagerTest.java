@@ -17,9 +17,6 @@ public class TaskManagerTest {
 
     /*
     Unit tests TODO:
-
-    - make sure groups combination of both IN GROUP and OUT OF GROUP are consistent
-    -
      */
 
     private TaskManager getTaskManager() {

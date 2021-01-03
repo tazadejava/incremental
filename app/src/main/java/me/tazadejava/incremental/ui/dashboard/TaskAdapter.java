@@ -486,7 +486,23 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             if(inputMinutes.getText().length() == 0) {
                                 minutesWorked = 0;
                             } else {
-                                minutesWorked = Integer.parseInt(inputMinutes.getText().toString());
+                                try {
+                                    minutesWorked = Integer.parseInt(inputMinutes.getText().toString());
+                                } catch(NumberFormatException ex) {
+                                    AlertDialog.Builder errorDialog = new AlertDialog.Builder(v.getContext());
+                                    errorDialog.setTitle("Something went wrong!");
+                                    errorDialog.setMessage("The inputted minutes value was invalid. Please try again.");
+
+                                    errorDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+
+                                        }
+                                    });
+
+                                    errorDialog.show();
+                                    return;
+                                }
                             }
 
                             if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate()) && dayPosition == 0) {

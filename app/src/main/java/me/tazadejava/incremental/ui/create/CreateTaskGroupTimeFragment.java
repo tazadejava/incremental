@@ -24,6 +24,7 @@ import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,14 +67,14 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         helpGroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(act, "A group can be thought of as a separate class. (ex: Physics, Math, English...)", Toast.LENGTH_LONG).show();
+                Toast.makeText(act, "For example, a group can be thought of as a class subject (ex: Physics, Math, English...).", Toast.LENGTH_LONG).show();
             }
         });
 
         helpSubgroup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(act, "Optional, but useful when similar tasks are repeated. The estimated minutes for all tasks in the subgroup are automatically averaged over time.", Toast.LENGTH_LONG).show();
+                Toast.makeText(act, "Optional. Create a subgroup to group similar + repeating tasks. Over time, the estimated minutes for future tasks in the subgroup are automatically averaged.", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -135,11 +136,11 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
         List<String> items = new ArrayList<>();
 
-        items.add("Select class");
+        items.add("Select group");
 
         items.addAll(taskManager.getAllCurrentGroupNames());
 
-        items.add("Add new class...");
+        items.add("Add new group...");
 
         ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
         groupSpinner.setAdapter(groupSpinnerAdapter);
@@ -171,7 +172,13 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                     List<String> groupScope = new ArrayList<>();
 
                     groupScope.add("Global Group (no expiration date)");
+
+                    LocalDate now = LocalDate.now();
                     for(TimePeriod period : taskManager.getTimePeriods()) {
+                        if(!period.isInTimePeriod(now)) {
+                            continue;
+                        }
+
                         String beginDateFormatted = period.getBeginDate() != null ? period.getBeginDate().getMonthValue() + "/" + period.getBeginDate().getDayOfMonth() : "";
                         String endDateFormatted = period.getEndDate() != null ? period.getEndDate().getMonthValue() + "/" + period.getEndDate().getDayOfMonth() : "";
                         groupScope.add(period.getName() + " (" + beginDateFormatted + " - " + endDateFormatted + ")");
@@ -195,22 +202,30 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
                                 String groupName = input.getText().toString();
 
-                                if(!items.contains(groupName)) {
-                                    items.add(items.size() - 1, groupName);
+                                if(taskManager.doesPersistentGroupExist(groupName) || taskManager.getCurrentTimePeriod().doesGroupExist(groupName)) {
+                                    AlertDialog.Builder failedToCreateGroup = new AlertDialog.Builder(getContext());
+                                    failedToCreateGroup.setTitle("Failed to create group");
+                                    failedToCreateGroup.setMessage("A group with that name already exists!");
 
+                                    failedToCreateGroup.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+
+                                        }
+                                    });
+
+                                    failedToCreateGroup.show();
+                                } else {
                                     if(groupScopeSpinner.getSelectedItemPosition() == 0) {
                                         taskManager.addNewPersistentGroup(groupName);
                                     } else {
-                                        taskManager.getTimePeriods().get(groupScopeSpinner.getSelectedItemPosition() - 1).addNewGroup(groupName);
+                                        taskManager.getCurrentTimePeriod().addNewGroup(groupName);
                                     }
+
+                                    items.add(items.size() - 1, groupName);
 
                                     groupSpinner.setSelection(items.size() - 2);
                                     groupSpinnerAdapter.notifyDataSetChanged();
-                                } else {
-                                    AlertDialog.Builder failedToCreateGroup = new AlertDialog.Builder(getContext());
-                                    failedToCreateGroup.setTitle("Failed to create group!");
-                                    failedToCreateGroup.setMessage("A group with that name already exists!");
-                                    failedToCreateGroup.show();
                                 }
 
                                 act.setSelectedGroup(taskManager.getCurrentGroupByName(groupName));
@@ -218,8 +233,6 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                                     updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
                                 }
                                 updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
-
-                                Utils.hideKeyboard(input);
                             }
                         }
                     });
@@ -227,7 +240,6 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Utils.hideKeyboard(input);
                         }
                     });
 
@@ -235,15 +247,19 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                         @Override
                         public void onDismiss(DialogInterface dialog) {
                             groupSpinner.setSelection(lastPosition);
-                            Utils.hideKeyboard(input);
                         }
                     });
 
                     builder.show();
                     input.requestFocus();
 
-                    InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                    input.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.showSoftInput(input, 0);
+                        }
+                    }, 50);
                 } else {
                     lastPosition = position;
 
@@ -295,7 +311,14 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                 updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
 
                 if(s.length() > 0) {
-                    act.setMinutesToCompletion(Integer.parseInt(s.toString()));
+                    try {
+                        act.setMinutesToCompletion(Integer.parseInt(s.toString()));
+                    } catch(NumberFormatException ex) {
+                        String shortenedTime = s.toString().substring(0, s.length() - 1);
+                        act.setMinutesToCompletion(Integer.parseInt(shortenedTime));
+                        minutesToCompleteTask.setText(shortenedTime);
+                        Toast.makeText(act, "Invalid amount of time specified!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         });
@@ -354,8 +377,6 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                                 }
 
                                 act.setSelectedSubgroup(act.getSelectedGroup().getSubGroupByName(subgroupName));
-
-                                Utils.hideKeyboard(input);
                             }
                         }
                     });
@@ -363,7 +384,6 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                     builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Utils.hideKeyboard(input);
                         }
                     });
 
@@ -371,15 +391,19 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                         @Override
                         public void onDismiss(DialogInterface dialog) {
                             subgroupSpinner.setSelection(lastPosition);
-                            Utils.hideKeyboard(input);
                         }
                     });
 
                     builder.show();
                     input.requestFocus();
 
-                    InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                    input.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            imm.showSoftInput(input, 0);
+                        }
+                    }, 50);
                 } else {
                     lastPosition = position;
 

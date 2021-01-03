@@ -5,6 +5,8 @@ import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.TypedValue;
@@ -119,8 +121,15 @@ public class Utils {
     }
 
     public static boolean unzipFile(File zippedFile) {
+        if(unzipFile(zippedFile, true)) {
+            return true;
+        }
+        return unzipFile(zippedFile, false);
+    }
+
+    private static boolean unzipFile(File zippedFile, boolean newPassword) {
         try {
-            ZipFile zip = new ZipFile(zippedFile, ZipCredentials.getZipPassword(Instant.ofEpochMilli(zippedFile.lastModified()).atZone(ZoneId.systemDefault()).toLocalDate()).toCharArray());
+            ZipFile zip = new ZipFile(zippedFile, ZipCredentials.getZipPassword(newPassword ? LocalDate.now() : LocalDate.of(2020, 1, 1)).toCharArray());
 
             if(!zip.isValidZipFile()) {
                 return false;

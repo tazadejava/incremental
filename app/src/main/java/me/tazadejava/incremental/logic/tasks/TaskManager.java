@@ -215,6 +215,12 @@ public class TaskManager {
 
     /**
      * Returns null if global. Time period otherwise.
+     *
+     * Order of scoping checks:
+     *
+     * 1) Current time period
+     * 2) Global scope
+     * 3) Past time periods
      * @param group
      * @return
      */
@@ -222,6 +228,10 @@ public class TaskManager {
         if(currentTimePeriod.doesGroupExist(group.getGroupName())) {
             return currentTimePeriod;
         } else {
+            if(allPersistentGroups.containsValue(group)) {
+                return null;
+            }
+
             for (TimePeriod period : timePeriods) {
                 if(period == currentTimePeriod) {
                     continue;
