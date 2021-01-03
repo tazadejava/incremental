@@ -363,7 +363,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             }
             refreshChartData();
         } else {
-            dashboardView.setAdapter(adapter);
+            adapter.unmarkAllTasksAsAnimated();
+            adapter.notifyDataSetChanged();
         }
     }
 

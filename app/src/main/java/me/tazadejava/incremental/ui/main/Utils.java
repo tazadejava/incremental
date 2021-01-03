@@ -122,7 +122,7 @@ public class Utils {
         try {
             ZipFile zip = new ZipFile(zippedFile, ZipCredentials.getZipPassword(Instant.ofEpochMilli(zippedFile.lastModified()).atZone(ZoneId.systemDefault()).toLocalDate()).toCharArray());
 
-            if(zip.isEncrypted() || !zip.isValidZipFile()) {
+            if(!zip.isValidZipFile()) {
                 return false;
             }
 
@@ -150,6 +150,22 @@ public class Utils {
         }
 
         return false;
+    }
+
+    public static void moveDirectory(File source, File target) {
+        if(source.isDirectory()) {
+            File newDirectory = new File(target.getAbsolutePath() + "/" + source.getName() + "/");
+            newDirectory.mkdirs();
+
+            File[] files = source.listFiles();
+
+            for (File file : files) {
+                moveDirectory(file, new File(newDirectory, file.getName()));
+            }
+            source.delete();
+        } else {
+            source.renameTo(target);
+        }
     }
 
     public static void deleteDirectory(File file) {

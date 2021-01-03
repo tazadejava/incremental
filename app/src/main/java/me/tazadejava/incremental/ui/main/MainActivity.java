@@ -34,6 +34,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -271,11 +272,12 @@ public class MainActivity extends AppCompatActivity {
                             bis.close();
                             bos.close();
 
-                            //now, remove the old data folder
+                            //now, temporarily move the old data folder to a recovery location, just in case restoration fails
 
-                            Utils.deleteDirectory(new File(getFilesDir().getAbsolutePath() + "/data/"));
+                            File backupFolder = new File(getFilesDir().getAbsolutePath() + "/data_temp/");
+                            Utils.moveDirectory(new File(getFilesDir().getAbsolutePath() + "/data/"), backupFolder);
 
-                            //finally, replace the data folder with the new one!
+                            //replace the data folder with the new one!
 
                             if(!Utils.unzipFile(destinationFile)) {
                                 AlertDialog.Builder failed = new AlertDialog.Builder(MainActivity.this);
@@ -305,7 +307,10 @@ public class MainActivity extends AppCompatActivity {
                                 return;
                             }
 
+                            //finally, delete all movement traces
+
                             destinationFile.delete();
+                            Utils.deleteDirectory(backupFolder);
 
                             AlertDialog.Builder finished = new AlertDialog.Builder(MainActivity.this);
                             finished.setTitle("The restoration completed successfully!");

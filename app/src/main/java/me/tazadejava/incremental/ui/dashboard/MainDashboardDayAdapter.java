@@ -83,7 +83,7 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
         List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
         if(taskAdaptersByPosition.containsKey(position)) {
-            holder.taskList.setAdapter(taskAdaptersByPosition.get(position));
+            taskAdaptersByPosition.get(position).notifyDataSetChanged();
         } else {
             TaskAdapter adapter;
             holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, tasksToday, dayTasks, this));
@@ -159,6 +159,14 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
     public void markTaskAsAnimated(Task task) {
         alreadyAnimatedTasks.add(task);
+    }
+
+    public void unmarkTaskAsAnimated(Task task) {
+        alreadyAnimatedTasks.remove(task);
+    }
+
+    public void unmarkAllTasksAsAnimated() {
+        alreadyAnimatedTasks.clear();
     }
 
     @Override

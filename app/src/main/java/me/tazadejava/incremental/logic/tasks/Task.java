@@ -194,8 +194,13 @@ public class Task {
         return percentage;
     }
 
+    //returns a completion percentage that changes based on how much work has been tracked
     public float getTaskCompletionPercentage() {
-        return (float) totalLoggedMinutesOfWork / estimatedTotalMinutesToCompletion;
+        if(isTaskCurrentlyWorkedOn) {
+            return Math.min(1, (float) (totalLoggedMinutesOfWork + getCurrentWorkedMinutesWithCarryover()) / estimatedTotalMinutesToCompletion);
+        } else {
+            return (float) totalLoggedMinutesOfWork / estimatedTotalMinutesToCompletion;
+        }
     }
 
     public int getTodaysMinutesLeft() {
