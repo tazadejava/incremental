@@ -355,6 +355,23 @@ public class TaskManager {
         return true;
     }
 
+    public boolean deleteGroup(Group group) {
+        if(allPersistentGroups.containsKey(group.getGroupName())) {
+
+            for(Task task : currentTimePeriod.getAllTasksByGroup(group)) {
+                currentTimePeriod.deleteTaskCompletely(task);
+            }
+
+            currentTimePeriod.getStatsManager().deleteGroupStats(group);
+
+            allPersistentGroups.remove(group.getGroupName());
+            saveAllData();
+            return true;
+        } else {
+            return currentTimePeriod.deleteGroup(group);
+        }
+    }
+
     public void verifyDayChangeReset() {
         currentTimePeriod.verifyDayChangeReset();
         saveData(true, currentTimePeriod);

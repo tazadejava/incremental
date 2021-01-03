@@ -13,6 +13,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -127,23 +128,25 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                                 error.show();
                             }
                         }
-
-                        Utils.hideKeyboard(input);
                     }
                 });
 
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Utils.hideKeyboard(input);
                     }
                 });
 
                 builder.show();
                 input.requestFocus();
 
-                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                input.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        InputMethodManager imm = (InputMethodManager) input.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.showSoftInput(input, 0);
+                    }
+                }, 50);
             }
         });
 
@@ -257,8 +260,65 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             }
         });
 
+        holder.thirdActionTaskText.setText("Delete Group");
+        holder.thirdActionTaskText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder deleteDialog = new AlertDialog.Builder(context);
+
+                boolean doTasksExist = !taskManager.getCurrentTimePeriod().getAllTasksByGroup(group).isEmpty();
+                if(doTasksExist) {
+                    int taskSize = taskManager.getCurrentTimePeriod().getAllTasksByGroup(group).size();
+                    deleteDialog.setTitle("Confirm group and tasks deletion");
+                    deleteDialog.setMessage("Are you sure you want to delete the group " + group.getGroupName() +
+                            " along with its " + taskSize + " total task" + (taskSize == 1 ? "" : "s") + "? THIS CANNOT BE UNDONE!");
+                } else {
+                    deleteDialog.setTitle("Confirm group deletion");
+                    deleteDialog.setMessage("Are you sure you want to delete the group " + group.getGroupName() + "?");
+                }
+
+                deleteDialog.setPositiveButton("DELETE", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(doTasksExist) {
+                            AlertDialog.Builder deleteDialog = new AlertDialog.Builder(context);
+
+                            deleteDialog.setTitle("Confirm group and tasks deletion");
+                            deleteDialog.setMessage("Press CONFIRM DELETE if you are sure. You will lose all tasks, completed and upcoming, associated with this group. THIS CANNOT BE UNDONE!");
+
+                            deleteDialog.setPositiveButton("CONFIRM DELETE", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    deleteGroup(group);
+                                }
+                            });
+
+                            deleteDialog.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+
+                                }
+                            });
+
+                            deleteDialog.show();
+                        } else {
+                            deleteGroup(group);
+                        }
+                    }
+                });
+
+                deleteDialog.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+
+                deleteDialog.show();
+            }
+        });
+
         holder.taskNotes.setVisibility(View.GONE);
-        holder.thirdActionTaskText.setVisibility(View.GONE);
 
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -282,6 +342,17 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         } else {
             holder.timePeriodText.setText(timePeriodScope.getName());
         }
+    }
+
+    private void deleteGroup(Group group) {
+        if(taskManager.deleteGroup(group)) {
+            Toast.makeText(context, group.getGroupName() + " was deleted.", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(context, "Something went wrong, and the group could not be deleted...", Toast.LENGTH_SHORT).show();
+        }
+
+        groups = new ArrayList<>(taskManager.getAllCurrentGroups(taskManager.getCurrentTimePeriod()));
+        notifyDataSetChanged();
     }
 
     private void navigateToGroupTasks(Group group) {

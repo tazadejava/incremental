@@ -171,6 +171,6 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
     @Override
     public int getItemCount() {
-        return TimePeriod.DAILY_LOGS_AHEAD_COUNT_SHOW + 1;
+        return TimePeriod.DAILY_LOGS_AHEAD_COUNT_SHOW_UI + 1;
     }
 }

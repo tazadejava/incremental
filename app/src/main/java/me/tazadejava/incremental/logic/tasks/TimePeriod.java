@@ -33,7 +33,7 @@ public class TimePeriod {
 
     //need to account for the possible next week plus 6 days if on a Monday
     public static final int DAILY_LOGS_AHEAD_COUNT_LOAD = 13;
-    public static final int DAILY_LOGS_AHEAD_COUNT_SHOW = 6;
+    public static final int DAILY_LOGS_AHEAD_COUNT_SHOW_UI = 6; //not including today
 
     private TaskManager taskManager;
     private Gson gson;
@@ -403,7 +403,8 @@ public class TimePeriod {
         processPendingTasks(generator);
     }
 
-    public void deleteTaskCompletely(Task task, TaskGenerator generator) {
+    public void deleteTaskCompletely(Task task) {
+        TaskGenerator generator = task.getParent();
         allActiveTasks.remove(task);
         removeTaskFromDailyLists(task);
 
@@ -621,6 +622,23 @@ public class TimePeriod {
 
         groups.put(name, new Group(name));
 
+        taskManager.saveData(true, this);
+
+        return true;
+    }
+
+    public boolean deleteGroup(Group group) {
+        if(!groups.containsKey(group.getGroupName())) {
+            return false;
+        }
+
+        for(Task task : getAllTasksByGroup(group)) {
+            deleteTaskCompletely(task);
+        }
+
+        statsManager.deleteGroupStats(group);
+
+        groups.remove(group.getGroupName());
         taskManager.saveData(true, this);
 
         return true;

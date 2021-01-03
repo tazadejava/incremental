@@ -95,7 +95,7 @@ public class StatsManager {
                 timePeriodFolder.mkdirs();
             }
 
-            File statsFile = new File(timePeriodFolder.getAbsolutePath() + "/statistics.json");
+            File statsFile = new File(timePeriodFolder.getAbsolutePath() + "/statistics.json.TMP");
 
             try {
                 if(!statsFile.exists()) {
@@ -137,6 +137,8 @@ public class StatsManager {
                 statsManager.gson.toJson(data, writer);
 
                 writer.close();
+
+                statsFile.renameTo(new File(timePeriodFolder.getAbsolutePath() + "/statistics.json"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -266,5 +268,19 @@ public class StatsManager {
         }
 
         return 0;
+    }
+
+    public void deleteGroupStats(Group group) {
+        for(LocalDate date : totalMinutesWorkedByGroup.keySet()) {
+            if(totalMinutesWorkedByGroup.get(date).containsKey(group)) {
+                totalMinutesWorkedByGroup.get(date).remove(group);
+            }
+        }
+
+        for(LocalDate date : totalTasksCompletedByGroup.keySet()) {
+            if(totalTasksCompletedByGroup.get(date).containsKey(group)) {
+                totalTasksCompletedByGroup.get(date).remove(group);
+            }
+        }
     }
 }

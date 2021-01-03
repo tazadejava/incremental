@@ -242,7 +242,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     for(Task task : selectedTasks.values()) {
-                        taskManager.getCurrentTimePeriod().deleteTaskCompletely(task, task.getParent());
+                        taskManager.getCurrentTimePeriod().deleteTaskCompletely(task);
                         tasks.remove(task);
                     }
 

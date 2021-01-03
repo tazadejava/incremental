@@ -184,7 +184,7 @@ public class CreateTaskActivity extends AppCompatActivity {
                 confirmation.setPositiveButton("DELETE TASK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        taskManager.getCurrentTimePeriod().deleteTaskCompletely(taskManager.getActiveEditTask(), taskManager.getActiveEditTask().getParent());
+                        taskManager.getCurrentTimePeriod().deleteTaskCompletely(taskManager.getActiveEditTask());
 
                         taskManager.saveData(true, taskManager.getCurrentTimePeriod());
 

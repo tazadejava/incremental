@@ -87,6 +87,8 @@ public class CreateTaskTaskTypeFragment extends Fragment implements BackPressedI
             } else {
                 oneTimeTaskRadioButton.setChecked(true);
             }
+        } else {
+            oneTimeTaskRadioButton.setChecked(true);
         }
 
         return root;
