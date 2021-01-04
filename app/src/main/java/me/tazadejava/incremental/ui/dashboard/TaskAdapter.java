@@ -18,6 +18,7 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnticipateOvershootInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -40,6 +41,7 @@ import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,9 +53,12 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.ui.animation.ColorAnimation;
+import me.tazadejava.incremental.ui.animation.TextColorAnimation;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
+import me.tazadejava.incremental.ui.statistics.CalendarWeekAdapter;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
@@ -100,6 +105,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private int dayPosition;
 
     private HashMap<Task, ViewHolder> taskLayout;
+    private HashMap<Task, Integer> inactiveTaskPositions = new HashMap<>();
 
     public TaskAdapter(TaskManager taskManager, Activity context, TimePeriod timePeriod, int dayPosition, LocalDate date, Set<Task> tasksToday, List<Task> tasks, MainDashboardDayAdapter mainDashboardDayAdapter) {
         this.taskManager = taskManager;
@@ -115,16 +121,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         taskLayout = new HashMap<>();
 
         //sort if active
-        this.tasks.sort(new Comparator<Task>() {
-            @Override
-            public int compare(Task task, Task t1) {
-                if(task.isTaskCurrentlyWorkedOn()) {
-                    return -1;
-                } else if(t1.isTaskCurrentlyWorkedOn()) {
-                    return 1;
-                } else {
-                    return 0;
-                }
+        this.tasks.sort((task, task2) -> {
+            if(task.isTaskCurrentlyWorkedOn()) {
+                return -1;
+            } else if(task2.isTaskCurrentlyWorkedOn()) {
+                return 1;
+            } else {
+                return 0;
             }
         });
     }
@@ -190,13 +193,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
         });
 
-        //todo: temp disabled because unsure if the design benefits from the addition of a star
-//        if(task.getMinutesNotesTimestamps().isEmpty()) {
-//            holder.bottomLeftIndicator.setText("");
-//        } else {
-//            holder.bottomLeftIndicator.setText("*");
-//        }
-
         taskLayout.put(task, holder);
 
         holder.taskName.setText(task.getName());
@@ -204,22 +200,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         holder.taskClass.setTextColor(task.getGroup().getLightColor());
 
-        int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
-        holder.totalTimeRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
-
-        if(date.equals(LocalDate.now())) {
-            int minutesLeftToday = task.getTodaysMinutesLeftIncludingCurrentWork();
-
-            holder.dailyTimeRemaining.setText(Utils.formatHourMinuteTime(minutesLeftToday) + " of work left today");
-        } else {
-            int minutesLeft = task.getDayMinutesOfWorkTotal(date);
-
-            if(minutesLeft < 0) {
-                minutesLeft = 0;
-            }
-
-            holder.dailyTimeRemaining.setText(Utils.formatHourMinuteTime(minutesLeft) + " of work left");
-        }
+        updateTaskMinutesText(task, holder);
 
         if(task.isOverdue()) {
             int overdueDays = task.getOverdueDays();
@@ -266,6 +247,25 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         } else {
             holder.actionTaskText.setVisibility(View.GONE);
             holder.horizontalLine.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateTaskMinutesText(Task task, ViewHolder holder) {
+        int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
+        holder.totalTimeRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
+
+        if(date.equals(LocalDate.now())) {
+            int minutesLeftToday = task.getTodaysMinutesLeftIncludingCurrentWork();
+
+            holder.dailyTimeRemaining.setText(Utils.formatHourMinuteTime(minutesLeftToday) + " of work left today");
+        } else {
+            int minutesLeft = task.getDayMinutesOfWorkTotal(date);
+
+            if(minutesLeft < 0) {
+                minutesLeft = 0;
+            }
+
+            holder.dailyTimeRemaining.setText(Utils.formatHourMinuteTime(minutesLeft) + " of work left");
         }
     }
 
@@ -355,8 +355,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 task.startWorkingOnTask();
                                 task.logMinutes(0, "", false);
                                 task.completeTaskForTheDay();
-                                mainDashboardDayAdapter.updateTaskCards(task);
-                                mainDashboardDayAdapter.updateDayLayouts(task);
+                                mainDashboardDayAdapter.updateTaskCards(task, null);
+                                mainDashboardDayAdapter.updateDayLayouts(task, null);
 
                                 notifyDataSetChanged();
 
@@ -530,8 +530,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                                 .translationXBy(width).setDuration(1000).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
                                             @Override
                                             public void run() {
-                                                mainDashboardDayAdapter.updateTaskCards(task);
-                                                mainDashboardDayAdapter.updateDayLayouts(task);
+                                                mainDashboardDayAdapter.updateTaskCards(task, null);
+                                                mainDashboardDayAdapter.updateDayLayouts(task, null);
 
                                                 notifyDataSetChanged();
 
@@ -569,13 +569,69 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                             .translationXBy(width).setStartDelay(200).setDuration(1000).setInterpolator(new AnticipateOvershootInterpolator(4)).withEndAction(new Runnable() {
                                         @Override
                                         public void run() {
-                                            mainDashboardDayAdapter.updateTaskCards(task);
-                                            mainDashboardDayAdapter.updateDayLayouts(task);
+                                            mainDashboardDayAdapter.updateTaskCards(task, null);
+                                            mainDashboardDayAdapter.updateDayLayouts(task, null);
 
                                             notifyDataSetChanged();
                                             mainView.setTranslationX(0);
                                         }
                                     }).start();
+
+                                    //animate text colors to indicate success
+                                    Animation textColorAnim = new Animation() {
+                                        @Override
+                                        protected void applyTransformation(float interpolatedTime, Transformation t) {
+                                            holder.actionTaskText.setAlpha(1 - interpolatedTime);
+                                            holder.dailyTimeRemaining.setAlpha(1 - interpolatedTime);
+                                            holder.taskDueDate.setAlpha(1 - interpolatedTime);
+                                            holder.totalTimeRemaining.setAlpha(1 - interpolatedTime);
+                                        }
+                                    };
+                                    textColorAnim.setDuration(200);
+                                    textColorAnim.setAnimationListener(new Animation.AnimationListener() {
+                                        @Override
+                                        public void onAnimationStart(Animation animation) {
+
+                                        }
+
+                                        @Override
+                                        public void onAnimationEnd(Animation animation) {
+                                            holder.actionTaskText.setAlpha(1);
+                                            holder.dailyTimeRemaining.setAlpha(1);
+                                            holder.taskDueDate.setAlpha(1);
+                                            holder.totalTimeRemaining.setAlpha(1);
+                                        }
+
+                                        @Override
+                                        public void onAnimationRepeat(Animation animation) {
+
+                                        }
+                                    });
+                                    textColorAnim.setInterpolator(new DecelerateInterpolator());
+                                    expandedOptionsLayout.startAnimation(textColorAnim);
+
+                                    //animate main text color as well
+                                    TextColorAnimation colorAnimation = new TextColorAnimation(holder.taskName, holder.taskName.getTextColors().getDefaultColor(),
+                                            task.getGroup().getLightColor());
+                                    colorAnimation.setDuration(200);
+                                    colorAnimation.setInterpolator(new DecelerateInterpolator());
+                                    colorAnimation.setAnimationListener(new Animation.AnimationListener() {
+                                        @Override
+                                        public void onAnimationStart(Animation animation) {
+
+                                        }
+
+                                        @Override
+                                        public void onAnimationEnd(Animation animation) {
+                                            holder.taskName.setTextColor(holder.taskName.getTextColors());
+                                        }
+
+                                        @Override
+                                        public void onAnimationRepeat(Animation animation) {
+
+                                        }
+                                    });
+                                    holder.taskName.startAnimation(colorAnimation);
 
                                     taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                                     if(dayPosition == 0) {
@@ -605,8 +661,67 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         @Override
                                         public void run() {
                                             mainDashboardDayAdapter.unmarkTaskAsAnimated(task);
-                                            mainDashboardDayAdapter.updateTaskCards(task);
-                                            mainDashboardDayAdapter.updateDayLayouts(task);
+
+                                            //two cases:
+                                            //1: if it is the only active task, then move back to where it was before, easy
+                                            //2: if there are multiple active tasks, then need to calculate where to place the task now (this probably could be optimized w/ an algo in future)
+
+                                            if(inactiveTaskPositions.size() == 1 && inactiveTaskPositions.containsKey(task)) {
+                                                //switch back to original position
+                                                int newPosition = inactiveTaskPositions.get(task);
+                                                tasks.remove(task);
+                                                tasks.add(newPosition, task);
+                                                notifyItemMoved(0, newPosition);
+                                            } else {
+                                                //calculate task location
+                                                List<Task> taskLocations = getUpdatedTasks();
+                                                taskLocations.sort((task, task2) -> {
+                                                    if(task.isTaskCurrentlyWorkedOn()) {
+                                                        return -1;
+                                                    } else if(task2.isTaskCurrentlyWorkedOn()) {
+                                                        return 1;
+                                                    } else {
+                                                        return 0;
+                                                    }
+                                                });
+
+                                                //count currently worked tasks so that if inactiveTaskPositions was lost, can still only move one item
+                                                boolean anotherTaskCurrentlyWorkedOn = false;
+                                                int taskIndex = 0;
+                                                boolean countingTaskIndex = true;
+                                                for(Task loopTask : tasks) {
+                                                    if(loopTask.isTaskCurrentlyWorkedOn()) {
+                                                        anotherTaskCurrentlyWorkedOn = true;
+                                                    }
+                                                    if(loopTask == task) {
+                                                        countingTaskIndex = false;
+                                                    }
+
+                                                    if(countingTaskIndex) {
+                                                        taskIndex++;
+                                                    }
+                                                }
+
+                                                if(!anotherTaskCurrentlyWorkedOn) {
+                                                    int newPosition = taskLocations.indexOf(task);
+                                                    tasks = taskLocations;
+                                                    notifyItemMoved(taskIndex, newPosition);
+                                                } else {
+                                                    tasks = taskLocations;
+                                                    notifyItemRangeChanged(0, getItemCount());
+                                                }
+                                            }
+
+                                            inactiveTaskPositions.remove(task);
+                                            updateTaskCards(task, holder, true);
+
+                                            //update text and graphs
+                                            mainDashboardDayAdapter.updateTaskCards(task, TaskAdapter.this);
+                                            mainDashboardDayAdapter.updateDayLayouts(task, TaskAdapter.this);
+
+                                            //manually update estimation texts
+                                            updateTaskMinutesText(task, holder);
+                                            mainDashboardDayAdapter.refreshEstimatedTime(TaskAdapter.this);
                                         }
                                     }, 75);
                                 }
@@ -650,9 +765,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
 
                     //move to top
+                    int oldPosition = tasks.indexOf(task);
+                    inactiveTaskPositions.put(task, oldPosition);
                     tasks.remove(task);
                     tasks.add(0, task);
-                    notifyItemMoved(position, 0);
+                    notifyItemMoved(oldPosition, 0);
                     mainDashboardDayAdapter.smoothScrollToPosition(dayPosition);
                 }
             };
@@ -661,6 +778,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     public void refreshLayout() {
         tasks = getUpdatedTasks();
+        taskLayout.clear();
         notifyDataSetChanged();
     }
 

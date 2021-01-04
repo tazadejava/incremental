@@ -27,6 +27,7 @@ import java.util.Set;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.ui.animation.ColorAnimation;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
@@ -41,42 +42,6 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
 
             dayButtons = new View[] {itemView.findViewById(R.id.button1), itemView.findViewById(R.id.button2), itemView.findViewById(R.id.button3),
                     itemView.findViewById(R.id.button4), itemView.findViewById(R.id.button5), itemView.findViewById(R.id.button6), itemView.findViewById(R.id.button7)};
-        }
-    }
-
-    public class ColorAnimation extends Animation {
-
-        private View view;
-        private int[] fromColor, toColor;
-
-        public ColorAnimation(View view, int[] fromColor, int[] toColor) {
-            this.view = view;
-            this.fromColor = fromColor;
-            this.toColor = toColor;
-
-            this.view.setHasTransientState(true);
-            setAnimationListener(new AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-
-                }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    view.setHasTransientState(false);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-
-                }
-            });
-        }
-
-        @Override
-        protected void applyTransformation(float interpolatedTime, Transformation t) {
-            view.setBackgroundColor(Color.rgb(fromColor[0] + (int) ((toColor[0] - fromColor[0]) * interpolatedTime), fromColor[1] + (int) ((toColor[1] - fromColor[1]) * interpolatedTime),
-                    fromColor[2] + (int) ((toColor[2] - fromColor[2]) * interpolatedTime)));
         }
     }
 

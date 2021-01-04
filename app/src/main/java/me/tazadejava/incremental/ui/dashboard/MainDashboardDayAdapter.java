@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -46,8 +47,6 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
     private TimePeriod timePeriod;
 
-    //store the task adapters since a small constant amount exists
-    private HashMap<Integer, TaskAdapter> taskAdaptersByPosition = new HashMap<>();
     private HashMap<TaskAdapter, ViewHolder> taskAdapters;
 
     private Set<Task> tasksToday, alreadyAnimatedTasks;
@@ -82,14 +81,9 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
         List<Task> dayTasks = timePeriod.getTasksByDay(position);
 
-        if(taskAdaptersByPosition.containsKey(position)) {
-            taskAdaptersByPosition.get(position).notifyDataSetChanged();
-        } else {
-            TaskAdapter adapter;
-            holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, tasksToday, dayTasks, this));
-            taskAdapters.put(adapter, holder);
-            taskAdaptersByPosition.put(position, adapter);
-        }
+        TaskAdapter adapter;
+        holder.taskList.setAdapter(adapter = new TaskAdapter(taskManager, context, timePeriod, position, date, tasksToday, dayTasks, this));
+        taskAdapters.put(adapter, holder);
 
         holder.dashboardDate.setText(dayToTitleFormat(date));
         refreshEstimatedTime(holder, dayTasks, date);
@@ -110,7 +104,7 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
         }
     }
 
-    private void refreshEstimatedTime(TaskAdapter adapter) {
+    protected void refreshEstimatedTime(TaskAdapter adapter) {
         List<Task> dayTasks = adapter.getUpdatedTasks();
         refreshEstimatedTime(taskAdapters.get(adapter), dayTasks, adapter.getDate());
     }
@@ -124,8 +118,12 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
         return dayOfWeek.charAt(0) + dayOfWeek.substring(1).toLowerCase() + ", " + date.getMonthValue() + "/" + date.getDayOfMonth();
     }
 
-    public void updateTaskCards(Task task) {
+    public void updateTaskCards(Task task, @Nullable TaskAdapter skipAdapter) {
         for(TaskAdapter adapter : taskAdapters.keySet()) {
+            if(skipAdapter == adapter) {
+                continue;
+            }
+
             if(adapter.hasTask(task)) {
                 adapter.updateTaskCardsAndAnimation(task);
             }
@@ -135,8 +133,12 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
         fragment.refreshChartData();
     }
 
-    public void updateDayLayouts(Task task) {
+    public void updateDayLayouts(Task task, @Nullable TaskAdapter skipAdapter) {
         for(TaskAdapter adapter : taskAdapters.keySet()) {
+            if(skipAdapter == adapter) {
+                continue;
+            }
+
             if(adapter.hasTask(task)) {
                 adapter.refreshLayout();
 
