@@ -43,6 +43,7 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
     private TaskManager taskManager;
     private DashboardFragment fragment;
     private RecyclerView recyclerView;
+    private LinearLayoutManager llm;
     private Activity context;
 
     private TimePeriod timePeriod;
@@ -51,10 +52,11 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
 
     private Set<Task> tasksToday, alreadyAnimatedTasks;
 
-    public MainDashboardDayAdapter(TaskManager taskManager, DashboardFragment fragment, RecyclerView recyclerView, Activity context) {
+    public MainDashboardDayAdapter(TaskManager taskManager, DashboardFragment fragment, RecyclerView recyclerView, LinearLayoutManager llm, Activity context) {
         this.taskManager = taskManager;
         this.fragment = fragment;
         this.recyclerView = recyclerView;
+        this.llm = llm;
         this.context = context;
 
         taskAdapters = new HashMap<>();
@@ -152,7 +154,13 @@ public class MainDashboardDayAdapter extends RecyclerView.Adapter<MainDashboardD
             return;
         }
 
-        recyclerView.smoothScrollToPosition(position);
+        int firstVisible = llm.findFirstVisibleItemPosition();
+        int lastVisible = llm.findLastVisibleItemPosition();
+
+        //when first < last, the day should already be visible and scrolling becomes choppy, so don't scroll there
+        if(firstVisible >= lastVisible) {
+            recyclerView.smoothScrollToPosition(position);
+        }
     }
 
     public boolean hasTaskBeenAnimated(Task task) {

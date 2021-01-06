@@ -144,6 +144,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         final Task task = tasks.get(position);
 
+        //set card to defaults before loading info
+        holder.actionTaskText.setTextColor(holder.actionTaskText.getTextColors());
+        holder.expandedOptionsLayout.setVisibility(View.GONE);
+
+        //update info
+
         updateTaskCards(task, holder, dayPosition == 0);
 
         //update card color if active
@@ -295,7 +301,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
 
         //init baseline colors before setting later
-        holder.sideCardAccent.setBackground(darkColor);
+        holder.sideCardAccent.setBackground(unwrapped);
 
         double completionPercentage = task.getTaskCompletionPercentage();
         if(updateAnimation && completionPercentage != 0 && !mainDashboardDayAdapter.hasTaskBeenAnimated(task)) {

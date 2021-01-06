@@ -51,6 +51,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
     private BarChart workBarChart;
 
     private RecyclerView dashboardView;
+    private LinearLayoutManager llm;
     private MainDashboardDayAdapter adapter;
 
     private Description description;
@@ -102,8 +103,9 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         workBarChart.getAxisLeft().setTextColor(primaryTextColor);
 
         dashboardView = root.findViewById(R.id.dashboard_day_list);
-        dashboardView.setAdapter(adapter = new MainDashboardDayAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, dashboardView, getActivity()));
-        dashboardView.setLayoutManager(new LinearLayoutManager(getContext()));
+        dashboardView.setLayoutManager(llm = new LinearLayoutManager(getContext()));
+        dashboardView.setAdapter(adapter = new MainDashboardDayAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
+                this, dashboardView, llm, getActivity()));
 
         lastRefreshDate = LocalDate.now();
 
@@ -356,7 +358,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             lastRefreshDate = LocalDate.now();
             ((IncrementalApplication) getActivity().getApplication()).reset();
 
-            dashboardView.setAdapter(adapter = new MainDashboardDayAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(), this, dashboardView, getActivity()));
+            dashboardView.setAdapter(adapter = new MainDashboardDayAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
+                    this, dashboardView, llm, getActivity()));
 
             if(lastRefreshDate.getDayOfWeek() == DayOfWeek.MONDAY) {
                 currentDateOffset++;
