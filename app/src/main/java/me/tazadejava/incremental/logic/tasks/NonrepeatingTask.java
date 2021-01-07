@@ -71,7 +71,7 @@ public class NonrepeatingTask extends TaskGenerator {
 
     @Override
     public boolean hasGeneratorCompletedAllTasks() {
-        return hasTaskStarted && allTasks[0].isTaskComplete();
+        return allTasks[0].isTaskComplete();
     }
 
     @Override

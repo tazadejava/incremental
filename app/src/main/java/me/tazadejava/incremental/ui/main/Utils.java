@@ -10,6 +10,7 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
@@ -219,11 +220,11 @@ public class Utils {
             public void run() {
                 LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(view.getContext(), R.drawable.task_card_gradient).mutate();
 
-                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(0);
-                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(1);
-
+                GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
+                GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
                 darkColor.setColor(darkColorVal);
                 lightColor.setColor(lightColorVal);
+                unwrapped.setLayerGravity(1, Gravity.BOTTOM);
 
                 unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), (int) (view.getHeight() * percentage));
 

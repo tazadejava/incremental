@@ -151,13 +151,12 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         });
 
         int tasksCount = taskManager.getCurrentTimePeriod().getTasksCountThisWeekByGroup(group);
-        int tasksTotal = taskManager.getCurrentTimePeriod().getAllCurrentAndUpcomingTasksByGroup(group).size();
 
         int[] averageWorkload = getAverageMinutesWorkedPerWeek(group);
 
         holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
                 + "\n\n" + Utils.formatHourMinuteTime(getMinutesWorkedThisWeek(group)) + " worked this week"
-                + "\nAverage workload per week (" + averageWorkload[1] + "): " + Utils.formatHourMinuteTime(averageWorkload[0]));
+                + "\nAverage work per week (" + averageWorkload[1] + " total): " + Utils.formatHourMinuteTime(averageWorkload[0]));
 
         holder.actionTaskText.setText("View Tasks");
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
@@ -397,11 +396,25 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             endLoopDate = taskManager.getCurrentTimePeriod().getEndDate();
         }
 
+        //start on the week when the group started, not on the beginning date
+        boolean groupStarted = false;
+        main:
+        while(currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
+            for(LocalDate date : LogicalUtils.getWorkWeekDates(currentLoopDate)) {
+                if(taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date) > 0) {
+                    groupStarted = true;
+                    break main;
+                }
+            }
+
+            currentLoopDate = currentLoopDate.plusDays(7);
+        }
+
         //make the week start on a MONDAY not sunday, offset by one day
         long currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         long endWeekValue = endLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
 
-        while(currentWeekValue <= endWeekValue && currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
+        while(currentWeekValue <= endWeekValue || currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
             boolean workedThisWeek = false;
             for(LocalDate date : LogicalUtils.getWorkWeekDates(currentLoopDate)) {
                 if(!workedThisWeek) {

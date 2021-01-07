@@ -1,19 +1,14 @@
 package me.tazadejava.incremental.ui.archive;
 
-import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.text.Html;
-import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,11 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
-import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.Task;
-import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.ui.dashboard.TaskAdapter;
-import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class PastTasksListAdapter extends RecyclerView.Adapter<PastTasksListAdapter.ViewHolder> {

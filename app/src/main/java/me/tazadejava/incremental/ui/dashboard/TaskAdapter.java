@@ -15,6 +15,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.text.Html;
 import android.text.InputType;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -286,10 +287,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         //first, init a baseline drawable
         LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
-        GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(0);
-        GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(1);
+        GradientDrawable lightColor = (GradientDrawable) unwrapped.getDrawable(0);
+        GradientDrawable darkColor = (GradientDrawable) unwrapped.getDrawable(1);
         darkColor.setColor(task.getGroup().getDarkColor());
         lightColor.setColor(task.getGroup().getLightColor());
+        unwrapped.setLayerGravity(1, Gravity.BOTTOM);
 
         unwrapped.setLayerSize(1, unwrapped.getLayerWidth(1), 0);
 
@@ -323,9 +325,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                         protected void applyTransformation(float interpolatedTime, Transformation t) {
                             LayerDrawable unwrapped2 = (LayerDrawable) unwrapped.getConstantState().newDrawable();
                             if(previousPercentage != 1) {
-                                unwrapped2.setLayerSize(1, unwrapped2.getLayerWidth(1), (int) ((double) holder.sideCardAccent.getHeight() * (((completionPercentage - previousPercentage) * interpolatedTime) + previousPercentage)));
+                                unwrapped2.setLayerSize(1, unwrapped2.getLayerWidth(0), (int) ((double) holder.sideCardAccent.getHeight() * (((completionPercentage - previousPercentage) * interpolatedTime) + previousPercentage)));
                             } else {
-                                unwrapped2.setLayerSize(1, unwrapped2.getLayerWidth(1), (int) ((double) holder.sideCardAccent.getHeight() * (completionPercentage * interpolatedTime)));
+                                unwrapped2.setLayerSize(1, unwrapped2.getLayerWidth(0), (int) ((double) holder.sideCardAccent.getHeight() * (completionPercentage * interpolatedTime)));
                             }
                             holder.sideCardAccent.setBackground(unwrapped2);
                         }
@@ -336,8 +338,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     holder.sideCardAccent.startAnimation(anim);
                 }
             });
-        } else {
-            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, completionPercentage);
         }
     }
 
