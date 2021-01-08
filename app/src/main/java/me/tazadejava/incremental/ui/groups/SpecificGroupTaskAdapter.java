@@ -163,6 +163,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                     taskManager.setActiveEditTask(task);
 
                     Intent editTask = new Intent(context, CreateTaskActivity.class);
+                    editTask.putExtra("isViewingGroupTasks", true);
                     context.startActivity(editTask);
                 }
             });

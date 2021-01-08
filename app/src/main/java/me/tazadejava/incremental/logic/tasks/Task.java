@@ -271,10 +271,10 @@ public class Task {
      * @param completedTask
      */
     public void logMinutes(int loggedMinutes, String minutesNotes, boolean completedTask) {
-        logMinutes(loggedMinutes, minutesNotes, completedTask, false, null);
+        logMinutes(loggedMinutes, minutesNotes, completedTask, null);
     }
 
-    public void logMinutes(int loggedMinutes, String minutesNotes, boolean completedTask, boolean usedEstimatedTime, LocalDateTime estimatedStartTime) {
+    public void logMinutes(int loggedMinutes, String minutesNotes, boolean completedTask, LocalDateTime estimatedStartTime) {
         timePeriod.getStatsManager().appendMinutes(group, lastTaskWorkStartTime.toLocalDate(), loggedMinutes, completedTask);
 
         if(!minutesNotes.isEmpty() || loggedMinutes > 0) {
@@ -291,12 +291,11 @@ public class Task {
         }
         loggedMinutesOfWorkToday += loggedMinutes;
 
-        if(usedEstimatedTime) {
+        if(loggedMinutes > 0 && carryOverSeconds >= 60) {
             carryOverSeconds %= 60;
 
             int seconds = ((int) estimatedStartTime.until(LocalDateTime.now(), ChronoUnit.SECONDS)) % 60;
             carryOverSeconds += seconds;
-            System.out.println("SECONDS NOW: " + carryOverSeconds);
         }
 
         if(completedTask) {

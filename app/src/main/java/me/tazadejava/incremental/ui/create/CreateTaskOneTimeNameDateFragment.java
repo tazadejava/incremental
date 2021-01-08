@@ -199,15 +199,18 @@ public class CreateTaskOneTimeNameDateFragment extends Fragment implements BackP
 
         dueTime.setText(Utils.formatLocalTime(act.getDueTime()));
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                InputMethodManager imm = (InputMethodManager) taskNameInput.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        //don't show keyboard if editing a task
+        if(taskManager.getActiveEditTask() == null) {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    InputMethodManager imm = (InputMethodManager) taskNameInput.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 
-                taskNameInput.requestFocus();
-            }
-        }, 100);
+                    taskNameInput.requestFocus();
+                }
+            }, 100);
+        }
 
         return root;
     }

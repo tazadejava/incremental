@@ -1,6 +1,7 @@
 package me.tazadejava.incremental.ui.groups;
 
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,6 +32,8 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
 
     private RecyclerView groupView;
     private SpecificGroupTaskAdapter adapter;
+    private LinearLayoutManager llm;
+    private Parcelable groupViewState;
 
     private Menu menu;
 
@@ -80,7 +83,7 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
                             getActivity(), group, taskManager.getCurrentTimePeriod()));
         }
 
-        groupView.setLayoutManager(new LinearLayoutManager(getContext()));
+        groupView.setLayoutManager(llm = new LinearLayoutManager(getContext()));
 
         return root;
     }
@@ -114,11 +117,22 @@ public class GroupTasksViewFragment extends Fragment implements BackPressedInter
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+
+        groupViewState = llm.onSaveInstanceState();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
 
         //refresh contents
         groupView.setAdapter(adapter);
+
+        if(groupViewState != null) {
+            llm.onRestoreInstanceState(groupViewState);
+        }
     }
 
     @Override

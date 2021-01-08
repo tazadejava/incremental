@@ -539,10 +539,16 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
     public void onBackPressed() {
         TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
         if(taskManager.getActiveEditTask() != null) {
-            taskManager.setActiveEditTask(null);
+            //return to group task; active edit task will be erased when specific adapter is reached
+            if(getActivity().getIntent().getBooleanExtra("isViewingGroupTasks", false)) {
+                ((CreateTaskActivity) getActivity()).setBackPressedInterface(null);
+                getActivity().onBackPressed();
+            } else {
+                taskManager.setActiveEditTask(null);
 
-            Intent main = new Intent(getContext(), MainActivity.class);
-            startActivity(main);
+                Intent main = new Intent(getContext(), MainActivity.class);
+                startActivity(main);
+            }
         } else {
             getActivity().getSupportFragmentManager().beginTransaction()
                     .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right)

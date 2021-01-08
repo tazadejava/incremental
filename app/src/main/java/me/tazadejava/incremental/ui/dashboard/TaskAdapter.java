@@ -490,8 +490,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setCancelable(false);
                             finishedTaskBuilder.setTitle("Did you finish the task?");
 
-                            boolean usedEstimatedTime = currentMinutes.equals(inputMinutes.getText().toString());
-
                             int minutesWorked;
                             if(inputMinutes.getText().length() == 0) {
                                 minutesWorked = 0;
@@ -527,7 +525,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         expandedOptionsLayout.setVisibility(View.GONE);
 
                                         task.completeTaskForTheDay();
-                                        task.logMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
+                                        task.logMinutes(minutesWorked, inputNotes.getText().toString(), false, estimateTimestamp);
 
                                         mainDashboardDayAdapter.unmarkTaskAsAnimated(task);
                                         updateTaskCards(task, holder, true);
@@ -566,7 +564,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     actionTaskText.setTextColor(actionTaskText.getTextColors());
                                     expandedOptionsLayout.setVisibility(View.GONE);
 
-                                    task.logMinutes(minutesWorked, inputNotes.getText().toString(), true, usedEstimatedTime, estimateTimestamp);
+                                    task.logMinutes(minutesWorked, inputNotes.getText().toString(), true, estimateTimestamp);
 
                                     mainDashboardDayAdapter.unmarkTaskAsAnimated(task);
                                     updateTaskCards(task, holder, true);
@@ -652,7 +650,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             finishedTaskBuilder.setNegativeButton("Not done yet!", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    task.logMinutes(minutesWorked, inputNotes.getText().toString(), false, usedEstimatedTime, estimateTimestamp);
+                                    task.logMinutes(minutesWorked, inputNotes.getText().toString(), false, estimateTimestamp);
 
                                     taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                                     if(dayPosition == 0) {

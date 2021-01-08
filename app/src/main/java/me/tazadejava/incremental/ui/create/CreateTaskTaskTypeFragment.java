@@ -99,6 +99,19 @@ public class CreateTaskTaskTypeFragment extends Fragment implements BackPressedI
         TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
         if(taskManager.getActiveEditTask() != null) {
             taskManager.setActiveEditTask(null);
+
+            //return to group task; active edit task will be erased when specific adapter is reached
+            if(getActivity().getIntent().getBooleanExtra("isViewingGroupTasks", false)) {
+                taskManager.setActiveEditTask(null);
+                getActivity().getSupportFragmentManager().beginTransaction()
+                        .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right)
+                        .replace(R.id.createTaskFrame, new CreateTaskTaskTypeFragment())
+                        .commit();
+//                Intent groupTask = new Intent(getContext(), MainActivity.class);
+//                groupTask.putExtra("isViewingGroupTasks", true);
+//                startActivity(groupTask);
+                return;
+            }
         }
 
         Intent main = new Intent(getContext(), MainActivity.class);

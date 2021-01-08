@@ -143,8 +143,14 @@ public class CreateTaskActivity extends AppCompatActivity {
             }
         }
 
-        Intent returnToMain = new Intent(this, MainActivity.class);
-        startActivity(returnToMain);
+        //return to group task; active edit task will be erased when specific adapter is reached
+        if(getIntent().getBooleanExtra("isViewingGroupTasks", false)) {
+            backPressedInterface = null;
+            onBackPressed();
+        } else {
+            Intent returnToMain = new Intent(this, MainActivity.class);
+            startActivity(returnToMain);
+        }
 
         Utils.hideKeyboard(frame);
     }
@@ -208,6 +214,8 @@ public class CreateTaskActivity extends AppCompatActivity {
     public void onBackPressed() {
         if(backPressedInterface != null) {
             backPressedInterface.onBackPressed();
+        } else {
+            super.onBackPressed();
         }
     }
 
