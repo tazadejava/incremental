@@ -17,6 +17,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.GlobalTaskWorkPreference;
@@ -42,7 +43,7 @@ public class DaysOffFragment extends Fragment implements BackPressedInterface {
 
         GlobalTaskWorkPreference workPreferences = taskManager.getCurrentTimePeriod().getWorkPreferences();
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE (MM/dd)");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE (MM/dd)").withLocale(Locale.ENGLISH);
 
         TextView daysOffText = root.findViewById(R.id.daysOffText);
 

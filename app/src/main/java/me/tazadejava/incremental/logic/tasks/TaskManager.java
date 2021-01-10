@@ -401,6 +401,21 @@ public class TaskManager {
         return timePeriodsRevised;
     }
 
+    /**
+     * Returns whether an active time period exists at all
+     * @return
+     */
+    public boolean existsActiveTimePeriod() {
+        LocalDate now = LocalDate.now();
+        for(int i = timePeriods.size() - 1; i >= 0; i--) {
+            if(timePeriods.get(i).isInTimePeriod(now)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void saveAllData() {
         saveData(true, timePeriods.toArray(new TimePeriod[0]));
     }

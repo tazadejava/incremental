@@ -21,4 +21,14 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:title="Miscellaneous">
+
+        <Preference
+            app:key="contactInformation"
+            app:title="Contact me"
+            app:summary="Feedback or comments? Feel free to shoot an email!" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

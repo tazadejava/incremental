@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         updateNavBarTimePeriod();
 
         //check if need new time period
-        if(taskManager.hasTimePeriodExpired()) {
+        if(taskManager.hasTimePeriodExpired() && !taskManager.existsActiveTimePeriod()) {
             creatingNewTimePeriod = true;
             showRenewalTimePeriodDialog();
         }

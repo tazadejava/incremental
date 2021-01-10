@@ -16,6 +16,8 @@ import java.util.HashMap;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdapter.ViewHolder> {
 
@@ -71,6 +73,10 @@ public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdap
         ViewHolder vh = new CalendarMonthAdapter.ViewHolder(view);
 
         vh.monthCalendar.setLayoutManager(new LinearLayoutManager(activity));
+
+        if(!((IncrementalApplication) activity.getApplication()).isDarkModeOn()) {
+            vh.monthCalendar.setBackgroundColor(Utils.getThemeAttrColor(activity, R.attr.cardTextColor));
+        }
 
         return vh;
     }
