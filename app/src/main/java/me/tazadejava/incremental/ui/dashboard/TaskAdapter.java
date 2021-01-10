@@ -338,6 +338,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     holder.sideCardAccent.startAnimation(anim);
                 }
             });
+        } else {
+            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, completionPercentage);
         }
     }
 
