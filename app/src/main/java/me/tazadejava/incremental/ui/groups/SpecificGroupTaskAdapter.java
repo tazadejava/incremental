@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,14 +17,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.logic.taskmodifiers.SubGroup;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
@@ -60,10 +65,12 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
     private TaskManager taskManager;
 
     private List<Task> tasks;
+    private HashMap<Task, List<Task>> taskGroups = new HashMap<>();
+    private HashMap<Task, Task> taskGroupHeads = new HashMap<>(); //store the top task pointer for all task groups
+    private Set<Task> taskGroupsVisible = new HashSet<>();
 
-    //used to batch delete tasks
-    private HashMap<Integer, Task> selectedTasks = new HashMap<>();
-    private HashMap<Integer, ConstraintLayout> selectedTaskLayouts = new HashMap<>();
+    //used to batch delete tasks; the array is used to batch delete a batch-created task
+    private Set<Task> selectedTasks = new HashSet<>();
     private boolean isSelectingTasks;
 
     public SpecificGroupTaskAdapter(TaskManager taskManager, GroupTasksViewFragment groupFragment, Activity context, Group group, TimePeriod timePeriod) {
@@ -73,8 +80,54 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
         tasks = new ArrayList<>(timePeriod.getAllTasksByGroup(group));
 
+        //sort by creation date
+
+        tasks.sort(new Comparator<Task>() {
+            @Override
+            public int compare(Task task, Task t1) {
+                return task.getParent().getCreationTime().compareTo(t1.getParent().getCreationTime());
+            }
+        });
+
+        //group batch tasks together; invariant that tasks are sorted by creation date
+        List<Task> tasksGrouped = new ArrayList<>();
+        for(int i = 0; i < tasks.size(); i++) {
+            Task task = tasks.get(i);
+            LocalDateTime creationDate = task.getParent().getCreationTime();
+
+            //if created at the same time, then they are batched together
+            if(i + 1 < tasks.size() && ChronoUnit.SECONDS.between(creationDate, creationDate = tasks.get(i + 1).getParent().getCreationTime()) <= 1) {
+                List<Task> batchTasks = new ArrayList<>();
+                batchTasks.add(0, task);
+                batchTasks.add(tasks.get(i + 1));
+                taskGroupHeads.put(task, task);
+                taskGroupHeads.put(tasks.get(i + 1), task);
+                i++;
+
+                while(i + 1 < tasks.size() && ChronoUnit.SECONDS.between(creationDate, creationDate = tasks.get(i + 1).getParent().getCreationTime()) <= 1) {
+                    batchTasks.add(tasks.get(i + 1));
+                    taskGroupHeads.put(tasks.get(i + 1), task);
+                    i++;
+                }
+
+                tasksGrouped.add(task);
+
+                sortTasksListByStartDate(batchTasks);
+
+                taskGroups.put(task, batchTasks);
+            } else {
+                tasksGrouped.add(task);
+            }
+        }
+
+        tasks = tasksGrouped;
+
         //sort by start date
 
+        sortTasksListByStartDate(tasks);
+    }
+
+    private void sortTasksListByStartDate(List<Task> tasks) {
         tasks.sort(new Comparator<Task>() {
             @Override
             public int compare(Task task, Task t1) {
@@ -115,87 +168,146 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         return startDate;
     }
 
+    private boolean isTaskGroupHead(int position, Task task) {
+        return (position == 0 || taskGroupHeads.getOrDefault(tasks.get(position - 1), null) != taskGroupHeads.getOrDefault(task, task));
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Task task = tasks.get(position);
 
-        if(task.isTaskComplete()) {
-            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, 1);
-
-            holder.taskCardConstraintLayout.setOnLongClickListener(null);
+        if(taskGroups.containsKey(task) && isTaskGroupHead(position, task)) {
+            List<Task> groupTasks = taskGroups.get(task);
+            Task lastTask = groupTasks.get(groupTasks.size() - 1);
+            holder.workRemaining.setText(groupTasks.size() + " batch-created tasks");
 
             if(task.getSubgroup() != null) {
-                holder.startDate.setText(task.getSubgroup().getName());
-            } else {
-                holder.startDate.setText("");
+                //if all tasks are the same subgroup, label them
+                boolean allSameSubgroup = true;
+                for (Task groupTask : groupTasks) {
+                    if (groupTask.getSubgroup() == null || !groupTask.getSubgroup().equals(task.getSubgroup())) {
+                        allSameSubgroup = false;
+                        break;
+                    }
+                }
+
+                if (allSameSubgroup) {
+                    holder.startDate.setText(task.getSubgroup().getName());
+                } else {
+                    holder.startDate.setText("");
+                }
             }
 
-            holder.dueDate.setText("Completed on " + Utils.formatLocalDateWithDayOfWeek(task.getLastTaskWorkedTime().toLocalDate()) + "\n@ " + Utils.formatLocalTime(task.getLastTaskWorkedTime().toLocalTime()));
+            //calculate percent done
+            int completedGroupTasks = 0;
+            for(Task groupTask : groupTasks) {
+                if(groupTask.isTaskComplete()) {
+                    completedGroupTasks++;
+                }
+            }
 
-            holder.workRemaining.setText("Worked " + Utils.formatHourMinuteTime(task.getTotalLoggedMinutesOfWork()) + " total");
+            LocalDate startDateFirst = getStartDate(task);
+            LocalDate startDateLast = getStartDate(lastTask);
+            holder.dueDate.setText("Spans from " +
+                    Utils.formatLocalDate(startDateFirst) +
+                    " to " +
+                    Utils.formatLocalDate(startDateLast));
 
-            holder.actionTaskText.setText("");
-            holder.actionTaskText.setOnClickListener(null);
+            updateTaskGroupState(holder, task, taskGroupsVisible.contains(task));
+
+            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, (double) completedGroupTasks / groupTasks.size());
+
+            holder.taskGroupName.setTextColor(task.getGroup().getLightColor());
         } else {
-            Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, task.getTaskCompletionPercentage());
+            if (task.isTaskComplete()) {
+                Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, 1);
 
-            holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    taskManager.setActiveEditTask(task);
+                holder.taskCardConstraintLayout.setOnLongClickListener(null);
 
-                    Intent editTask = new Intent(context, CreateTaskActivity.class);
-                    context.startActivity(editTask);
-                    return true;
+                if (task.getSubgroup() != null) {
+                    holder.startDate.setText(task.getSubgroup().getName());
+                } else {
+                    holder.startDate.setText("");
                 }
-            });
 
-            LocalDate startDate = getStartDate(task);
-            holder.startDate.setText("Task starts " + Utils.formatLocalDateWithDayOfWeek(startDate));
+                holder.dueDate.setText("Completed on " + Utils.formatLocalDateWithDayOfWeek(task.getLastTaskWorkedTime().toLocalDate()) + "\n@ " + Utils.formatLocalTime(task.getLastTaskWorkedTime().toLocalTime()));
 
-            int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
-            holder.workRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
+                holder.workRemaining.setText("Worked " + Utils.formatHourMinuteTime(task.getTotalLoggedMinutesOfWork()) + " total");
 
-            holder.actionTaskText.setText("Edit Task");
-            holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    taskManager.setActiveEditTask(task);
-
-                    Intent editTask = new Intent(context, CreateTaskActivity.class);
-                    editTask.putExtra("isViewingGroupTasks", true);
-                    context.startActivity(editTask);
-                }
-            });
-
-            LocalDateTime dueDateTime = task.getDueDateTime();
-            if(dueDateTime.toLocalDate().equals(LocalDate.now())) {
-                holder.dueDate.setText("Due TODAY" + " @ " + Utils.formatLocalTime(dueDateTime));
+                holder.actionTaskText.setText("");
+                holder.actionTaskText.setOnClickListener(null);
             } else {
-                holder.dueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
+                Utils.setViewGradient(task.getGroup(), holder.sideCardAccent, task.getTaskCompletionPercentage());
+
+                holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View view) {
+                        taskManager.setActiveEditTask(task);
+
+                        Intent editTask = new Intent(context, CreateTaskActivity.class);
+                        context.startActivity(editTask);
+                        return true;
+                    }
+                });
+
+                LocalDate startDate = getStartDate(task);
+                holder.startDate.setText("Task starts " + Utils.formatLocalDateWithDayOfWeek(startDate));
+
+                int totalMinutesLeft = task.getTotalMinutesLeftOfWork();
+                holder.workRemaining.setText(Utils.formatHourMinuteTime(totalMinutesLeft) + " of total work remaining");
+
+                holder.actionTaskText.setText("Edit Task");
+                holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        taskManager.setActiveEditTask(task);
+
+                        Intent editTask = new Intent(context, CreateTaskActivity.class);
+                        editTask.putExtra("isViewingGroupTasks", true);
+                        context.startActivity(editTask);
+                    }
+                });
+
+                LocalDateTime dueDateTime = task.getDueDateTime();
+                if (dueDateTime.toLocalDate().equals(LocalDate.now())) {
+                    holder.dueDate.setText("Due TODAY" + " @ " + Utils.formatLocalTime(dueDateTime));
+                } else {
+                    holder.dueDate.setText("Due " + dueDateTime.getMonthValue() + "/" + dueDateTime.getDayOfMonth() + " @ " + Utils.formatLocalTime(dueDateTime));
+                }
             }
+
+            holder.taskGroupName.setTextColor(Utils.getThemeAttrColor(context, R.attr.cardTextColor));
         }
 
         holder.taskGroupName.setText(task.getName());
+
+        //task selection for deletion logic
 
         holder.taskCardConstraintLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
                 if(isSelectingTasks) {
-                    for(int taskPosition : selectedTasks.keySet()) {
-                        selectedTaskLayouts.get(taskPosition).setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
-                    }
-
                     groupFragment.setBatchDeleteIconAndOptionsActive(false);
                     isSelectingTasks = false;
                     selectedTasks.clear();
-                    selectedTaskLayouts.clear();
+
+                    notifyDataSetChanged();
                 } else {
                     groupFragment.setBatchDeleteIconAndOptionsActive(true);
                     isSelectingTasks = true;
                     holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
-                    selectedTasks.put(position, task);
-                    selectedTaskLayouts.put(position, holder.taskCardConstraintLayout);
+
+                    if(taskGroups.containsKey(task) && isTaskGroupHead(position, task)) {
+                        selectedTasks.addAll(taskGroups.get(task));
+                        notifyItemRangeChanged(position + 1, taskGroups.get(task).size());
+                    } else {
+                        selectedTasks.add(task);
+
+                        //update active status of the head task node
+                        if(taskGroupHeads.containsKey(task)) {
+                            notifyItemChanged(tasks.indexOf(taskGroupHeads.get(task)));
+                        }
+                    }
                 }
                 return true;
             }
@@ -205,30 +317,110 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             @Override
             public void onClick(View view) {
                 if(isSelectingTasks) {
-                    if (selectedTasks.containsKey(position)) {
-                        selectedTasks.remove(position);
-                        selectedTaskLayouts.remove(position);
+                    boolean isGroupTaskSelected = false;
+                    boolean isHead = isTaskGroupHead(position, task);
+                    if(taskGroups.containsKey(task) && isHead) {
+                        for(Task groupTask : taskGroups.get(task)) {
+                            if(selectedTasks.contains(groupTask)) {
+                                isGroupTaskSelected = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isGroupTaskSelected || selectedTasks.contains(task)) {
+                        if(taskGroups.containsKey(task) && isHead) {
+                            selectedTasks.removeAll(taskGroups.get(task));
+                            notifyItemRangeChanged(position + 1, taskGroups.get(task).size());
+                        } else {
+                            selectedTasks.remove(task);
+
+                            //update active status of the head task node
+                            if(taskGroupHeads.containsKey(task)) {
+                                notifyItemChanged(tasks.indexOf(taskGroupHeads.get(task)));
+                            }
+                        }
+
                         if (selectedTasks.isEmpty()) {
                             isSelectingTasks = false;
                             groupFragment.setBatchDeleteIconAndOptionsActive(false);
+
+                            notifyDataSetChanged();
                         }
 
                         holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
                     } else {
                         holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
-                        selectedTasks.put(position, task);
-                        selectedTaskLayouts.put(position, holder.taskCardConstraintLayout);
+
+                        if(taskGroups.containsKey(task) && isHead) {
+                            selectedTasks.addAll(taskGroups.get(task));
+                            notifyItemRangeChanged(position + 1, taskGroups.get(task).size());
+                        } else {
+                            selectedTasks.add(task);
+
+                            //update active status of the head task node
+                            if(taskGroupHeads.containsKey(task)) {
+                                notifyItemChanged(tasks.indexOf(taskGroupHeads.get(task)));
+                            }
+                        }
                     }
                 }
             }
         });
 
         if(isSelectingTasks) {
-            holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, selectedTasks.containsKey(position) ? R.attr.cardColorActive : R.attr.cardColor));
+            if(taskGroups.containsKey(task) && isTaskGroupHead(position, task)) {
+                boolean isGroupTaskSelected = false;
+                for(Task groupTask : taskGroups.get(task)) {
+                    if(selectedTasks.contains(groupTask)) {
+                        isGroupTaskSelected = true;
+                        break;
+                    }
+                }
 
-            if(selectedTasks.containsKey(position) && !selectedTaskLayouts.containsKey(position)) {
-                selectedTaskLayouts.put(position, holder.taskCardConstraintLayout);
+                holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, isGroupTaskSelected ? R.attr.cardColorActive : R.attr.cardColor));
+            } else {
+                holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, selectedTasks.contains(task) ? R.attr.cardColorActive : R.attr.cardColor));
             }
+        } else {
+            holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
+        }
+    }
+
+    private void updateTaskGroupState(ViewHolder holder, Task task, boolean shouldExpandGroup) {
+        if(shouldExpandGroup) {
+            holder.actionTaskText.setText("Collapse Task List");
+            holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    taskGroupsVisible.remove(task);
+
+                    List<Task> groupTasks = taskGroups.get(task);
+
+                    int index = tasks.indexOf(task);
+                    for(int i = index + groupTasks.size(); i > index; i--) {
+                        tasks.remove(i);
+                    }
+
+                    notifyItemRangeRemoved(index + 1, groupTasks.size());
+                    notifyItemChanged(index);
+                }
+            });
+        } else {
+            holder.actionTaskText.setText("Expand Task List");
+            holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    taskGroupsVisible.add(task);
+
+                    int position = tasks.indexOf(task);
+                    List<Task> groupTasks = taskGroups.get(task);
+
+                    tasks.addAll(position + 1, groupTasks);
+                    notifyItemRangeInserted(position + 1, groupTasks.size());
+                    notifyItemChanged(position);
+                }
+            });
         }
     }
 
@@ -242,23 +434,16 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             confirmation.setPositiveButton("DELETE TASK" + (selectedTasks.size() == 1 ? "" : "S"), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
-                    for(Task task : selectedTasks.values()) {
+                    for(Task task : selectedTasks) {
                         taskManager.getCurrentTimePeriod().deleteTaskCompletely(task);
                         tasks.remove(task);
                     }
 
                     taskManager.saveData(true, taskManager.getCurrentTimePeriod());
 
-                    for(int taskPosition : selectedTasks.keySet()) {
-                        if(selectedTaskLayouts.get(taskPosition) != null) {
-                            selectedTaskLayouts.get(taskPosition).setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColor));
-                        }
-                    }
-
                     groupFragment.setBatchDeleteIconAndOptionsActive(false);
                     isSelectingTasks = false;
                     selectedTasks.clear();
-                    selectedTaskLayouts.clear();
 
                     notifyDataSetChanged();
                 }
@@ -269,11 +454,17 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
     }
 
     public void selectAllIncompleteTasks() {
-        for(int i = 0; i < tasks.size(); i++) {
-            Task task = tasks.get(i);
-
+        for(Task task : tasks) {
             if(!task.isTaskComplete()) {
-                selectedTasks.put(i, task);
+                selectedTasks.add(task);
+            }
+
+            if(taskGroups.containsKey(task) && !taskGroupsVisible.contains(task)) {
+                for(Task groupTask : taskGroups.get(task)) {
+                    if (!groupTask.isTaskComplete()) {
+                        selectedTasks.add(groupTask);
+                    }
+                }
             }
         }
 

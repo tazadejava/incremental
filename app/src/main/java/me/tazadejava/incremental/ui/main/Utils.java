@@ -63,6 +63,10 @@ public class Utils {
                 + "/" + date.getDayOfMonth() + "/" + date.getYear();
     }
 
+    public static String formatLocalDate(LocalDate date) {
+        return date.getMonthValue() + "/" + date.getDayOfMonth() + "/" + date.getYear();
+    }
+
     public static String formatLocalTime(LocalDateTime time) {
         DateTimeFormatter format = DateTimeFormatter.ofPattern("h:mm ");
         return time.format(format) + (time.getHour() >= 12 ? "pm" : "am");

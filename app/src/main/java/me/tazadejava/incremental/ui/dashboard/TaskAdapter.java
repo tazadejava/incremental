@@ -146,7 +146,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         final Task task = tasks.get(position);
 
         //set card to defaults before loading info
-        holder.actionTaskText.setTextColor(holder.actionTaskText.getTextColors());
+        holder.actionTaskText.setTextColor(Utils.getThemeAttrColor(context, R.attr.cardTextColor));
         holder.expandedOptionsLayout.setVisibility(View.GONE);
 
         //update info
