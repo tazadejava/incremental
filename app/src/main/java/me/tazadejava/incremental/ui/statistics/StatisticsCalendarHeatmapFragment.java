@@ -1,6 +1,5 @@
 package me.tazadejava.incremental.ui.statistics;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,7 +24,7 @@ import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
 
-    private CalendarMonthAdapter monthAdapter;
+    private CalendarMonthsAdapter monthAdapter;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -87,6 +86,6 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
             currentYearMonth = YearMonth.from(currentYearMonth.atEndOfMonth().plusDays(1));
         } while(currentYearMonth.isBefore(endDate) || currentYearMonth.equals(endDate));
 
-        calendarLayout.setAdapter(monthAdapter = new CalendarMonthAdapter(getActivity(), yearMonths.toArray(new YearMonth[0])));
+        calendarLayout.setAdapter(monthAdapter = new CalendarMonthsAdapter(getActivity(), yearMonths.toArray(new YearMonth[0])));
     }
 }

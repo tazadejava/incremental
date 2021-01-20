@@ -92,6 +92,17 @@ public class Utils {
         }
     }
 
+    public static String formatHourMinuteTimeColonShorthand(int minutes) {
+        if(minutes < 60) {
+            return "0:" + String.format("%02d", minutes);
+        } else {
+            int hours = minutes / 60;
+            minutes %= 60;
+
+            return hours + ":" + String.format("%02d", minutes);
+        }
+    }
+
     public static String formatHourMinuteTimeFull(int minutes) {
         if(minutes < 60) {
             return minutes + " minute" + (minutes == 1 ? "" : "s");

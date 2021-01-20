@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,11 +16,13 @@ import java.time.YearMonth;
 import java.util.HashMap;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
-public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdapter.ViewHolder> {
+public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
@@ -40,9 +43,9 @@ public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdap
     private YearMonth[] yearMonths;
 
     //TODO: this is not very good if the time period lasts for large numbers, but this is the temporary solution in order to create animations
-    private CalendarWeekAdapter[] weekAdapters;
+    private CalendarWeeksAdapter[] weekAdapters;
 
-    public CalendarMonthAdapter(Activity activity, YearMonth[] yearMonths) {
+    public CalendarMonthsAdapter(Activity activity, YearMonth[] yearMonths) {
         this.activity = activity;
         this.yearMonths = yearMonths;
 
@@ -55,22 +58,47 @@ public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdap
         dowIndices.put(DayOfWeek.SATURDAY, 5);
         dowIndices.put(DayOfWeek.SUNDAY, 6);
 
-        weekAdapters = new CalendarWeekAdapter[yearMonths.length];
+        weekAdapters = new CalendarWeeksAdapter[yearMonths.length];
         int daysTotal = 0;
+
+        int maxMinutesWorked = getMaxMinutesWorked(null);
+
+        //now, set week adapters
         for(int i = 0; i < yearMonths.length; i++) {
             if(i > 0) {
                 daysTotal += yearMonths[i - 1].lengthOfMonth();
             }
 
-            weekAdapters[i] = new CalendarWeekAdapter(activity, daysTotal, null, dowIndices, yearMonths[i]);
+            weekAdapters[i] = new CalendarWeeksAdapter(activity, daysTotal, maxMinutesWorked, null, dowIndices, yearMonths[i]);
         }
+    }
+
+    private int getMaxMinutesWorked(@Nullable Group group) {
+        TaskManager taskManager = ((IncrementalApplication) activity.getApplication()).getTaskManager();
+        StatsManager stats = taskManager.getCurrentTimePeriod().getStatsManager();
+
+        int maxMinutesWorked = 0;
+        for(int i = 0; i < yearMonths.length; i++) { //for all weeks
+            for (int j = 1; j <= yearMonths[i].lengthOfMonth(); j++) { //for all days of the month
+                int worked;
+                if(group == null) {
+                    worked = stats.getMinutesWorked(yearMonths[i].atDay(j));
+                } else {
+                    worked = stats.getMinutesWorkedByGroup(group, yearMonths[i].atDay(j));
+                }
+
+                maxMinutesWorked = Math.max(worked, maxMinutesWorked);
+            }
+        }
+
+        return maxMinutesWorked;
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_calendar_month, parent, false);
-        ViewHolder vh = new CalendarMonthAdapter.ViewHolder(view);
+        ViewHolder vh = new CalendarMonthsAdapter.ViewHolder(view);
 
         vh.monthCalendar.setLayoutManager(new LinearLayoutManager(activity));
 
@@ -90,8 +118,8 @@ public class CalendarMonthAdapter extends RecyclerView.Adapter<CalendarMonthAdap
     }
 
     public void setHeatmapGroup(Group group) {
-        for(CalendarWeekAdapter adapter : weekAdapters) {
-            adapter.setHeatmapGroup(group);
+        for(CalendarWeeksAdapter adapter : weekAdapters) {
+            adapter.setHeatmapGroup(group, getMaxMinutesWorked(group));
         }
     }
 

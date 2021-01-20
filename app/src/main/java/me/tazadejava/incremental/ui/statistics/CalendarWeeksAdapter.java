@@ -7,10 +7,9 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.Transformation;
+import android.view.animation.AlphaAnimation;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,31 +20,35 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
+import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.animation.ColorAnimation;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
 
-public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapter.ViewHolder> {
+public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdapter.ViewHolder> {
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public View[] dayButtons;
+        public TextView hourDisplay;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
 
             dayButtons = new View[] {itemView.findViewById(R.id.button1), itemView.findViewById(R.id.button2), itemView.findViewById(R.id.button3),
                     itemView.findViewById(R.id.button4), itemView.findViewById(R.id.button5), itemView.findViewById(R.id.button6), itemView.findViewById(R.id.button7)};
+            hourDisplay = itemView.findViewById(R.id.hourDisplay);
         }
     }
 
+    private static final int CALCULATED_DAYS_COUNT = 42;
+
     private Activity activity;
+    private TaskManager taskManager;
 
     private HashMap<DayOfWeek, Integer> dowIndices;
     private Group heatmapGroup;
@@ -53,17 +56,19 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
     private YearMonth yearMonth;
     private float[] heatmap;
     private int[] minutesWorkedPerDay;
-    private int firstDayIndex, daysOffsetFromTop;
+    private int firstDayIndex, daysOffsetFromTop, maxMinutesWorked;
 
     private int[] heatmapMaxColors;
 
     private boolean animate = false;
-    private HashMap<View, Integer> animatingViews = new HashMap<>();
 
-    public CalendarWeekAdapter(Activity activity, int daysOffsetFromTop, @Nullable Group heatmapGroup, HashMap<DayOfWeek, Integer> dowIndices, YearMonth yearMonth) {
+    public CalendarWeeksAdapter(Activity activity, int daysOffsetFromTop, int maxMinutesWorked, @Nullable Group heatmapGroup, HashMap<DayOfWeek, Integer> dowIndices, YearMonth yearMonth) {
         this.activity = activity;
         this.daysOffsetFromTop = daysOffsetFromTop;
         this.yearMonth = yearMonth;
+        this.maxMinutesWorked = maxMinutesWorked;
+
+        taskManager = ((IncrementalApplication) activity.getApplication()).getTaskManager();
 
         this.heatmapGroup = heatmapGroup;
         this.dowIndices = dowIndices;
@@ -84,32 +89,26 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
 
         int monthLength = yearMonth.lengthOfMonth() + firstDayIndex;
 
-        StatsManager stats = ((IncrementalApplication) activity.getApplication()).getTaskManager().getCurrentTimePeriod().getStatsManager();
+        StatsManager stats = taskManager.getCurrentTimePeriod().getStatsManager();
 
-        int maxMinutesWorked = 0;
-        for(int i = 1; i <= yearMonth.lengthOfMonth(); i++) {
-            if(heatmapGroup == null) {
-                maxMinutesWorked = Math.max(maxMinutesWorked, stats.getMinutesWorked(yearMonth.atDay(i)));
-            } else {
-                maxMinutesWorked = Math.max(maxMinutesWorked, stats.getMinutesWorkedByGroup(heatmapGroup, yearMonth.atDay(i)));
-            }
-        }
-
-        heatmap = new float[35];
-        minutesWorkedPerDay = new int[35];
+        heatmap = new float[CALCULATED_DAYS_COUNT];
+        minutesWorkedPerDay = new int[CALCULATED_DAYS_COUNT];
         //first, log the heatmap in regards to total minutes worked
-        for(int i = 0; i < 35; i++) {
+        for(int i = 0; i < CALCULATED_DAYS_COUNT; i++) {
+            //calculate minutes for all days of the week so that the weekly hour:min is correct
+            int minutesWorked;
+            LocalDate day = yearMonth.atDay(1).plusDays(i - firstDayIndex);
+            if(heatmapGroup == null) {
+                minutesWorked = stats.getMinutesWorked(day);
+            } else {
+                minutesWorked = stats.getMinutesWorkedByGroup(heatmapGroup, day);
+            }
+            minutesWorkedPerDay[i] = minutesWorked;
+
             if(i < firstDayIndex || i >= monthLength) {
                 heatmap[i] = -1;
             } else {
-                int minutesWorked;
-                if(heatmapGroup == null) {
-                    minutesWorked = stats.getMinutesWorked(yearMonth.atDay(i - firstDayIndex + 1));
-                } else {
-                    minutesWorked = stats.getMinutesWorkedByGroup(heatmapGroup, yearMonth.atDay(i - firstDayIndex + 1));
-                }
                 heatmap[i] = (float) minutesWorked / maxMinutesWorked;
-                minutesWorkedPerDay[i] = minutesWorked;
             }
         }
     }
@@ -118,11 +117,12 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_calendar_week, parent, false);
-        return new CalendarWeekAdapter.ViewHolder(view);
+        return new CalendarWeeksAdapter.ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        int totalMinutes = 0;
         for(int i = 0; i < 7; i++) {
             int heatmapPosition = i + (position * 7);
 
@@ -131,16 +131,16 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
                 holder.dayButtons[i].setOnClickListener(null);
             } else {
                 holder.dayButtons[i].setVisibility(View.VISIBLE);
+                holder.dayButtons[i].setBackgroundColor(Color.BLACK);
 
                 int buttonColor;
                 if(animate && holder.dayButtons[i].getBackground() instanceof ColorDrawable &&
                         (buttonColor = ((ColorDrawable) holder.dayButtons[i].getBackground()).getColor()) != heatmapPositionToColor(heatmapMaxColors, heatmapPosition)) {
-                    ColorAnimation colorAnimation = new ColorAnimation(holder.dayButtons[i], colorToIntArray(buttonColor), heatmapPositionToColorValues(heatmapMaxColors, heatmapPosition));
+                    ColorAnimation colorAnimation = new ColorAnimation(holder.dayButtons[i], colorToIntArray(Color.WHITE), heatmapPositionToColorValues(heatmapMaxColors, heatmapPosition));
                     colorAnimation.setDuration(500);
                     colorAnimation.setInterpolator(new AccelerateInterpolator());
                     colorAnimation.setStartOffset((daysOffsetFromTop + heatmapPosition - firstDayIndex) * 5);
                     holder.dayButtons[i].startAnimation(colorAnimation);
-                    animatingViews.put(holder.dayButtons[i], heatmapPositionToColor(heatmapMaxColors, heatmapPosition));
                 } else {
                     holder.dayButtons[i].setBackgroundColor(heatmapPositionToColor(heatmapMaxColors, heatmapPosition));
                 }
@@ -153,6 +153,25 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
                     }
                 });
             }
+
+            totalMinutes += minutesWorkedPerDay[heatmapPosition];
+        }
+
+        //if the current week is not full AND there exists a next week, then don't render the time
+        if(heatmap[6 + (position * 7)] == -1 && taskManager.getCurrentTimePeriod().isInTimePeriod(yearMonth.atEndOfMonth().plusDays(1))) {
+            holder.hourDisplay.setText("");
+        } else {
+            String text = Utils.formatHourMinuteTimeColonShorthand(totalMinutes);
+            if (animate) {
+                AlphaAnimation alphaAnimation = new AlphaAnimation(0, 1);
+                alphaAnimation.setDuration(500);
+                alphaAnimation.setInterpolator(new AccelerateInterpolator());
+                alphaAnimation.setStartOffset((daysOffsetFromTop - firstDayIndex) * 5);
+                holder.hourDisplay.startAnimation(alphaAnimation);
+            } else {
+                holder.hourDisplay.setAlpha(1f);
+            }
+            holder.hourDisplay.setText(text);
         }
     }
 
@@ -171,8 +190,9 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
                 (int) ((float) heatmap[heatmapPosition] * colorMap[2])};
     }
 
-    public void setHeatmapGroup(Group group) {
+    public void setHeatmapGroup(Group group, int maxMinutesWorked) {
         heatmapGroup = group;
+        this.maxMinutesWorked = maxMinutesWorked;
         calculateGroupHeatmap();
 
         animate = true;
@@ -184,11 +204,11 @@ public class CalendarWeekAdapter extends RecyclerView.Adapter<CalendarWeekAdapte
             public void run() {
                 animate = false;
             }
-        }, 100);
+        }, 200);
     }
 
     @Override
     public int getItemCount() {
-        return 5;
+        return CALCULATED_DAYS_COUNT / 7;
     }
 }
