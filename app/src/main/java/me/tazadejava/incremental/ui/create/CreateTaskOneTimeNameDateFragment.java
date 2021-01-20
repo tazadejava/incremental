@@ -130,7 +130,7 @@ public class CreateTaskOneTimeNameDateFragment extends Fragment implements BackP
 
                 if(act.getStartDate().isAfter(LocalDate.now())) {
                     //convert days to milliseconds to set the min date
-                    datePicker.getDatePicker().setMinDate((act.getStartDate().toEpochDay() + 1) * 24 * 60 * 60 * 1000);
+                    datePicker.getDatePicker().setMinDate(Utils.localDateToMilliseconds(act.getStartDate()));
                 } else {
                     datePicker.getDatePicker().setMinDate(System.currentTimeMillis());
                 }

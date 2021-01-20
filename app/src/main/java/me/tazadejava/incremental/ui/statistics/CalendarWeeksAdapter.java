@@ -49,6 +49,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
 
     private Activity activity;
     private TaskManager taskManager;
+    private StatsManager statsManager;
 
     private HashMap<DayOfWeek, Integer> dowIndices;
     private Group heatmapGroup;
@@ -69,6 +70,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
         this.maxMinutesWorked = maxMinutesWorked;
 
         taskManager = ((IncrementalApplication) activity.getApplication()).getTaskManager();
+        statsManager = taskManager.getCurrentTimePeriod().getStatsManager();
 
         this.heatmapGroup = heatmapGroup;
         this.dowIndices = dowIndices;
@@ -89,8 +91,6 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
 
         int monthLength = yearMonth.lengthOfMonth() + firstDayIndex;
 
-        StatsManager stats = taskManager.getCurrentTimePeriod().getStatsManager();
-
         heatmap = new float[CALCULATED_DAYS_COUNT];
         minutesWorkedPerDay = new int[CALCULATED_DAYS_COUNT];
         //first, log the heatmap in regards to total minutes worked
@@ -99,9 +99,9 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
             int minutesWorked;
             LocalDate day = yearMonth.atDay(1).plusDays(i - firstDayIndex);
             if(heatmapGroup == null) {
-                minutesWorked = stats.getMinutesWorked(day);
+                minutesWorked = statsManager.getMinutesWorked(day);
             } else {
-                minutesWorked = stats.getMinutesWorkedByGroup(heatmapGroup, day);
+                minutesWorked = statsManager.getMinutesWorkedByGroup(heatmapGroup, day);
             }
             minutesWorkedPerDay[i] = minutesWorked;
 
@@ -129,6 +129,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
             if(heatmap[heatmapPosition] == -1) {
                 holder.dayButtons[i].setVisibility(View.GONE);
                 holder.dayButtons[i].setOnClickListener(null);
+                holder.dayButtons[i].setOnLongClickListener(null);
             } else {
                 holder.dayButtons[i].setVisibility(View.VISIBLE);
                 holder.dayButtons[i].setBackgroundColor(Color.BLACK);
@@ -150,6 +151,32 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                     public void onClick(View view) {
                         LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
                         Toast.makeText(activity, date.getMonth().toString() + " " + date.getDayOfMonth() + ": worked " + Utils.formatHourMinuteTime(minutesWorkedPerDay[heatmapPosition]), Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                holder.dayButtons[i].setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        if(minutesWorkedPerDay[heatmapPosition] > 0) {
+                            //get what was worked on, and display them all to the user
+                            LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
+                            HashMap<Group, Integer> minutesPerGroup = statsManager.getMinutesWorkedSplitByGroup(date);
+
+                            //TODO: make an interface to show this
+
+                            StringBuilder builder = new StringBuilder();
+
+                            for(Group group : minutesPerGroup.keySet()) {
+                                builder.append(group.getGroupName() + ": ");
+                                builder.append(Utils.formatHourMinuteTime(minutesPerGroup.get(group)));
+                                builder.append("\n");
+                            }
+
+                            Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
+
+                            return true;
+                        }
+                        return false;
                     }
                 });
             }

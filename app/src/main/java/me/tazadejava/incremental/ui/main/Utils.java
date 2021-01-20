@@ -324,4 +324,8 @@ public class Utils {
             expandedOptionsLayout.startAnimation(anim);
         }
     }
+
+    public static long localDateToMilliseconds(LocalDate date) {
+        return (date.toEpochDay() + 1) * 24 * 60 * 60 * 1000;
+    }
 }

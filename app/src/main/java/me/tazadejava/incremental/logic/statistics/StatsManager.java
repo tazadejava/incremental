@@ -270,6 +270,18 @@ public class StatsManager {
         return 0;
     }
 
+    public HashMap<Group, Integer> getMinutesWorkedSplitByGroup(LocalDate date) {
+        HashMap<Group, Integer> minutesWorked = new HashMap<>();
+
+        if(totalMinutesWorkedByGroup.containsKey(date)) {
+            for (Group group : totalMinutesWorkedByGroup.get(date).keySet()) {
+                minutesWorked.put(group, totalMinutesWorkedByGroup.get(date).get(group));
+            }
+        }
+
+        return minutesWorked;
+    }
+
     public void deleteGroupStats(Group group) {
         for(LocalDate date : totalMinutesWorkedByGroup.keySet()) {
             if(totalMinutesWorkedByGroup.get(date).containsKey(group)) {
