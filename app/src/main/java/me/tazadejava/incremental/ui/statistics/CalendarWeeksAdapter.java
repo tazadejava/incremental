@@ -3,6 +3,7 @@ package me.tazadejava.incremental.ui.statistics;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.DayOfWeek;
@@ -25,6 +29,7 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.animation.ColorAnimation;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
@@ -158,22 +163,23 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                     @Override
                     public boolean onLongClick(View v) {
                         if(minutesWorkedPerDay[heatmapPosition] > 0) {
-                            //get what was worked on, and display them all to the user
                             LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
-                            HashMap<Group, Integer> minutesPerGroup = statsManager.getMinutesWorkedSplitByGroup(date);
 
-                            //TODO: make an interface to show this
+                            //open an interface to show what classes were worked on
+                            NavController nav = Navigation.findNavController(activity, R.id.nav_host_fragment);
 
-                            StringBuilder builder = new StringBuilder();
+                            Bundle bundle = new Bundle();
 
-                            for(Group group : minutesPerGroup.keySet()) {
-                                builder.append(group.getGroupName() + ": ");
-                                builder.append(Utils.formatHourMinuteTime(minutesPerGroup.get(group)));
-                                builder.append("\n");
-                            }
+                            bundle.putString("date", date.toString());
 
-                            Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
+                            NavOptions navOptions = new NavOptions.Builder()
+                                    .setEnterAnim(R.anim.slide_in_left)
+                                    .setExitAnim(R.anim.slide_out_right)
+                                    .setPopEnterAnim(R.anim.slide_in_right)
+                                    .setPopExitAnim(R.anim.slide_out_left)
+                                    .build();
 
+                            nav.navigate(R.id.nav_specific_heatmap_point, bundle, navOptions);
                             return true;
                         }
                         return false;
@@ -199,6 +205,34 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                 holder.hourDisplay.setAlpha(1f);
             }
             holder.hourDisplay.setText(text);
+
+            holder.hourDisplay.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    String[] dates = new String[7];
+                    for(int i = 0; i < 7; i++) {
+                        int heatmapPosition = i + (position * 7);
+                        dates[i] = yearMonth.atDay(heatmapPosition - firstDayIndex + 1).toString();
+                    }
+
+                    //open an interface to show what classes were worked on
+                    NavController nav = Navigation.findNavController(activity, R.id.nav_host_fragment);
+
+                    Bundle bundle = new Bundle();
+
+                    bundle.putStringArray("dates", dates);
+
+                    NavOptions navOptions = new NavOptions.Builder()
+                            .setEnterAnim(R.anim.slide_in_left)
+                            .setExitAnim(R.anim.slide_out_right)
+                            .setPopEnterAnim(R.anim.slide_in_right)
+                            .setPopExitAnim(R.anim.slide_out_left)
+                            .build();
+
+                    nav.navigate(R.id.nav_specific_heatmap_point, bundle, navOptions);
+                    return true;
+                }
+            });
         }
     }
 
