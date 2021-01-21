@@ -210,9 +210,10 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                 @Override
                 public boolean onLongClick(View v) {
                     String[] dates = new String[7];
+                    LocalDate day = yearMonth.atDay(1).plusDays(-firstDayIndex);
                     for(int i = 0; i < 7; i++) {
                         int heatmapPosition = i + (position * 7);
-                        dates[i] = yearMonth.atDay(heatmapPosition - firstDayIndex + 1).toString();
+                        dates[i] = day.plusDays(heatmapPosition).toString();
                     }
 
                     //open an interface to show what classes were worked on

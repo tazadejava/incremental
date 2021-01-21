@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +43,17 @@ import me.tazadejava.incremental.ui.main.Utils;
 
 public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdapter.ViewHolder> {
 
+    private static class LocalDateMinutes {
+
+        public final LocalDate date;
+        public final int minutes;
+
+        public LocalDateMinutes(LocalDate date, int minutes) {
+            this.date = date;
+            this.minutes = minutes;
+        }
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
@@ -72,6 +84,9 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
     private TaskManager taskManager;
 
     private List<Group> groups;
+    private HashMap<Group, Integer[]> groupStats = new HashMap<>();
+    private HashMap<Group, LocalDateMinutes[]> groupMinMax = new HashMap<>();
+    private HashMap<Group, Integer> groupCurrentWeekMinutes = new HashMap<>();
 
     public TaskGroupListAdapter(TaskManager taskManager, AppCompatActivity context) {
         this.context = context;
@@ -79,7 +94,16 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
         groups = new ArrayList<>(taskManager.getAllCurrentGroups(taskManager.getCurrentTimePeriod()));
 
-        sortByCurrentWeekHours();
+        for(Group group : groups) {
+            calculateAverageMedianSTDWorkedPerWeek(group);
+            groupCurrentWeekMinutes.put(group, getMinutesWorkedThisWeek(group));
+        }
+
+        if(taskManager.isCurrentTimePeriodActive()) {
+            sortByCurrentWeekHours();
+        } else {
+            sortByAverageWeekHours();
+        }
     }
 
     @NonNull
@@ -152,11 +176,37 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
         int tasksCount = taskManager.getCurrentTimePeriod().getTasksCountThisWeekByGroup(group);
 
-        int[] averageWorkload = getAverageMinutesWorkedPerWeek(group);
+        Integer[] stats = groupStats.get(group);
+        LocalDateMinutes[] minMaxStats = groupMinMax.get(group);
 
-        holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
-                + "\n\n" + Utils.formatHourMinuteTime(getMinutesWorkedThisWeek(group)) + " worked this week"
-                + "\nAverage work per week (" + averageWorkload[1] + " total): " + Utils.formatHourMinuteTime(averageWorkload[0]));
+        if(taskManager.isCurrentTimePeriodActive()) {
+            int minutesThisWeek = groupCurrentWeekMinutes.get(group);
+            holder.tasksCount.setText(tasksCount + " task" + (tasksCount == 1 ? "" : "s") + " this week"
+                    + "\n" + Utils.formatHourMinuteTime(minutesThisWeek) + " worked this week");
+        } else {
+            holder.tasksCount.setText("");
+        }
+
+        if(minMaxStats[0].minutes > 0 || minMaxStats[1].minutes > 0) {
+            holder.taskNotes.setLines(10);
+            //align numbers with each other using tabs
+            holder.taskNotes.setText("Detailed weekly statistics:\n" +
+                    "Logged weeks: \t\t\t\t\t" + stats[3] + "\n" +
+                    "Average workload: \t\t" + Utils.formatHourMinuteTime(stats[0]) + "\n" +
+                    "Median workload: \t\t" + Utils.formatHourMinuteTime(stats[1]) + "\n" +
+                    "Standard deviation: \t" + Utils.formatHourMinuteTime(stats[2]) + "\n\n" +
+                    "Min workload: " + Utils.formatHourMinuteTime(minMaxStats[0].minutes) + "\n" +
+                    "\t\t\t\t\t\t\t\t\t\t\t\t" + Utils.formatLocalDate(minMaxStats[0].date) + " - " + Utils.formatLocalDate(minMaxStats[0].date.plusDays(7)) + "\n" +
+                    "Max workload: " + Utils.formatHourMinuteTime(minMaxStats[1].minutes) + "\n" +
+                    "\t\t\t\t\t\t\t\t\t\t\t\t" + Utils.formatLocalDate(minMaxStats[1].date) + " - " + Utils.formatLocalDate(minMaxStats[1].date.plusDays(7)));
+        } else {
+            holder.taskNotes.setLines(5);
+            holder.taskNotes.setText("Detailed weekly statistics:\n" +
+                    "Logged weeks: \t\t\t\t\t" + stats[3] + "\n" +
+                    "Average workload: \t\t" + Utils.formatHourMinuteTime(stats[0]) + "\n" +
+                    "Median workload: \t\t" + Utils.formatHourMinuteTime(stats[1]) + "\n" +
+                    "Standard deviation: \t" + Utils.formatHourMinuteTime(stats[2]));
+        }
 
         holder.actionTaskText.setText("View Tasks");
         holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
@@ -317,8 +367,6 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             }
         });
 
-        holder.taskNotes.setVisibility(View.GONE);
-
         holder.taskCardConstraintLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -380,10 +428,12 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
     /**
      *
+     * into groupStats -> array of four ints: average minutes, median minutes, standard deviation, then total weeks counted
+     * into groupMinMax -> min minutes and date, max minutes and date (monday)
      * @param group
-     * @return array of two ints: the first value is the average minutes worked, and the second value is the total weeks counted
+     *
      */
-    private int[] getAverageMinutesWorkedPerWeek(Group group) {
+    private void calculateAverageMedianSTDWorkedPerWeek(Group group) {
         int averageMinutesWorked = 0;
         int totalWeeksWorked = 0;
 
@@ -397,12 +447,10 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         }
 
         //start on the week when the group started, not on the beginning date
-        boolean groupStarted = false;
         main:
         while(currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
             for(LocalDate date : LogicalUtils.getWorkWeekDates(currentLoopDate)) {
                 if(taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date) > 0) {
-                    groupStarted = true;
                     break main;
                 }
             }
@@ -414,18 +462,43 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         long currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
         long endWeekValue = endLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
 
+        List<Integer> minutesPerWeek = new ArrayList<>();
+
+        int minMinutes = Integer.MAX_VALUE;
+        LocalDate minDate = null;
+        int maxMinutes = Integer.MIN_VALUE;
+        LocalDate maxDate = null;
+
+        StatsManager statsManager = taskManager.getCurrentTimePeriod().getStatsManager();
+
+        //calculate per week
         while(currentWeekValue <= endWeekValue || currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
             boolean workedThisWeek = false;
+            int totalMinutes = 0;
             for(LocalDate date : LogicalUtils.getWorkWeekDates(currentLoopDate)) {
                 if(!workedThisWeek) {
                     workedThisWeek = true;
                 }
 
-                averageMinutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
+                int minutes = statsManager.getMinutesWorkedByGroup(group, date);
+                totalMinutes += minutes;
+                averageMinutesWorked += minutes;
             }
 
             if(workedThisWeek) {
                 totalWeeksWorked++;
+            }
+
+            minutesPerWeek.add(totalMinutes);
+
+            if(totalMinutes < minMinutes) {
+                minMinutes = totalMinutes;
+                minDate = currentLoopDate;
+            }
+
+            if(totalMinutes > maxMinutes) {
+                maxMinutes = totalMinutes;
+                maxDate = currentLoopDate;
             }
 
             currentLoopDate = currentLoopDate.plusDays(7);
@@ -433,11 +506,30 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         }
 
         if(totalWeeksWorked == 0) {
-            return new int[] {0, 0};
+            groupStats.put(group, new Integer[] {0, 0, 0, 0});
+            groupMinMax.put(group, new LocalDateMinutes[] {new LocalDateMinutes(LocalDate.now(), 0), new LocalDateMinutes(LocalDate.now(), 0)});
         }
 
+        double average = (double) averageMinutesWorked / totalWeeksWorked;
+
+        minutesPerWeek.sort(new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                return Integer.compare(o1, o2);
+            }
+        });
+        int median = minutesPerWeek.isEmpty() ? 0 : minutesPerWeek.get(minutesPerWeek.size() / 2);
+        double standardDeviation = 0;
+
+        for(int weeklyMinutes : minutesPerWeek) {
+            standardDeviation += Math.pow(average - weeklyMinutes, 2);
+        }
+
+        standardDeviation = Math.sqrt(standardDeviation / totalWeeksWorked);
+
         //find the average
-        return new int[] {averageMinutesWorked / totalWeeksWorked, totalWeeksWorked};
+        groupStats.put(group, new Integer[] {(int) average, median, (int) standardDeviation, totalWeeksWorked});
+        groupMinMax.put(group, new LocalDateMinutes[] {new LocalDateMinutes(minDate, minMinutes), new LocalDateMinutes(maxDate, maxMinutes)});
     }
 
     private int getMinutesWorkedThisWeek(Group group) {
@@ -454,7 +546,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         HashMap<Group, Integer> averageWorkHours = new HashMap<>();
 
         for(Group group : groups) {
-            averageWorkHours.put(group, getAverageMinutesWorkedPerWeek(group)[0]);
+            averageWorkHours.put(group, groupStats.get(group)[0]);
         }
 
         groups.sort(new Comparator<Group>() {
@@ -471,7 +563,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         HashMap<Group, Integer> currentWeekHours = new HashMap<>();
 
         for(Group group : groups) {
-            currentWeekHours.put(group, getMinutesWorkedThisWeek(group));
+            currentWeekHours.put(group, groupCurrentWeekMinutes.get(group));
         }
 
         groups.sort(new Comparator<Group>() {

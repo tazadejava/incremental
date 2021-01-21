@@ -66,6 +66,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
     private List<Task> tasks;
     private HashMap<Task, List<Task>> taskGroups = new HashMap<>();
+    private HashMap<Task, Integer> taskGroupMinutes = new HashMap<>();
     private HashMap<Task, Task> taskGroupHeads = new HashMap<>(); //store the top task pointer for all task groups
     private Set<Task> taskGroupsVisible = new HashSet<>();
 
@@ -89,32 +90,42 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             }
         });
 
+        //first off, group any subgroups together
+
+
         //group batch tasks together; invariant that tasks are sorted by creation date
+        //first, group tasks if they have the same name (minus a suffix of a number)
         List<Task> tasksGrouped = new ArrayList<>();
         for(int i = 0; i < tasks.size(); i++) {
             Task task = tasks.get(i);
             LocalDateTime creationDate = task.getParent().getCreationTime();
 
+            boolean isCreatedAtSameTime = i + 1 < tasks.size() && ChronoUnit.SECONDS.between(creationDate, tasks.get(i + 1).getParent().getCreationTime()) <= 1;
+            boolean hasSameName = i + 1 < tasks.size() && areTaskNamesEffectivelyIdentical(task, tasks.get(i + 1));
+
             //if created at the same time, then they are batched together
-            if(i + 1 < tasks.size() && ChronoUnit.SECONDS.between(creationDate, creationDate = tasks.get(i + 1).getParent().getCreationTime()) <= 1) {
+            if(isCreatedAtSameTime || hasSameName) {
+                int totalMinutes = task.getTotalLoggedMinutesOfWork();
                 List<Task> batchTasks = new ArrayList<>();
                 batchTasks.add(0, task);
-                batchTasks.add(tasks.get(i + 1));
                 taskGroupHeads.put(task, task);
-                taskGroupHeads.put(tasks.get(i + 1), task);
-                i++;
 
-                while(i + 1 < tasks.size() && ChronoUnit.SECONDS.between(creationDate, creationDate = tasks.get(i + 1).getParent().getCreationTime()) <= 1) {
+                do {
+                    isCreatedAtSameTime = i + 1 < tasks.size() && ChronoUnit.SECONDS.between(creationDate, creationDate = tasks.get(i + 1).getParent().getCreationTime()) <= 1;
+                    hasSameName = i + 1 < tasks.size() && areTaskNamesEffectivelyIdentical(task, tasks.get(i + 1));
+
+                    totalMinutes += tasks.get(i + 1).getTotalLoggedMinutesOfWork();
                     batchTasks.add(tasks.get(i + 1));
                     taskGroupHeads.put(tasks.get(i + 1), task);
                     i++;
-                }
+                } while(isCreatedAtSameTime || hasSameName);
 
                 tasksGrouped.add(task);
 
                 sortTasksListByStartDate(batchTasks);
 
                 taskGroups.put(task, batchTasks);
+                taskGroupMinutes.put(task, totalMinutes);
             } else {
                 tasksGrouped.add(task);
             }
@@ -125,6 +136,39 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         //sort by start date
 
         sortTasksListByStartDate(tasks);
+    }
+
+    /**
+     * Will return true if the two task names are identical, ignoring the appended number at the end, if it exists (from batch-creation)
+     * @param task1
+     * @param task2
+     * @return
+     */
+    private boolean areTaskNamesEffectivelyIdentical(Task task1, Task task2) {
+        if(task1.getName().equals(task2.getName())) {
+            return true;
+        }
+
+        String task1Name = task1.getName();
+        String task2Name = task2.getName();
+
+        //remove appended number, if it exists
+        int lastIndex;
+        if((lastIndex = task1Name.lastIndexOf(" ")) != -1) {
+            String[] split = task1Name.split(" ");
+            if(Utils.isInteger(split[split.length - 1])) {
+                task1Name = task1Name.substring(0, lastIndex);
+            }
+        }
+
+        if((lastIndex = task2Name.lastIndexOf(" ")) != -1) {
+            String[] split = task2Name.split(" ");
+            if(Utils.isInteger(split[split.length - 1])) {
+                task2Name = task2Name.substring(0, lastIndex);
+            }
+        }
+
+        return task1Name.equals(task2Name);
     }
 
     private void sortTasksListByStartDate(List<Task> tasks) {
@@ -179,7 +223,8 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         if(taskGroups.containsKey(task) && isTaskGroupHead(position, task)) {
             List<Task> groupTasks = taskGroups.get(task);
             Task lastTask = groupTasks.get(groupTasks.size() - 1);
-            holder.workRemaining.setText(groupTasks.size() + " batch-created tasks");
+            holder.workRemaining.setText("Worked " + Utils.formatHourMinuteTime(taskGroupMinutes.get(task)) + " total\n" +
+                    groupTasks.size() + " batch-created tasks");
 
             if(task.getSubgroup() != null) {
                 //if all tasks are the same subgroup, label them
