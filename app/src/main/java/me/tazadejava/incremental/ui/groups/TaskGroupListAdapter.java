@@ -187,7 +187,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             holder.tasksCount.setText("");
         }
 
-        if(minMaxStats[0].minutes > 0 || minMaxStats[1].minutes > 0) {
+        if(minMaxStats[0].date != null && minMaxStats[1].date != null) {
             holder.taskNotes.setLines(10);
             //align numbers with each other using tabs
             holder.taskNotes.setText("Detailed weekly statistics:\n" +
@@ -507,7 +507,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
 
         if(totalWeeksWorked == 0) {
             groupStats.put(group, new Integer[] {0, 0, 0, 0});
-            groupMinMax.put(group, new LocalDateMinutes[] {new LocalDateMinutes(LocalDate.now(), 0), new LocalDateMinutes(LocalDate.now(), 0)});
+            groupMinMax.put(group, new LocalDateMinutes[] {new LocalDateMinutes(null, 0), new LocalDateMinutes(null, 0)});
         }
 
         double average = (double) averageMinutesWorked / totalWeeksWorked;
@@ -519,8 +519,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             }
         });
         int median = minutesPerWeek.isEmpty() ? 0 : minutesPerWeek.get(minutesPerWeek.size() / 2);
-        double standardDeviation = 0;
 
+        double standardDeviation = 0;
         for(int weeklyMinutes : minutesPerWeek) {
             standardDeviation += Math.pow(average - weeklyMinutes, 2);
         }

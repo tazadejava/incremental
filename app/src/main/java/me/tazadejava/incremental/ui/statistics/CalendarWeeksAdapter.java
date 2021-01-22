@@ -3,6 +3,8 @@ package me.tazadejava.incremental.ui.statistics;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -15,6 +17,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.navigation.NavController;
 import androidx.navigation.NavOptions;
 import androidx.navigation.Navigation;
@@ -38,11 +42,15 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
+        public ConstraintLayout parent;
+
         public View[] dayButtons;
         public TextView hourDisplay;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+
+            parent = itemView.findViewById(R.id.calendarWeekParent);
 
             dayButtons = new View[] {itemView.findViewById(R.id.button1), itemView.findViewById(R.id.button2), itemView.findViewById(R.id.button3),
                     itemView.findViewById(R.id.button4), itemView.findViewById(R.id.button5), itemView.findViewById(R.id.button6), itemView.findViewById(R.id.button7)};
@@ -51,6 +59,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
     }
 
     private static final int CALCULATED_DAYS_COUNT = 42;
+    private static final int TODAY_HEATMAP_WIDTH = 6;
 
     private Activity activity;
     private TaskManager taskManager;
@@ -67,6 +76,8 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
     private int[] heatmapMaxColors;
 
     private boolean animate = false;
+
+    private View dayOutlineView;
 
     public CalendarWeeksAdapter(Activity activity, int daysOffsetFromTop, int maxMinutesWorked, @Nullable Group heatmapGroup, HashMap<DayOfWeek, Integer> dowIndices, YearMonth yearMonth) {
         this.activity = activity;
@@ -128,9 +139,9 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         int totalMinutes = 0;
+        LocalDate now = LocalDate.now();
         for(int i = 0; i < 7; i++) {
             int heatmapPosition = i + (position * 7);
-
             if(heatmap[heatmapPosition] == -1) {
                 holder.dayButtons[i].setVisibility(View.GONE);
                 holder.dayButtons[i].setOnClickListener(null);
@@ -142,12 +153,40 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                 int buttonColor;
                 if(animate && holder.dayButtons[i].getBackground() instanceof ColorDrawable &&
                         (buttonColor = ((ColorDrawable) holder.dayButtons[i].getBackground()).getColor()) != heatmapPositionToColor(heatmapMaxColors, heatmapPosition)) {
-                    ColorAnimation colorAnimation = new ColorAnimation(holder.dayButtons[i], colorToIntArray(Color.WHITE), heatmapPositionToColorValues(heatmapMaxColors, heatmapPosition));
+                    ColorAnimation colorAnimation = new ColorAnimation(holder.dayButtons[i], colorToIntArray(heatmapGroup == null ? Color.RED : heatmapGroup.getLightColor()), heatmapPositionToColorValues(heatmapMaxColors, heatmapPosition));
                     colorAnimation.setDuration(500);
                     colorAnimation.setInterpolator(new AccelerateInterpolator());
                     colorAnimation.setStartOffset((daysOffsetFromTop + heatmapPosition - firstDayIndex) * 5);
                     holder.dayButtons[i].startAnimation(colorAnimation);
                 } else {
+                    LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
+                    if(date.equals(now)) {
+                        if(dayOutlineView != null) {
+                            holder.parent.removeView(dayOutlineView);
+                            dayOutlineView = null;
+                        }
+
+                        dayOutlineView = new View(activity);
+                        dayOutlineView.setId(View.generateViewId());
+                        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(holder.dayButtons[i].getLayoutParams());
+                        params.width += TODAY_HEATMAP_WIDTH;
+                        params.height += TODAY_HEATMAP_WIDTH;
+                        dayOutlineView.setLayoutParams(params);
+                        dayOutlineView.setBackgroundColor(Color.WHITE);
+                        holder.parent.addView(dayOutlineView, holder.parent.indexOfChild(holder.dayButtons[i]));
+
+                        ConstraintSet set = new ConstraintSet();
+                        set.clone(holder.parent);
+
+                        set.connect(dayOutlineView.getId(), ConstraintSet.LEFT, holder.dayButtons[i].getId(), ConstraintSet.LEFT, 0);
+                        set.connect(dayOutlineView.getId(), ConstraintSet.TOP, holder.dayButtons[i].getId(), ConstraintSet.TOP, 0);
+
+                        set.setTranslationX(dayOutlineView.getId(), -(TODAY_HEATMAP_WIDTH/2));
+                        set.setTranslationY(dayOutlineView.getId(), -(TODAY_HEATMAP_WIDTH/2));
+
+                        set.applyTo(holder.parent);
+                    }
+
                     holder.dayButtons[i].setBackgroundColor(heatmapPositionToColor(heatmapMaxColors, heatmapPosition));
                 }
 
@@ -163,10 +202,9 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                     @Override
                     public boolean onLongClick(View v) {
                         if(minutesWorkedPerDay[heatmapPosition] > 0) {
-                            LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
-
                             //open an interface to show what classes were worked on
                             NavController nav = Navigation.findNavController(activity, R.id.nav_host_fragment);
+                            LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
 
                             Bundle bundle = new Bundle();
 

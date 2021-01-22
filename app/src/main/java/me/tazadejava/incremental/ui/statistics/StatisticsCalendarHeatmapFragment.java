@@ -20,6 +20,7 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.ui.adapters.LargeHeightArrayAdapter;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 
 public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
@@ -47,7 +48,8 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
         items.add("All groups");
         items.addAll(taskManager.getAllCurrentGroupNames());
 
-        ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
+        ArrayAdapter<String> groupSpinnerAdapter = new LargeHeightArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
+
         heatmapGroupSpinner.setAdapter(groupSpinnerAdapter);
 
         heatmapGroupSpinner.setSelection(0, false);

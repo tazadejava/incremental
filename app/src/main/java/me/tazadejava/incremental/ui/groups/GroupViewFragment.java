@@ -32,6 +32,7 @@ import java.util.List;
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.ui.adapters.LargeHeightArrayAdapter;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.CustomOptionsMenu;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -125,7 +126,7 @@ public class GroupViewFragment extends Fragment implements BackPressedInterface,
         }
 
         Spinner groupScopeSpinner = dialogView.findViewById(R.id.groupScopeSpinner);
-        groupScopeSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, groupScope));
+        groupScopeSpinner.setAdapter(new LargeHeightArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, groupScope));
 
         groupScopeSpinner.setSelection(groupScope.size() - 1);
 

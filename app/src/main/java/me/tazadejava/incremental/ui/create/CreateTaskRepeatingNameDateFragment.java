@@ -33,6 +33,7 @@ import java.util.List;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.ui.adapters.LargeHeightArrayAdapter;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
@@ -203,7 +204,7 @@ public class CreateTaskRepeatingNameDateFragment extends Fragment implements Bac
 
         DayOfWeek[] dayOfWeekValues = DayOfWeek.values();
 
-        ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
+        ArrayAdapter<String> groupSpinnerAdapter = new LargeHeightArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, new ArrayList<>());
 
         updateDueDayOfWeek(act, act.getStartDate(), groupSpinnerAdapter, taskManager.getActiveEditTask() == null);
 

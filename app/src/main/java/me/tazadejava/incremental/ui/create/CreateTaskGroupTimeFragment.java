@@ -32,6 +32,7 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.SubGroup;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.ui.adapters.LargeHeightArrayAdapter;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
@@ -142,7 +143,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
 
         items.add("Add new group...");
 
-        ArrayAdapter<String> groupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
+        ArrayAdapter<String> groupSpinnerAdapter = new LargeHeightArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, items);
         groupSpinner.setAdapter(groupSpinnerAdapter);
 
         Spinner subgroupSpinner = root.findViewById(R.id.subgroupSpinner);
@@ -154,7 +155,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         if(act.getSelectedGroup() != null) {
             subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
         }
-        ArrayAdapter<String> subgroupSpinnerAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, subgroupItems);
+        ArrayAdapter<String> subgroupSpinnerAdapter = new LargeHeightArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, subgroupItems);
 
         groupSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -185,7 +186,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                     }
 
                     Spinner groupScopeSpinner = dialogView.findViewById(R.id.groupScopeSpinner);
-                    groupScopeSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, groupScope));
+                    groupScopeSpinner.setAdapter(new LargeHeightArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, groupScope));
 
                     groupScopeSpinner.setSelection(groupScope.size() - 1);
 

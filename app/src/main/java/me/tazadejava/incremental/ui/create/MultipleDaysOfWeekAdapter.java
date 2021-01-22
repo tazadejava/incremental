@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.ui.adapters.LargeHeightArrayAdapter;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDaysOfWeekAdapter.ViewHolder> {
@@ -148,7 +149,7 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
             dueDays.add(dueDateText);
         }
 
-        holder.startDayOfWeek.setAdapter(new ArrayAdapter<>(holder.startDayOfWeek.getContext(), android.R.layout.simple_spinner_item, startDays));
+        holder.startDayOfWeek.setAdapter(new LargeHeightArrayAdapter<>(holder.startDayOfWeek.getContext(), android.R.layout.simple_spinner_item, startDays));
 
         if(startDayOfWeeks.get(position) != null) {
             holder.startDayOfWeek.setSelection(potentialStartDays.indexOf(startDayOfWeeks.get(position)));
@@ -171,7 +172,7 @@ public class MultipleDaysOfWeekAdapter extends RecyclerView.Adapter<MultipleDays
         });
 
         ArrayAdapter<String> dueDateAdapter;
-        holder.dueDayOfWeek.setAdapter(dueDateAdapter = new ArrayAdapter<>(holder.dueDayOfWeek.getContext(), android.R.layout.simple_spinner_item, dueDays));
+        holder.dueDayOfWeek.setAdapter(dueDateAdapter = new LargeHeightArrayAdapter<>(holder.dueDayOfWeek.getContext(), android.R.layout.simple_spinner_item, dueDays));
 
         if(dueDayOfWeeks.get(position) != null) {
             holder.dueDayOfWeek.setSelection(potentialEndDays.indexOf(dueDayOfWeeks.get(position)));
