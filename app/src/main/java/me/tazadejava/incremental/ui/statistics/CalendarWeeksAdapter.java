@@ -3,8 +3,6 @@ package me.tazadejava.incremental.ui.statistics;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.ShapeDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -33,7 +31,6 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.animation.ColorAnimation;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.Utils;
@@ -59,7 +56,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
     }
 
     private static final int CALCULATED_DAYS_COUNT = 42;
-    private static final int TODAY_HEATMAP_WIDTH = 6;
+    private static final int TODAY_HEATMAP_SIZE = 6;
 
     private Activity activity;
     private TaskManager taskManager;
@@ -150,6 +147,35 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                 holder.dayButtons[i].setVisibility(View.VISIBLE);
                 holder.dayButtons[i].setBackgroundColor(Color.BLACK);
 
+                //add indicator for where today is
+                LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
+                if(date.equals(now)) {
+                    if(dayOutlineView != null) {
+                        holder.parent.removeView(dayOutlineView);
+                        dayOutlineView = null;
+                    }
+
+                    dayOutlineView = new View(activity);
+                    dayOutlineView.setId(View.generateViewId());
+                    ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(holder.dayButtons[i].getLayoutParams());
+                    params.width += TODAY_HEATMAP_SIZE;
+                    params.height += TODAY_HEATMAP_SIZE;
+                    dayOutlineView.setLayoutParams(params);
+                    dayOutlineView.setBackgroundColor(Color.WHITE);
+                    holder.parent.addView(dayOutlineView, holder.parent.indexOfChild(holder.dayButtons[i]));
+
+                    ConstraintSet set = new ConstraintSet();
+                    set.clone(holder.parent);
+
+                    set.connect(dayOutlineView.getId(), ConstraintSet.LEFT, holder.dayButtons[i].getId(), ConstraintSet.LEFT, 0);
+                    set.connect(dayOutlineView.getId(), ConstraintSet.TOP, holder.dayButtons[i].getId(), ConstraintSet.TOP, 0);
+
+                    set.setTranslationX(dayOutlineView.getId(), -(TODAY_HEATMAP_SIZE / 2));
+                    set.setTranslationY(dayOutlineView.getId(), -(TODAY_HEATMAP_SIZE / 2));
+
+                    set.applyTo(holder.parent);
+                }
+
                 int buttonColor;
                 if(animate && holder.dayButtons[i].getBackground() instanceof ColorDrawable &&
                         (buttonColor = ((ColorDrawable) holder.dayButtons[i].getBackground()).getColor()) != heatmapPositionToColor(heatmapMaxColors, heatmapPosition)) {
@@ -159,34 +185,6 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                     colorAnimation.setStartOffset((daysOffsetFromTop + heatmapPosition - firstDayIndex) * 5);
                     holder.dayButtons[i].startAnimation(colorAnimation);
                 } else {
-                    LocalDate date = yearMonth.atDay(heatmapPosition - firstDayIndex + 1);
-                    if(date.equals(now)) {
-                        if(dayOutlineView != null) {
-                            holder.parent.removeView(dayOutlineView);
-                            dayOutlineView = null;
-                        }
-
-                        dayOutlineView = new View(activity);
-                        dayOutlineView.setId(View.generateViewId());
-                        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(holder.dayButtons[i].getLayoutParams());
-                        params.width += TODAY_HEATMAP_WIDTH;
-                        params.height += TODAY_HEATMAP_WIDTH;
-                        dayOutlineView.setLayoutParams(params);
-                        dayOutlineView.setBackgroundColor(Color.WHITE);
-                        holder.parent.addView(dayOutlineView, holder.parent.indexOfChild(holder.dayButtons[i]));
-
-                        ConstraintSet set = new ConstraintSet();
-                        set.clone(holder.parent);
-
-                        set.connect(dayOutlineView.getId(), ConstraintSet.LEFT, holder.dayButtons[i].getId(), ConstraintSet.LEFT, 0);
-                        set.connect(dayOutlineView.getId(), ConstraintSet.TOP, holder.dayButtons[i].getId(), ConstraintSet.TOP, 0);
-
-                        set.setTranslationX(dayOutlineView.getId(), -(TODAY_HEATMAP_WIDTH/2));
-                        set.setTranslationY(dayOutlineView.getId(), -(TODAY_HEATMAP_WIDTH/2));
-
-                        set.applyTo(holder.parent);
-                    }
-
                     holder.dayButtons[i].setBackgroundColor(heatmapPositionToColor(heatmapMaxColors, heatmapPosition));
                 }
 
@@ -294,6 +292,11 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
         heatmapGroup = group;
         this.maxMinutesWorked = maxMinutesWorked;
         calculateGroupHeatmap();
+
+        if(dayOutlineView != null) {
+            ((ConstraintLayout) dayOutlineView.getParent()).removeView(dayOutlineView);
+            dayOutlineView = null;
+        }
 
         animate = true;
         notifyDataSetChanged();

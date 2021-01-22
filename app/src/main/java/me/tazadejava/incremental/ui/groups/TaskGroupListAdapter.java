@@ -195,10 +195,10 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                     "Average workload: \t\t" + Utils.formatHourMinuteTime(stats[0]) + "\n" +
                     "Median workload: \t\t" + Utils.formatHourMinuteTime(stats[1]) + "\n" +
                     "Standard deviation: \t" + Utils.formatHourMinuteTime(stats[2]) + "\n\n" +
-                    "Min workload: " + Utils.formatHourMinuteTime(minMaxStats[0].minutes) + "\n" +
-                    "\t\t\t\t\t\t\t\t\t\t\t\t" + Utils.formatLocalDate(minMaxStats[0].date) + " - " + Utils.formatLocalDate(minMaxStats[0].date.plusDays(7)) + "\n" +
-                    "Max workload: " + Utils.formatHourMinuteTime(minMaxStats[1].minutes) + "\n" +
-                    "\t\t\t\t\t\t\t\t\t\t\t\t" + Utils.formatLocalDate(minMaxStats[1].date) + " - " + Utils.formatLocalDate(minMaxStats[1].date.plusDays(7)));
+                    "Min workload: " + "\t\t\t\t\t" + Utils.formatHourMinuteTime(minMaxStats[0].minutes) + "\n" +
+                    "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + Utils.formatLocalDate(minMaxStats[0].date) + " - " + Utils.formatLocalDate(minMaxStats[0].date.plusDays(7)) + "\n" +
+                    "Max workload: " + "\t\t\t\t\t" + Utils.formatHourMinuteTime(minMaxStats[1].minutes) + "\n" +
+                    "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + Utils.formatLocalDate(minMaxStats[1].date) + " - " + Utils.formatLocalDate(minMaxStats[1].date.plusDays(7)));
         } else {
             holder.taskNotes.setLines(5);
             holder.taskNotes.setText("Detailed weekly statistics:\n" +
