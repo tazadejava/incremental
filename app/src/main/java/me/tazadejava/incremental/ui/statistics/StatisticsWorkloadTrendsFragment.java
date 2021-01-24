@@ -54,7 +54,7 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
 
         dailyGroupTrends = root.findViewById(R.id.dailyGroupTrendsText);
 
-        dailyGroupTrends.setText("Workload Trends Overall (min)");
+        dailyGroupTrends.setText("Average Workload Trends (min)");
 
         BarChart workloadTrendsChart = root.findViewById(R.id.workloadTrendChart);
 
@@ -279,7 +279,7 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
                     if(groupWorkloadTrendsStatisticsAdapter.reverseAllWeeklyCharts()) {
-                        dailyGroupTrends.setText("Workload Trends Overall (min)");
+                        dailyGroupTrends.setText("Average Workload Trends (min)");
                     } else {
                         dailyGroupTrends.setText("Workload Trends This Week (min)");
                     }

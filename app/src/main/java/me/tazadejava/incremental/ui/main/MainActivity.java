@@ -106,6 +106,12 @@ public class MainActivity extends AppCompatActivity {
         }, 50);
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
+
     public void updateNavBarTimePeriod() {
         TaskManager taskManager = ((IncrementalApplication) getApplication()).getTaskManager();
 

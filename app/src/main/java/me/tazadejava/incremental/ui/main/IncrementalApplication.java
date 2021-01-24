@@ -4,8 +4,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.os.AsyncTask;
-import android.os.Build;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.Lifecycle;
@@ -18,22 +16,17 @@ import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 import me.tazadejava.incremental.logic.tasks.TaskManager;
-import me.tazadejava.incremental.ui.reminder.NotificationWorker;
+import me.tazadejava.incremental.ui.notifications.ReminderNotificationWorker;
 
 public class IncrementalApplication extends android.app.Application implements LifecycleObserver {
 
     public final static String NOTIFICATION_MAIN_CHANNEL = "Reminder Notifications";
-    public final static int PERSISTENT_NOTIFICATION_ID = 0;
+    public final static String NOTIFICATION_ACTIVE_TASK_CHANNEL = "Active Task Notifications";
+    public final static int REMINDER_NOTIFICATION_ID = 0;
+    public final static int PERSISTENT_NOTIFICATION_ID = 1;
 
     private TaskManager taskManager;
     private boolean isInForeground;
@@ -76,14 +69,14 @@ public class IncrementalApplication extends android.app.Application implements L
 
         //notifications
 
-        if(prefs.getAll().containsKey("persistentNotification") && ((Boolean) prefs.getAll().get("persistentNotification"))) {
-            NotificationWorker.annotateLogDoc(getApplicationContext(), "The persistent notification is on, and the request has been done.");
-            PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(NotificationWorker.class, 1, TimeUnit.HOURS)
+        if(prefs.getAll().containsKey("reminderNotification") && ((Boolean) prefs.getAll().get("reminderNotification"))) {
+            ReminderNotificationWorker.annotateLogDoc(getApplicationContext(), "The reminder notification is on, and the request has been done.");
+            PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(ReminderNotificationWorker.class, 1, TimeUnit.HOURS)
                     .setBackoffCriteria(BackoffPolicy.LINEAR, 1, TimeUnit.MINUTES)
                     .build();
             WorkManager.getInstance(getApplicationContext()).enqueueUniquePeriodicWork(NOTIFICATION_MAIN_CHANNEL, ExistingPeriodicWorkPolicy.REPLACE, request);
         } else {
-            NotificationWorker.annotateLogDoc(getApplicationContext(), "The persistent notification is off, so the request has been canceled.");
+            ReminderNotificationWorker.annotateLogDoc(getApplicationContext(), "The reminder notification is off, so the request has been canceled.");
             WorkManager.getInstance(getApplicationContext()).cancelUniqueWork(NOTIFICATION_MAIN_CHANNEL);
         }
 
@@ -122,13 +115,16 @@ public class IncrementalApplication extends android.app.Application implements L
     }
 
     private void createNotificationChannels() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_MAIN_CHANNEL, NOTIFICATION_MAIN_CHANNEL, NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("Sends daily reminders of tasks and hours of work.");
+        NotificationManager nMan = getSystemService(NotificationManager.class);
 
-            NotificationManager nMan = getSystemService(NotificationManager.class);
-            nMan.createNotificationChannel(channel);
-        }
+        NotificationChannel reminderChannel = new NotificationChannel(NOTIFICATION_MAIN_CHANNEL, NOTIFICATION_MAIN_CHANNEL, NotificationManager.IMPORTANCE_DEFAULT);
+        reminderChannel.setDescription("Sends daily reminders of tasks and hours of work.");
+        nMan.createNotificationChannel(reminderChannel);
+
+
+        NotificationChannel activeTaskChannel = new NotificationChannel(NOTIFICATION_ACTIVE_TASK_CHANNEL, NOTIFICATION_ACTIVE_TASK_CHANNEL, NotificationManager.IMPORTANCE_LOW);
+        activeTaskChannel.setDescription("Displays currently active task for quick logging.");
+        nMan.createNotificationChannel(activeTaskChannel);
     }
 
     public boolean isDarkModeOn() {

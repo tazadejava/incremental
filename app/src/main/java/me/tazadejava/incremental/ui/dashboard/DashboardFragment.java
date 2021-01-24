@@ -42,7 +42,6 @@ import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 import me.tazadejava.incremental.ui.main.Utils;
-import me.tazadejava.incremental.ui.statistics.StatisticsCalendarHeatmapFragment;
 
 public class DashboardFragment extends Fragment implements BackPressedInterface {
 
@@ -63,6 +62,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
     private LocalDate lastRefreshDate;
 
     private ImageView leftNav, rightNav;
+
+    private long lastResume;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         //change the FAB to create a new task
@@ -352,6 +353,12 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         super.onResume();
 
         //refresh contents
+
+        //don't refresh too often; for some reason, when pendingintent is run for logTask, this is called twice, which invalidates the log
+        if(System.currentTimeMillis() - lastResume < 500) {
+            return;
+        }
+        lastResume = System.currentTimeMillis();
 
         //if new day, then reset the task manager
         if(!lastRefreshDate.equals(LocalDate.now())) {

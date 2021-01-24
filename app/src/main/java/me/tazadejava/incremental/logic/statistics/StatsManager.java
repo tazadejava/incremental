@@ -223,6 +223,11 @@ public class StatsManager {
     }
 
     public void appendMinutes(Group group, LocalDate date, int minutes, boolean finishedTask) {
+        //don't put 0 minutes into the log
+        if(minutes == 0) {
+            return;
+        }
+
         if(!totalMinutesWorkedByGroup.containsKey(date)) {
             totalMinutesWorkedByGroup.put(date, new HashMap<>());
         }

@@ -5,9 +5,16 @@
         app:title="Notifications">
 
         <SwitchPreferenceCompat
-            app:key="persistentNotification"
+            app:key="reminderNotification"
             app:title="Enable reminder notifications"
             app:summary="Gently reminds you throughout the day when there are tasks left to complete" />
+
+
+        <SwitchPreferenceCompat
+            app:key="persistentNotification"
+            app:defaultValue="true"
+            app:title="Enable active task notification"
+            app:summary="Shows a notification while a task is active for easy log access" />
 
     </PreferenceCategory>
 

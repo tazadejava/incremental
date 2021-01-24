@@ -1,4 +1,4 @@
-package me.tazadejava.incremental.ui.reminder;
+package me.tazadejava.incremental.ui.notifications;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -36,9 +36,9 @@ import me.tazadejava.incremental.ui.main.IncrementalApplication;
 import me.tazadejava.incremental.ui.main.MainActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
-public class NotificationWorker extends Worker {
+public class ReminderNotificationWorker extends Worker {
 
-    public NotificationWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public ReminderNotificationWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
 
@@ -78,9 +78,12 @@ public class NotificationWorker extends Worker {
 
         LocalDateTime nowTime = LocalDateTime.now();
 
+        TaskManager taskManager = new TaskManager(app.getFilesDir().getAbsolutePath());
+        TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
+
         long minutesBetweenLastAccess = ChronoUnit.MINUTES.between(getLastBumpOrApplicationOpenTime(), nowTime);
         //don't send notifications for 1.5 hours after the app was opened
-        if(minutesBetweenLastAccess < 90) {
+        if(minutesBetweenLastAccess < 90 && timePeriod.getNumberOfActiveTasks() == 0) {
             annotateLogDoc("The app was opened last " + minutesBetweenLastAccess + " minute(s) last. It is too soon (threshold 90 minutes).");
             return Result.success();
         } else {
@@ -93,11 +96,7 @@ public class NotificationWorker extends Worker {
 
         annotateLogDoc("Service is ready to run!");
 
-        TaskManager taskManager = new TaskManager(app.getFilesDir().getAbsolutePath());
-
-        TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
-
-        List<Task> tasks = timePeriod.getTasksByDay(0);
+        List<Task> tasksToday = timePeriod.getTasksByDay(0);
         Set<Group> uniqueGroups = new HashSet<>();
 
         int tasksLimit = 5;
@@ -105,7 +104,7 @@ public class NotificationWorker extends Worker {
 
         LocalDate now = LocalDate.now();
 
-        for(Task task : tasks) {
+        for(Task task : tasksToday) {
             uniqueGroups.add(task.getGroup());
 
             if(tasksLimit > 0) {
@@ -141,7 +140,7 @@ public class NotificationWorker extends Worker {
             }
         }
 
-        int activeTasks = tasks.size();
+        int activeTasks = tasksToday.size();
         if(activeTasks > 0) {
             String contentText = "You have " + Utils.formatHourMinuteTimeFull(timePeriod.getEstimatedMinutesOfWorkForDate(now)) + " of work today (" + activeTasks + " task" + (activeTasks == 1 ? "" : "s") + ")";
 
@@ -155,7 +154,7 @@ public class NotificationWorker extends Worker {
                     .setAutoCancel(true);
 
             NotificationManagerCompat nMan = NotificationManagerCompat.from(getApplicationContext());
-            nMan.notify(IncrementalApplication.PERSISTENT_NOTIFICATION_ID, builder.build());
+            nMan.notify(IncrementalApplication.REMINDER_NOTIFICATION_ID, builder.build());
         }
 
         annotateLogDoc("Service finished running successfully!");

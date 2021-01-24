@@ -349,6 +349,27 @@ public class TimePeriod {
         }
     }
 
+    public int getNumberOfActiveTasks() {
+        int count = 0;
+
+        Set<Task> countedTasks = new HashSet<>();
+
+        for(List<Task> tasks : tasksByDay) {
+            for(Task task : tasks) {
+                if(countedTasks.contains(task)) {
+                    continue;
+                }
+                countedTasks.add(task);
+
+                if(task.isTaskCurrentlyWorkedOn()) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+
     public void addNewTaskGenerator(TaskGenerator taskGenerator) {
         processPendingTasks(taskGenerator);
 

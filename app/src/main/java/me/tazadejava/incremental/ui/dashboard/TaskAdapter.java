@@ -3,14 +3,19 @@ package me.tazadejava.incremental.ui.dashboard;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.text.InputType;
 import android.view.Gravity;
@@ -31,7 +36,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
@@ -43,6 +51,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
@@ -51,6 +61,7 @@ import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.ui.animation.TextColorAnimation;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
+import me.tazadejava.incremental.ui.main.MainActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
@@ -100,6 +111,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private HashMap<Task, ViewHolder> taskLayout;
     private HashMap<Task, Integer> inactiveTaskPositions = new HashMap<>();
 
+    private boolean updatePersistentNotification;
+    private Task logTask;
+
     public TaskAdapter(TaskManager taskManager, Activity context, TimePeriod timePeriod, int dayPosition, LocalDate date, Set<Task> tasksToday, List<Task> tasks, MainDashboardDayAdapter mainDashboardDayAdapter) {
         this.taskManager = taskManager;
         this.context = context;
@@ -123,6 +137,22 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 return 0;
             }
         });
+
+        if(!this.tasks.isEmpty() && this.tasks.get(0).isTaskCurrentlyWorkedOn()) {
+            if (context.getIntent().hasExtra("logTask") && context.getIntent().getIntExtra("dayPosition", -1) == dayPosition) {
+                if (context.getIntent().getStringExtra("logTask").equals(this.tasks.get(0).getName())) {
+                    logTask = this.tasks.get(0);
+                    context.getIntent().removeExtra("logTask");
+                }
+            } else {
+                Task task = this.tasks.get(0);
+                boolean containsTaskAndIsNotDoneToday = tasksToday.contains(task) && !task.isDoneWithTaskToday();
+                if (dayPosition == 0 || !containsTaskAndIsNotDoneToday) {
+                    clearPersistentNotification();
+                    setupPersistentNotification(task);
+                }
+            }
+        }
     }
 
     @NonNull
@@ -233,7 +263,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             if (task.isTaskCurrentlyWorkedOn()) {
                 holder.actionTaskText.setText("Log\nWork");
 
-                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, position, true, holder));
+                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, true, holder));
             } else {
                 if(dayPosition == 0) {
                     holder.actionTaskText.setText("Start\nTask");
@@ -241,11 +271,21 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     holder.actionTaskText.setText("Start\nTask\nEarly");
                 }
 
-                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, position, false, holder));
+                holder.actionTaskText.setOnClickListener(getActionTaskListener(task, false, holder));
             }
         } else {
             holder.actionTaskText.setVisibility(View.GONE);
             holder.horizontalLine.setVisibility(View.GONE);
+        }
+
+
+        if(logTask == task) {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    holder.actionTaskText.performClick();
+                }
+            }, 250);
         }
     }
 
@@ -369,7 +409,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                         } else {
                             holder.actionTaskText.setText("Start\nTask\nEarly");
                         }
-                        holder.actionTaskText.setOnClickListener(getActionTaskListener(task, position, false, holder));
+                        holder.actionTaskText.setOnClickListener(getActionTaskListener(task, false, holder));
                     }
                 });
 
@@ -434,7 +474,64 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
-    private View.OnClickListener getActionTaskListener(Task task, int position, boolean hasTaskStarted, ViewHolder holder) {
+    private void setupPersistentNotification(Task task) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        if (prefs.getAll().containsKey("persistentNotification") && !((Boolean) prefs.getAll().get("persistentNotification"))) {
+            return;
+        }
+
+        updatePersistentNotification = true;
+        onlySendPersistentNotification(task);
+
+        Timer timer = new Timer();
+
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                if(!updatePersistentNotification) {
+                    timer.cancel();
+                    return;
+                }
+
+                onlySendPersistentNotification(task);
+            }
+        };
+
+        timer.scheduleAtFixedRate(timerTask, 0, 60000);
+    }
+
+    /***
+     * Helper method, not to be called directly
+     * @param task
+     */
+    private void onlySendPersistentNotification(Task task) {
+        Intent logWorkDialogIntent = new Intent(context, MainActivity.class);
+        logWorkDialogIntent.putExtra("logTask", task.getName());
+        logWorkDialogIntent.putExtra("dayPosition", dayPosition);
+        PendingIntent logWorkDialog = PendingIntent.getActivity(context, 1, logWorkDialogIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, IncrementalApplication.NOTIFICATION_MAIN_CHANNEL)
+                .setSmallIcon(R.drawable.icon)
+                .setContentTitle("In progress: " + task.getName())
+                .setContentText(Utils.formatHourMinuteTime(task.getCurrentWorkedMinutesWithCarryover()) + " currently logged")
+                .setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT))
+                .addAction(R.drawable.ic_schedule_black_18dp, "Log work", logWorkDialog)
+                .setAutoCancel(false)
+                .setTimeoutAfter(90000) //auto cancel if app is closed
+                .setOngoing(true);
+
+        NotificationManagerCompat nMan = NotificationManagerCompat.from(context);
+        nMan.notify(IncrementalApplication.PERSISTENT_NOTIFICATION_ID, builder.build());
+    }
+
+    private void clearPersistentNotification() {
+        updatePersistentNotification = false;
+
+        NotificationManagerCompat nMan = NotificationManagerCompat.from(context);
+        nMan.cancel(IncrementalApplication.PERSISTENT_NOTIFICATION_ID);
+    }
+
+    private View.OnClickListener getActionTaskListener(Task task, boolean hasTaskStarted, ViewHolder holder) {
         ConstraintLayout taskCardConstraintLayout = holder.taskCardConstraintLayout;
         TextView actionTaskText = holder.actionTaskText;
         ConstraintLayout expandedOptionsLayout = holder.expandedOptionsLayout;
@@ -507,6 +604,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                 }
                             }
 
+                            clearPersistentNotification();
+
                             if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate()) && dayPosition == 0) {
                                 finishedTaskBuilder.setPositiveButton("Finished for today!", new DialogInterface.OnClickListener() {
                                     @Override
@@ -543,7 +642,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         } else {
                                             actionTaskText.setText("Start\nTask\nEarly");
                                         }
-                                        actionTaskText.setOnClickListener(getActionTaskListener(task, position, false, holder));
+                                        actionTaskText.setOnClickListener(getActionTaskListener(task, false, holder));
                                     }
                                 });
                             }
@@ -637,7 +736,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     } else {
                                         actionTaskText.setText("Start\nTask\nEarly");
                                     }
-                                    actionTaskText.setOnClickListener(getActionTaskListener(task, position, false, holder));
+                                    actionTaskText.setOnClickListener(getActionTaskListener(task, false, holder));
                                 }
                             });
 
@@ -652,7 +751,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     } else {
                                         actionTaskText.setText("Start\nTask\nEarly");
                                     }
-                                    actionTaskText.setOnClickListener(getActionTaskListener(task, position, false, holder));
+                                    actionTaskText.setOnClickListener(getActionTaskListener(task, false, holder));
 
                                     //delayed so that the keyboard can go away first
                                     v.postDelayed(new Runnable() {
@@ -744,7 +843,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             InputMethodManager imm = (InputMethodManager) inputMinutes.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                             imm.showSoftInput(inputMinutes, 0);
                         }
-                    }, 50);
+                    }, 150);
                 }
             };
         } else {
@@ -756,7 +855,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     task.startWorkingOnTask();
 
                     actionTaskText.setText("Log\nWork");
-                    actionTaskText.setOnClickListener(getActionTaskListener(task, position, true, holder));
+                    actionTaskText.setOnClickListener(getActionTaskListener(task, true, holder));
+
+                    setupPersistentNotification(task);
 
                     task.getParent().saveTaskToFile();
 
