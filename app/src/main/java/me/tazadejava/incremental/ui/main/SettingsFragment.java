@@ -31,20 +31,20 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             }
         });
 
-        SwitchPreferenceCompat activeTaskNotification = findPreference(PREF_ACTIVE_TASK_NOTIFICATION);
-        activeTaskNotification.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                boolean isActive = (Boolean) newValue;
-
-                if(!isActive) {
-                    NotificationManagerCompat nMan = NotificationManagerCompat.from(getContext());
-                    nMan.cancel(IncrementalApplication.PERSISTENT_NOTIFICATION_ID);
-                }
-
-                return true;
-            }
-        });
+//        SwitchPreferenceCompat activeTaskNotification = findPreference(PREF_ACTIVE_TASK_NOTIFICATION);
+//        activeTaskNotification.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+//            @Override
+//            public boolean onPreferenceChange(Preference preference, Object newValue) {
+//                boolean isActive = (Boolean) newValue;
+//
+//                if(!isActive) {
+//                    NotificationManagerCompat nMan = NotificationManagerCompat.from(getContext());
+//                    nMan.cancel(IncrementalApplication.PERSISTENT_NOTIFICATION_ID);
+//                }
+//
+//                return true;
+//            }
+//        });
     }
 
     @Override

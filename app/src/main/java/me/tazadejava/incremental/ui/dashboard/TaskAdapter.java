@@ -476,7 +476,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
     private void setupPersistentNotification(Task task) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        if (prefs.getAll().containsKey("persistentNotification") && !((Boolean) prefs.getAll().get("persistentNotification"))) {
+        if (true || prefs.getAll().containsKey("persistentNotification") && !((Boolean) prefs.getAll().get("persistentNotification"))) { //temp disable persistent notifications due to stability issues
             return;
         }
 

@@ -37,6 +37,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
@@ -116,6 +117,20 @@ public class Utils {
                 return hours + " hour" + (hours == 1 ? "" : "s") + " " + minutes + " minute" + (minutes == 1 ? "" : "s");
             }
         }
+    }
+
+    /**
+     *
+     * @param numberOfWeeks: 1 for the end of the first week
+     * @return
+     */
+    public static int getDaysUntilEndOfWeek(int numberOfWeeks) {
+        LocalDate date = LocalDate.now();
+
+        date = date.plusDays(Utils.getDaysBetweenDaysOfWeek(date.getDayOfWeek(), DayOfWeek.SUNDAY));
+        date = date.plusDays(7 * (numberOfWeeks - 1));
+
+        return (int) ChronoUnit.DAYS.between(LocalDate.now(), date);
     }
 
     public static int getDaysBetweenDaysOfWeek(DayOfWeek start, DayOfWeek end) {

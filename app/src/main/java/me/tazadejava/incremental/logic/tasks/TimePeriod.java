@@ -28,11 +28,12 @@ import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.taskmodifiers.GlobalTaskWorkPreference;
 import me.tazadejava.incremental.logic.taskmodifiers.Group;
 import me.tazadejava.incremental.logic.taskmodifiers.SubGroup;
+import me.tazadejava.incremental.ui.main.Utils;
 
 public class TimePeriod {
 
     //need to account for the possible next week plus 6 days if on a Monday
-    public static final int DAILY_LOGS_AHEAD_COUNT_LOAD = 13;
+    public static final int DAILY_LOGS_AHEAD_COUNT_LOAD = Utils.getDaysUntilEndOfWeek(2);
     public static final int DAILY_LOGS_AHEAD_COUNT_SHOW_UI = 6; //not including today
 
     private TaskManager taskManager;
