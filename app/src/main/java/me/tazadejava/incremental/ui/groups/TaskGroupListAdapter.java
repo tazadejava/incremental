@@ -459,8 +459,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         }
 
         //make the week start on a MONDAY not sunday, offset by one day
-        long currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
-        long endWeekValue = endLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        long currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) + (currentLoopDate.plusDays(-1).getYear() * 52);
+        long endWeekValue = endLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) + (endLoopDate.plusDays(-1).getYear() * 52);
 
         List<Integer> minutesPerWeek = new ArrayList<>();
 
@@ -472,7 +472,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         StatsManager statsManager = taskManager.getCurrentTimePeriod().getStatsManager();
 
         //calculate per week
-        while(currentWeekValue <= endWeekValue || currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
+        while(currentWeekValue <= endWeekValue) {
             boolean workedThisWeek = false;
             int totalMinutes = 0;
             for(LocalDate date : LogicalUtils.getWorkWeekDates(currentLoopDate)) {
@@ -502,7 +502,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             }
 
             currentLoopDate = currentLoopDate.plusDays(7);
-            currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+            currentWeekValue = currentLoopDate.plusDays(-1).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) + (currentLoopDate.plusDays(-1).getYear() * 52);
         }
 
         if(totalWeeksWorked == 0) {
