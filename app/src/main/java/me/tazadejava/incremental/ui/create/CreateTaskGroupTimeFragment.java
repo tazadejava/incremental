@@ -40,6 +40,8 @@ import me.tazadejava.incremental.ui.main.Utils;
 
 public class CreateTaskGroupTimeFragment extends Fragment implements BackPressedInterface {
 
+    private boolean hasInitializedSpinners = false;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         CreateTaskActivity act = (CreateTaskActivity) getActivity();
@@ -156,6 +158,32 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
             subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
         }
         ArrayAdapter<String> subgroupSpinnerAdapter = new LargeHeightArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, subgroupItems);
+
+        //create subgroup spinner
+
+        subgroupSpinner.setAdapter(subgroupSpinnerAdapter);
+        subgroupSpinner.setEnabled(false);
+
+        //check for previous group/subgroup data
+
+        if(act.getSelectedGroup() != null) {
+            groupSpinner.setSelection(groupSpinnerAdapter.getPosition(act.getSelectedGroup().getGroupName()));
+
+            if(taskManager.getActiveEditTask() == null) {
+                updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
+            }
+
+            subgroupItems.clear();
+            subgroupItems.add("No subgroup");
+            subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
+            subgroupItems.add("Add new subgroup...");
+
+            if(act.getSelectedSubgroup() != null) {
+                subgroupSpinner.setSelection(subgroupSpinnerAdapter.getPosition(act.getSelectedSubgroup().getName()));
+            }
+
+            subgroupSpinner.setEnabled(true);
+        }
 
         groupSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -296,38 +324,6 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
             }
         });
 
-        minutesToCompleteTask.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
-
-                if(s.length() > 0) {
-                    try {
-                        act.setMinutesToCompletion(Integer.parseInt(s.toString()));
-                    } catch(NumberFormatException ex) {
-                        String shortenedTime = s.toString().substring(0, s.length() - 1);
-                        act.setMinutesToCompletion(Integer.parseInt(shortenedTime));
-                        minutesToCompleteTask.setText(shortenedTime);
-                        Toast.makeText(act, "Invalid amount of time specified!", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        });
-
-        //create subgroup spinner
-
-        subgroupSpinner.setAdapter(subgroupSpinnerAdapter);
-
         subgroupSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             private int lastPosition = 0;
@@ -368,12 +364,19 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                                     subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
                                     subgroupItems.add("Add new subgroup...");
 
-                                    subgroupSpinner.setSelection(items.size() - 2);
                                     subgroupSpinnerAdapter.notifyDataSetChanged();
+                                    subgroupSpinner.setSelection(groupSpinnerAdapter.getCount() - 1);
                                 } else {
+                                    //TODO: dialog does not pop up
                                     AlertDialog.Builder failedToCreateGroup = new AlertDialog.Builder(getContext());
                                     failedToCreateGroup.setTitle("Failed to create subgroup!");
                                     failedToCreateGroup.setMessage("A subgroup with that name already exists!");
+                                    failedToCreateGroup.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+
+                                        }
+                                    });
                                     failedToCreateGroup.show();
                                 }
 
@@ -412,8 +415,10 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
                         SubGroup subgroup = act.getSelectedGroup().getSubGroupByName(subgroupSpinner.getSelectedItem().toString());
                         act.setSelectedSubgroup(subgroup);
 
-                        if(subgroup.haveMinutesBeenSet()) {
-                            minutesToCompleteTask.setText(String.valueOf(subgroup.getAveragedEstimatedMinutes()));
+                        if(hasInitializedSpinners) {
+                            if (subgroup.haveMinutesBeenSet()) {
+                                minutesToCompleteTask.setText(String.valueOf(subgroup.getAveragedEstimatedMinutes()));
+                            }
                         }
                     }
 
@@ -427,33 +432,52 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
             }
         });
 
-        subgroupSpinner.setEnabled(false);
+        minutesToCompleteTask.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                updateNextButton(groupSpinner, minutesToCompleteTask, nextButton);
+
+                if(s.length() > 0) {
+                    try {
+                        act.setMinutesToCompletion(Integer.parseInt(s.toString()));
+                    } catch(NumberFormatException ex) {
+                        String shortenedTime = s.toString().substring(0, s.length() - 1);
+                        act.setMinutesToCompletion(Integer.parseInt(shortenedTime));
+                        minutesToCompleteTask.setText(shortenedTime);
+                        Toast.makeText(act, "Invalid amount of time specified!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
 
         //check for previous data
 
-        if(act.getSelectedGroup() != null) {
-            groupSpinner.setSelection(groupSpinnerAdapter.getPosition(act.getSelectedGroup().getGroupName()));
-
-            if(taskManager.getActiveEditTask() == null) {
-                updateSuggestTimeButtons(taskManager, act, suggestedTime3Button, suggestedTime4Button, minutesToCompleteTask);
-            }
-
-            subgroupSpinner.setEnabled(true);
-
-            subgroupItems.clear();
-            subgroupItems.add("No subgroup");
-            subgroupItems.addAll(act.getSelectedGroup().getAllCurrentSubgroupNames());
-            subgroupItems.add("Add new subgroup...");
-
-            if(act.getSelectedSubgroup() != null) {
-                subgroupSpinner.setSelection(subgroupSpinnerAdapter.getPosition(act.getSelectedSubgroup().getName()));
-            }
-        }
-
         if(act.getMinutesToCompletion() != -1) {
-            //this method should call the textwatcher, and enable the next button if applicable
-            minutesToCompleteTask.setText(String.valueOf(act.getMinutesToCompletion()));
+            if(taskManager.getActiveEditTask().getTotalLoggedMinutesOfWork() > act.getMinutesToCompletion()) {
+                minutesToCompleteTask.setText(String.valueOf(taskManager.getActiveEditTask().getTotalLoggedMinutesOfWork()));
+            } else {
+                //this method should call the textwatcher, and enable the next button if applicable
+                minutesToCompleteTask.setText(String.valueOf(act.getMinutesToCompletion()));
+            }
         }
+
+        //todo: this is not a good solution; when there is more time, research why this is occurring in the first place?
+        root.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                hasInitializedSpinners = true;
+            }
+        }, 300);
 
         return root;
     }

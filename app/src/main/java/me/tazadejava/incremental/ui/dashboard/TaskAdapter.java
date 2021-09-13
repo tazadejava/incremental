@@ -465,7 +465,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 }
             }
 
-            holder.taskNotes.setText(Html.fromHtml("<b>Minutes (" + timestamps.size() + "):</b><br>" + minutesNotes.toString()));
+            if(timestamps.size() >= 3) {
+                minutesNotes.append("..." + (timestamps.size() - 3) + " more");
+                lines++;
+            }
+
+            holder.taskNotes.setText(Html.fromHtml("<b>Minutes (" + Utils.formatHourMinuteTime(task.getTotalLoggedMinutesOfWork()) + " so far):</b><br>" + minutesNotes.toString()));
             holder.taskNotes.setLines(lines);
 
             if(updateCardTextAnimation && holder.expandedOptionsLayout.getVisibility() == View.VISIBLE) {

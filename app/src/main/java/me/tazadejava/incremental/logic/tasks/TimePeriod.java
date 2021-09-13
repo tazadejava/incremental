@@ -58,11 +58,13 @@ public class TimePeriod {
 
     //representing index in allTasks for each day; INDEX 0 IS TOMORROW; does not save and is recreated each time
     private List<Task>[] tasksByDay;
+    private int[] timeCommitmentsPerDay;
 
     private TimePeriod(TaskManager taskManager) {
         this.taskManager = taskManager;
 
         tasksByDay = new List[DAILY_LOGS_AHEAD_COUNT_LOAD];
+        timeCommitmentsPerDay = new int[DAILY_LOGS_AHEAD_COUNT_LOAD];
 
         for (int i = 0; i < tasksByDay.length; i++) {
             tasksByDay[i] = new ArrayList<>();
@@ -80,6 +82,8 @@ public class TimePeriod {
         workPreferences = new GlobalTaskWorkPreference();
 
         timePeriodID = UUID.randomUUID().toString().replace("-", "") + beginDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+
+        timeCommitmentsPerDay = new int[Utils.getDaysUntilEndOfWeek(1 + (int) Math.max(0, ChronoUnit.WEEKS.between(LocalDate.now(), endDate)))];
     }
 
     //load from file
@@ -406,7 +410,7 @@ public class TimePeriod {
         //assumption: all active tasks still exist in the allTasksGenerators
         for(TaskGenerator futureTaskGenerator : allTaskGenerators) {
             for(Task futureTask : futureTaskGenerator.getAllTasks()) {
-                if(futureTask.isInSubGroup() && futureTask.getSubgroup().equals(subGroup)) {
+                if(futureTask.getGroup().equals(task.getGroup()) && futureTask.isInSubGroup() && futureTask.getSubgroup().equals(subGroup)) {
                     futureTask.setEstimatedTotalMinutesToCompletion(revisedMinutes);
                 }
             }
