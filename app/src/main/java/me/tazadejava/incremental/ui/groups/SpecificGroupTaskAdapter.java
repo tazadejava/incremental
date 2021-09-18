@@ -114,14 +114,14 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                 continue;
             }
 
-            //if created at the same time, then they are batched together
+            //if the subgroups are the same, then put them together
             if(i + 1 < tasks.size() && tasks.get(i + 1).getSubgroup() != null && tasks.get(i + 1).getSubgroup().equals(task.getSubgroup())) {
                 int totalMinutes = task.getTotalLoggedMinutesOfWork();
                 List<Task> batchTasks = new ArrayList<>();
                 batchTasks.add(task);
                 taskGroupHeads.put(task, task);
 
-                do {
+                do { //repeat for all in the subgroup
                     totalMinutes += tasks.get(i + 1).getTotalLoggedMinutesOfWork();
                     batchTasks.add(tasks.get(i + 1));
                     taskGroupHeads.put(tasks.get(i + 1), task);
@@ -144,65 +144,65 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
         //sort by name
 
-        tasks.sort(new Comparator<Task>() {
-            @Override
-            public int compare(Task task, Task t1) {
-                int name = task.getName().compareTo(t1.getName());
-
-                if(name == 0) {
-                    //guarantee that if an existing head matches with another name that is NOT in the subgroup, then it will be chosen first
-                    if(subgroupedTaskHeads.contains(task)) {
-                        return -1;
-                    } else if(subgroupedTaskHeads.contains(t1)) {
-                        return 1;
-                    } else {
-                        return task.getDueDateTime().compareTo(t1.getDueDateTime());
-                    }
-                } else {
-                    return name;
-                }
-            }
-        });
+//        tasks.sort(new Comparator<Task>() {
+//            @Override
+//            public int compare(Task task, Task t1) {
+//                int name = task.getName().compareTo(t1.getName());
+//
+//                if(name == 0) {
+//                    //guarantee that if an existing head matches with another name that is NOT in the subgroup, then it will be chosen first
+//                    if(subgroupedTaskHeads.contains(task)) {
+//                        return -1;
+//                    } else if(subgroupedTaskHeads.contains(t1)) {
+//                        return 1;
+//                    } else {
+//                        return task.getDueDateTime().compareTo(t1.getDueDateTime());
+//                    }
+//                } else {
+//                    return name;
+//                }
+//            }
+//        });
 
         //next, group tasks if they have the same name (minus a suffix of a number)
-        tasksGrouped = new ArrayList<>();
-        for(int i = 0; i < tasks.size(); i++) {
-            Task task = tasks.get(i);
+//        tasksGrouped = new ArrayList<>();
+//        for(int i = 0; i < tasks.size(); i++) {
+//            Task task = tasks.get(i);
+//
+//            boolean hasSameName = i + 1 < tasks.size() && areTaskNamesEffectivelyIdentical(task, tasks.get(i + 1));
+//            if(hasSameName) {
+//                int totalMinutes = task.getTotalLoggedMinutesOfWork();
+//                List<Task> batchTasks = new ArrayList<>();
+//
+//                //if already grouped via subgroup, then re-add the previous tasks first
+//                if(subgroupedTaskHeads.contains(task)) {
+//                    batchTasks.addAll(taskGroups.get(task));
+//                }
+//
+//                batchTasks.add(0, task);
+//                taskGroupHeads.put(task, task);
+//
+//                do {
+//                    totalMinutes += tasks.get(i + 1).getTotalLoggedMinutesOfWork();
+//                    batchTasks.add(tasks.get(i + 1));
+//                    taskGroupHeads.put(tasks.get(i + 1), task);
+//                    i++;
+//
+//                    hasSameName = i + 1 < tasks.size() && areTaskNamesEffectivelyIdentical(task, tasks.get(i + 1));
+//                } while (hasSameName);
+//
+//                tasksGrouped.add(task);
+//
+//                sortTasksListByStartDate(batchTasks);
+//
+//                taskGroups.put(task, batchTasks);
+//                taskGroupMinutes.put(task, totalMinutes);
+//            } else {
+//                tasksGrouped.add(task);
+//            }
+//        }
 
-            boolean hasSameName = i + 1 < tasks.size() && areTaskNamesEffectivelyIdentical(task, tasks.get(i + 1));
-            if(hasSameName) {
-                int totalMinutes = task.getTotalLoggedMinutesOfWork();
-                List<Task> batchTasks = new ArrayList<>();
-
-                //if already grouped via subgroup, then re-add the previous tasks first
-                if(subgroupedTaskHeads.contains(task)) {
-                    batchTasks.addAll(taskGroups.get(task));
-                }
-
-                batchTasks.add(0, task);
-                taskGroupHeads.put(task, task);
-
-                do {
-                    totalMinutes += tasks.get(i + 1).getTotalLoggedMinutesOfWork();
-                    batchTasks.add(tasks.get(i + 1));
-                    taskGroupHeads.put(tasks.get(i + 1), task);
-                    i++;
-
-                    hasSameName = i + 1 < tasks.size() && areTaskNamesEffectivelyIdentical(task, tasks.get(i + 1));
-                } while (hasSameName);
-
-                tasksGrouped.add(task);
-
-                sortTasksListByStartDate(batchTasks);
-
-                taskGroups.put(task, batchTasks);
-                taskGroupMinutes.put(task, totalMinutes);
-            } else {
-                tasksGrouped.add(task);
-            }
-        }
-
-        tasks = tasksGrouped;
+//        tasks = tasksGrouped;
 
         //sort by start date
         sortTasksListByStartDate(tasks);

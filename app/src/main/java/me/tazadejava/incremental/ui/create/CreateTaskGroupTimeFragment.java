@@ -463,7 +463,7 @@ public class CreateTaskGroupTimeFragment extends Fragment implements BackPressed
         //check for previous data
 
         if(act.getMinutesToCompletion() != -1) {
-            if(taskManager.getActiveEditTask().getTotalLoggedMinutesOfWork() > act.getMinutesToCompletion()) {
+            if(taskManager.getActiveEditTask() != null && taskManager.getActiveEditTask().getTotalLoggedMinutesOfWork() > act.getMinutesToCompletion()) {
                 minutesToCompleteTask.setText(String.valueOf(taskManager.getActiveEditTask().getTotalLoggedMinutesOfWork()));
             } else {
                 //this method should call the textwatcher, and enable the next button if applicable
