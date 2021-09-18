@@ -8,6 +8,7 @@ import android.text.Html;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -145,7 +146,8 @@ public class ReminderNotificationWorker extends Worker {
             String contentText = "You have " + Utils.formatHourMinuteTimeFull(timePeriod.getEstimatedMinutesOfWorkForDate(now)) + " of work today (" + activeTasks + " task" + (activeTasks == 1 ? "" : "s") + ")";
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), IncrementalApplication.NOTIFICATION_MAIN_CHANNEL)
-                    .setSmallIcon(R.drawable.icon)
+                    .setSmallIcon(R.drawable.icon_b_w)
+                    .setColor(ContextCompat.getColor(getApplicationContext(), R.color.secondaryColor))
                     .setContentTitle(getTimeRelatedWelcomeMessage(nowTime))
                     .setStyle(new NotificationCompat.BigTextStyle()
                             .bigText(Html.fromHtml("<b>" + contentText + "</b> <br>" + tasksList, 0)))

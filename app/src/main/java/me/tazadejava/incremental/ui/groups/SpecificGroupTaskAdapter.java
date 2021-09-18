@@ -74,6 +74,8 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
     private Set<Task> selectedTasks = new HashSet<>();
     private boolean isSelectingTasks;
 
+    private long lastExpandCollapseClick; //limit rate at which user can expand/collapse cards
+
     public SpecificGroupTaskAdapter(TaskManager taskManager, GroupTasksViewFragment groupFragment, Activity context, Group group, TimePeriod timePeriod) {
         this.context = context;
         this.groupFragment = groupFragment;
@@ -293,7 +295,15 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
         if(taskGroups.containsKey(task) && isTaskGroupHead(position, task)) {
             List<Task> groupTasks = taskGroups.get(task);
             Task lastTask = groupTasks.get(groupTasks.size() - 1);
+            int completedTasks = 0;
+            for(Task groupTask : groupTasks) {
+                if(groupTask.isTaskComplete()) {
+                    completedTasks++;
+                }
+            }
+            int averageMinutes = completedTasks > 0 ? taskGroupMinutes.get(task) / completedTasks : -1;
             holder.workRemaining.setText("Worked " + Utils.formatHourMinuteTime(taskGroupMinutes.get(task)) + " total\n" +
+                    (averageMinutes == -1 ? "" : ("Averaged " + Utils.formatHourMinuteTime(averageMinutes) + " per task\n")) +
                     groupTasks.size() + " grouped task" + (groupTasks.size() == 1 ? "" : "s"));
 
             if(task.getSubgroup() != null) {
@@ -412,9 +422,9 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                     isSelectingTasks = true;
                     holder.taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
 
-                    if(taskGroups.containsKey(task) && isTaskGroupHead(position, task)) {
+                    if(taskGroups.containsKey(task) && isTaskGroupHead(holder.getAdapterPosition(), task)) {
                         selectedTasks.addAll(taskGroups.get(task));
-                        notifyItemRangeChanged(position + 1, taskGroups.get(task).size());
+                        notifyItemRangeChanged(holder.getAdapterPosition() + 1, taskGroups.get(task).size());
                     } else {
                         selectedTasks.add(task);
 
@@ -433,7 +443,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             public void onClick(View view) {
                 if(isSelectingTasks) {
                     boolean isGroupTaskSelected = false;
-                    boolean isHead = isTaskGroupHead(position, task);
+                    boolean isHead = isTaskGroupHead(holder.getAdapterPosition(), task);
                     if(taskGroups.containsKey(task) && isHead) {
                         for(Task groupTask : taskGroups.get(task)) {
                             if(selectedTasks.contains(groupTask)) {
@@ -446,7 +456,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
                     if (isGroupTaskSelected || selectedTasks.contains(task)) {
                         if(taskGroups.containsKey(task) && isHead) {
                             selectedTasks.removeAll(taskGroups.get(task));
-                            notifyItemRangeChanged(position + 1, taskGroups.get(task).size());
+                            notifyItemRangeChanged(holder.getAdapterPosition() + 1, taskGroups.get(task).size());
                         } else {
                             selectedTasks.remove(task);
 
@@ -469,7 +479,7 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
 
                         if(taskGroups.containsKey(task) && isHead) {
                             selectedTasks.addAll(taskGroups.get(task));
-                            notifyItemRangeChanged(position + 1, taskGroups.get(task).size());
+                            notifyItemRangeChanged(holder.getAdapterPosition() + 1, taskGroups.get(task).size());
                         } else {
                             selectedTasks.add(task);
 
@@ -508,6 +518,11 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if(System.currentTimeMillis() - lastExpandCollapseClick < 500) {
+                        return;
+                    }
+                    lastExpandCollapseClick = System.currentTimeMillis();
+
                     taskGroupsVisible.remove(task);
 
                     List<Task> groupTasks = taskGroups.get(task);
@@ -526,6 +541,11 @@ public class SpecificGroupTaskAdapter extends RecyclerView.Adapter<SpecificGroup
             holder.actionTaskText.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if(System.currentTimeMillis() - lastExpandCollapseClick < 500) {
+                        return;
+                    }
+                    lastExpandCollapseClick = System.currentTimeMillis();
+
                     taskGroupsVisible.add(task);
 
                     int position = tasks.indexOf(task);

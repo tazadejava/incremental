@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import me.tazadejava.incremental.R;
@@ -67,6 +68,8 @@ public class TimePeriodsListAdapter extends RecyclerView.Adapter<TimePeriodsList
                 timePeriods.add(period);
             }
         }
+
+        Collections.reverse(timePeriods);
     }
 
     @NonNull

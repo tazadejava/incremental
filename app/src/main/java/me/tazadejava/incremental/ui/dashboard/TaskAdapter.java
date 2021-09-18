@@ -146,13 +146,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     logTask = this.tasks.get(0);
                     context.getIntent().removeExtra("logTask");
                 }
-            } else {
-                Task task = this.tasks.get(0);
-                boolean containsTaskAndIsNotDoneToday = tasksToday.contains(task) && !task.isDoneWithTaskToday();
-                if (dayPosition == 0 || !containsTaskAndIsNotDoneToday) {
-                    clearPersistentNotification();
-                    setupPersistentNotification(task);
-                }
             }
         }
 
@@ -503,63 +496,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         }
     }
 
-    private void setupPersistentNotification(Task task) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        if (true || prefs.getAll().containsKey("persistentNotification") && !((Boolean) prefs.getAll().get("persistentNotification"))) { //temp disable persistent notifications due to stability issues
-            return;
-        }
-
-        updatePersistentNotification = true;
-        onlySendPersistentNotification(task);
-
-        Timer timer = new Timer();
-
-        TimerTask timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                if(!updatePersistentNotification) {
-                    timer.cancel();
-                    return;
-                }
-
-                onlySendPersistentNotification(task);
-            }
-        };
-
-        timer.scheduleAtFixedRate(timerTask, 0, 60000);
-    }
-
-    /***
-     * Helper method, not to be called directly
-     * @param task
-     */
-    private void onlySendPersistentNotification(Task task) {
-        Intent logWorkDialogIntent = new Intent(context, MainActivity.class);
-        logWorkDialogIntent.putExtra("logTask", task.getName());
-        logWorkDialogIntent.putExtra("dayPosition", dayPosition);
-        PendingIntent logWorkDialog = PendingIntent.getActivity(context, 1, logWorkDialogIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, IncrementalApplication.NOTIFICATION_MAIN_CHANNEL)
-                .setSmallIcon(R.drawable.icon)
-                .setContentTitle("In progress: " + task.getName())
-                .setContentText(Utils.formatHourMinuteTime(task.getCurrentWorkedMinutesWithCarryover()) + " currently logged")
-                .setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT))
-                .addAction(R.drawable.ic_schedule_black_18dp, "Log work", logWorkDialog)
-                .setAutoCancel(false)
-                .setTimeoutAfter(90000) //auto cancel if app is closed
-                .setOngoing(true);
-
-        NotificationManagerCompat nMan = NotificationManagerCompat.from(context);
-        nMan.notify(IncrementalApplication.PERSISTENT_NOTIFICATION_ID, builder.build());
-    }
-
-    private void clearPersistentNotification() {
-        updatePersistentNotification = false;
-
-        NotificationManagerCompat nMan = NotificationManagerCompat.from(context);
-        nMan.cancel(IncrementalApplication.PERSISTENT_NOTIFICATION_ID);
-    }
-
     private View.OnClickListener getActionTaskListener(Task task, boolean hasTaskStarted, ViewHolder holder) {
         ConstraintLayout taskCardConstraintLayout = holder.taskCardConstraintLayout;
         TextView actionTaskText = holder.actionTaskText;
@@ -632,8 +568,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     return;
                                 }
                             }
-
-                            clearPersistentNotification();
 
                             if(LocalDate.now().isBefore(task.getDueDateTime().toLocalDate()) && dayPosition == 0) {
                                 finishedTaskBuilder.setPositiveButton("Finished for today!", new DialogInterface.OnClickListener() {
@@ -890,8 +824,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     actionTaskText.setText("Log\nWork");
                     actionTaskText.setOnClickListener(getActionTaskListener(task, true, holder));
 
-                    setupPersistentNotification(task);
-
                     task.getParent().saveTaskToFile();
 
                     taskCardConstraintLayout.setBackgroundColor(Utils.getThemeAttrColor(context, R.attr.cardColorActive));
@@ -922,7 +854,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         PendingIntent logWorkAction = PendingIntent.getActivity(context, 1, logWorkIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, IncrementalApplication.NOTIFICATION_MAIN_CHANNEL)
-                .setSmallIcon(R.drawable.icon)
+                .setSmallIcon(R.drawable.icon_b_w)
+                .setColor(ContextCompat.getColor(context, R.color.secondaryColor))
                 .setContentTitle("Task in progress:")
                 .setContentText(task.getName())
                 .setWhen(useTaskStartTime ? task.getLastTaskWorkStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : System.currentTimeMillis())
