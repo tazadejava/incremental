@@ -214,13 +214,13 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
         xAxis.setValueFormatter(xAxisFormatter);
 
-        ValueFormatter yAxisFormatter = new DefaultValueFormatter(1);
+        ValueFormatter yAxisFormatter = new DefaultValueFormatter(0);
 
         YAxis yAxis = workBarChart.getAxisLeft();
         yAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         yAxis.setGranularity(1.0f);
         yAxis.setGranularityEnabled(true);
-        yAxis.setLabelCount(4, true);
+        yAxis.setLabelCount(5, true);
 
         yAxis.setAxisMinimum(0);
 
@@ -283,7 +283,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             float totalHours = totalMinutes / 60f;
             totalHours = Math.round(totalHours * 10f) / 10f;
             description.setText("Hours worked this week (" + totalHours + " total)");
-            ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(1);
+            ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(0);
 
             int index = 0;
             for(LocalDate date : currentDates) {
@@ -300,7 +300,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
                 index++;
             }
 
-            workBarChart.getAxisLeft().setAxisMaximum((int) Math.ceil(maxMinutes / 60f));
+            //rounded to the nearest 4, ceil
+            workBarChart.getAxisLeft().setAxisMaximum((int) Math.ceil(maxMinutes / 60f / 4f) * 4);
         } else {
             isShowingHours = false;
             description.setText("Minutes worked this week (" + totalMinutes + " total)");
@@ -321,7 +322,8 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
                 index++;
             }
 
-            workBarChart.getAxisLeft().setAxisMaximum(maxMinutes);
+            //rounded to the nearest 40, ceil
+            workBarChart.getAxisLeft().setAxisMaximum((int) Math.ceil(maxMinutes / 40f) * 40);
         }
 
         BarDataSet barDataSet = new BarDataSet(values, "");

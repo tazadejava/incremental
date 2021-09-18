@@ -3,7 +3,6 @@ package me.tazadejava.incremental.ui.dashboard;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -44,6 +43,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -114,6 +114,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     private boolean updatePersistentNotification;
     private Task logTask;
 
+    private String loggingTaskID; //task id to log when loaded, parsed from notification
+
     public TaskAdapter(TaskManager taskManager, Activity context, TimePeriod timePeriod, int dayPosition, LocalDate date, Set<Task> tasksToday, List<Task> tasks, MainDashboardDayAdapter mainDashboardDayAdapter) {
         this.taskManager = taskManager;
         this.context = context;
@@ -152,6 +154,14 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     setupPersistentNotification(task);
                 }
             }
+        }
+
+        //check for notification log
+        if(context.getIntent().hasExtra("logTask")) {
+            //todo: if not in frame, need to scroll to task first?
+            loggingTaskID = context.getIntent().getStringExtra("logTask");
+            context.getIntent().removeExtra("logTask");
+            refreshLayout();
         }
     }
 
@@ -264,6 +274,9 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 holder.actionTaskText.setText("Log\nWork");
 
                 holder.actionTaskText.setOnClickListener(getActionTaskListener(task, true, holder));
+
+                //send notification if in progress
+                sendOngoingTaskNotification(task, true);
             } else {
                 if(dayPosition == 0) {
                     holder.actionTaskText.setText("Start\nTask");
@@ -272,6 +285,17 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 }
 
                 holder.actionTaskText.setOnClickListener(getActionTaskListener(task, false, holder));
+            }
+
+            //pull up dialog when notification is clicked
+            if(loggingTaskID != null && loggingTaskID.equals(task.getTaskID())) {
+                loggingTaskID = null;
+                holder.actionTaskText.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        holder.actionTaskText.callOnClick();
+                    }
+                });
             }
         } else {
             holder.actionTaskText.setVisibility(View.GONE);
@@ -849,6 +873,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                             imm.showSoftInput(inputMinutes, 0);
                         }
                     }, 150);
+
+                    //cancel notification
+                    NotificationManagerCompat nMan = NotificationManagerCompat.from(context);
+                    nMan.cancel(IncrementalApplication.PERSISTENT_NOTIFICATION_ID);
                 }
             };
         } else {
@@ -875,9 +903,38 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                     tasks.add(0, task);
                     notifyItemMoved(oldPosition, 0);
                     mainDashboardDayAdapter.smoothScrollToPosition(dayPosition);
+
+                    sendOngoingTaskNotification(task, false);
                 }
             };
         }
+    }
+
+    private void sendOngoingTaskNotification(Task task, boolean useTaskStartTime) {
+        //create persistent notification
+
+        //pause work action
+        PendingIntent pauseWorkAction = PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+        //log work action
+        Intent logWorkIntent = new Intent(context, MainActivity.class);
+        logWorkIntent.putExtra("logTask", task.getTaskID());
+        PendingIntent logWorkAction = PendingIntent.getActivity(context, 1, logWorkIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, IncrementalApplication.NOTIFICATION_MAIN_CHANNEL)
+                .setSmallIcon(R.drawable.icon)
+                .setContentTitle("Task in progress:")
+                .setContentText(task.getName())
+                .setWhen(useTaskStartTime ? task.getLastTaskWorkStartTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : System.currentTimeMillis())
+                .setUsesChronometer(true)
+                .setOngoing(true)
+//                            .setContentIntent(PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT))
+//                            .addAction(R.drawable.icon, "Pause", pauseWorkAction)
+                .addAction(R.drawable.icon, "Log Work", logWorkAction)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManagerCompat nMan = NotificationManagerCompat.from(context);
+        nMan.notify(IncrementalApplication.PERSISTENT_NOTIFICATION_ID, builder.build());
     }
 
     public void refreshLayout() {
