@@ -27,6 +27,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.view.animation.Transformation;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -55,6 +56,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import me.tazadejava.incremental.R;
+import me.tazadejava.incremental.logic.tasks.NonrepeatingTask;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.logic.tasks.Task;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
@@ -586,6 +588,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         mainDashboardDayAdapter.unmarkTaskAsAnimated(task);
                                         updateTaskCards(task, holder, true);
 
+                                        if(task.getTotalMinutesLeftOfWork() == 0) {
+                                            openAddEstimationForTaskDialog(task);
+                                        }
+
                                         mainView.animate()
                                                 .translationXBy(width).setDuration(1000).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
                                             @Override
@@ -715,6 +721,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         actionTaskText.setText("Start\nTask\nEarly");
                                     }
                                     actionTaskText.setOnClickListener(getActionTaskListener(task, false, holder));
+
+                                    if(task.getTotalMinutesLeftOfWork() == 0) {
+                                        openAddEstimationForTaskDialog(task);
+                                    }
 
                                     //delayed so that the keyboard can go away first
                                     v.postDelayed(new Runnable() {
@@ -868,6 +878,72 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
 
         NotificationManagerCompat nMan = NotificationManagerCompat.from(context);
         nMan.notify(IncrementalApplication.PERSISTENT_NOTIFICATION_ID, builder.build());
+    }
+
+    private void openAddEstimationForTaskDialog(Task task) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+        View dialogView = context.getLayoutInflater().inflate(R.layout.dialog_reestimate_task_time, null);
+
+        EditText minutesText = dialogView.findViewById(R.id.minutesToCompleteTask);
+        Button[] suggestedTimes = new Button[] {dialogView.findViewById(R.id.suggestedTime1Button), dialogView.findViewById(R.id.suggestedTime2Button),
+                dialogView.findViewById(R.id.suggestedTime3Button), dialogView.findViewById(R.id.suggestedTime4Button)};
+
+        updateSuggestedTimeAddButton(context, 5, suggestedTimes[0], minutesText);
+        updateSuggestedTimeAddButton(context, 15, suggestedTimes[1], minutesText);
+        updateSuggestedTimeAddButton(context, 30, suggestedTimes[2], minutesText);
+        updateSuggestedTimeAddButton(context, 60, suggestedTimes[3], minutesText);
+
+        builder.setView(dialogView);
+        builder.setTitle("You've exceeded your estimated time!");
+        builder.setMessage("\nHow many minutes would you like to add to the task's estimated time?");
+
+        builder.setNegativeButton("DISMISS", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        builder.setPositiveButton("ADD TIME", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //assumption: task must be nonrepeating
+                ((NonrepeatingTask) task.getParent()).updateAndSaveTask(task.getStartDate(), task.getName(),
+                        task.getDueDateTime(), task.getGroup(), task.getSubgroup(),
+                        task.getTotalLoggedMinutesOfWork() + Integer.parseInt(minutesText.getText().toString()));
+
+                //refresh layout
+                refreshLayout();
+            }
+        });
+
+        AlertDialog dialog = builder.show();
+
+        TextView messageText = dialog.findViewById(android.R.id.message);
+        messageText.setGravity(Gravity.CENTER);
+    }
+
+    private void updateSuggestedTimeAddButton(Context context, int minutesAdd, Button button, EditText minutesToCompleteTask) {
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (minutesToCompleteTask.getText().length() == 0) {
+                    minutesToCompleteTask.setText(String.valueOf(minutesAdd));
+                } else {
+                    minutesToCompleteTask.setText(String.valueOf(Integer.parseInt(minutesToCompleteTask.getText().toString()) + minutesAdd));
+                }
+            }
+        });
+
+        int updateColor = ContextCompat.getColor(context, R.color.secondaryColor);
+
+        button.setBackgroundColor(updateColor);
+        if(minutesAdd > 0) {
+            button.setText("+ " + Utils.formatHourMinuteTimeFull(minutesAdd));
+        } else {
+            button.setText("- " + Utils.formatHourMinuteTimeFull(-minutesAdd));
+        }
     }
 
     public void refreshLayout() {

@@ -92,6 +92,9 @@ public class CreateTaskActivity extends AppCompatActivity {
         }
     }
 
+    /*
+    Creates or updates an existing task.
+     */
     public void createTask() {
         TimePeriod timePeriod = taskManager.getCurrentTimePeriod();
 

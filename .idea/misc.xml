@@ -4,6 +4,8 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/layout/app_bar_main.xml" value="0.16770833333333332" />
+        <entry key="app/src/main/res/layout/dialog_reestimate_task_time.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/fragment_create_task_group_time.xml" value="0.16354166666666667" />
       </map>
     </option>
   </component>
