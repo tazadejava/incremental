@@ -263,6 +263,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         StatsManager stats = ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod().getStatsManager();
 
         int maxMinutes = 0;
+        int maxProjectedMinutes = 0;
         int totalMinutes = 0;
         int totalNonzeroDays = 0;
         //calculate maxes and determine whether to show hours or minutes as y axis
@@ -274,11 +275,13 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             if(minutes > 0) {
                 totalMinutes += minutes;
                 totalNonzeroDays++;
+            } else {
+                maxProjectedMinutes = Math.max(maxProjectedMinutes, taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date));
             }
         }
 
         List<BarEntry> values = new ArrayList<>();
-        if(totalNonzeroDays != 0 && totalMinutes / totalNonzeroDays > 60) {
+        if(totalNonzeroDays != 0 && totalMinutes / totalNonzeroDays > 60 || maxProjectedMinutes >= 120) {
             isShowingHours = true;
             float totalHours = totalMinutes / 60f;
             totalHours = Math.round(totalHours * 10f) / 10f;
