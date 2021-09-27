@@ -64,10 +64,10 @@ public class CalendarHeatmapPointAdapter extends RecyclerView.Adapter<CalendarHe
     private HashMap<Group, Integer> groupTimes;
     private HashMap<Group, Float> groupPercentages;
 
-    public CalendarHeatmapPointAdapter(TaskManager taskManager, LocalDate date) {
+    public CalendarHeatmapPointAdapter(boolean shouldIncludeTimeInvariants, TaskManager taskManager, LocalDate date) {
         StatsManager statsManager = taskManager.getCurrentTimePeriod().getStatsManager();
 
-        groupTimes = new HashMap<>(statsManager.getMinutesWorkedSplitByGroup(date));
+        groupTimes = new HashMap<>(statsManager.getMinutesWorkedSplitByGroup(date, shouldIncludeTimeInvariants));
         groups = new ArrayList<>(groupTimes.keySet());
 
         int totalMinutes = 0;
@@ -88,13 +88,13 @@ public class CalendarHeatmapPointAdapter extends RecyclerView.Adapter<CalendarHe
         });
     }
 
-    public CalendarHeatmapPointAdapter(TaskManager taskManager, LocalDate[] dates) {
+    public CalendarHeatmapPointAdapter(boolean shouldIncludeTimeInvariants, TaskManager taskManager, LocalDate[] dates) {
         StatsManager statsManager = taskManager.getCurrentTimePeriod().getStatsManager();
 
         groupTimes = new HashMap<>();
 
         for(LocalDate date : dates) {
-            HashMap<Group, Integer> times = statsManager.getMinutesWorkedSplitByGroup(date);
+            HashMap<Group, Integer> times = statsManager.getMinutesWorkedSplitByGroup(date, shouldIncludeTimeInvariants);
 
             for(Group group : times.keySet()) {
                 groupTimes.putIfAbsent(group, 0);

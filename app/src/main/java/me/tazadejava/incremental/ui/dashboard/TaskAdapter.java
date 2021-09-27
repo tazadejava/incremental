@@ -220,10 +220,19 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             }
         });
 
+        holder.taskNotes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateMinutesNotesView(task, holder, false);
+                Utils.animateTaskCardOptionsLayout(holder.expandedOptionsLayout, task.getGroup(), holder.sideCardAccent, task.getTaskCompletionPercentage(), true);
+            }
+        });
+
         holder.dailyTimeRemaining.post(new Runnable() {
             @Override
             public void run() {
-                updateMinutesNotesView(task, holder);
+                //run later to update
+                updateMinutesNotesView(task, holder, true);
             }
         });
 
@@ -334,7 +343,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     }
 
     private void updateTaskCards(Task task, ViewHolder holder, boolean updateAnimation) {
-        updateMinutesNotesView(task, holder, updateAnimation);
+        updateMinutesNotesView(task, holder, updateAnimation, true);
 
         //first, init a baseline drawable
         LayerDrawable unwrapped = (LayerDrawable) AppCompatResources.getDrawable(context, R.drawable.task_card_gradient).mutate();
@@ -443,11 +452,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
         };
     }
 
-    private void updateMinutesNotesView(Task task, ViewHolder holder) {
-        updateMinutesNotesView(task, holder, false);
+    private void updateMinutesNotesView(Task task, ViewHolder holder, boolean limitLines) {
+        updateMinutesNotesView(task, holder, false, limitLines);
     }
 
-    private void updateMinutesNotesView(Task task, ViewHolder holder, boolean updateCardTextAnimation) {
+    private void updateMinutesNotesView(Task task, ViewHolder holder, boolean updateCardTextAnimation, boolean limitLines) {
         List<LocalDateTime> timestamps = task.getMinutesNotesTimestamps();
         if(timestamps.isEmpty()) {
             holder.taskNotes.setLines(2);
@@ -458,7 +467,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
             boolean darkModeOn = ((IncrementalApplication) context.getApplication()).isDarkModeOn();
 
             int lines = 1;
-            for(int i = timestamps.size() - 1; i >= (timestamps.size() >= 3 ? timestamps.size() - 3 : 0); i--) {
+            int maxLineIndex = limitLines ? (timestamps.size() >= 3 ? timestamps.size() - 3 : 0) : 0;
+            for(int i = timestamps.size() - 1; i >= maxLineIndex; i--) {
                 LocalDateTime dateTime = timestamps.get(i);
                 int minutes = task.getMinutesFromTimestamp(dateTime);
                 String notes = task.getNotesFromTimestamp(dateTime);
@@ -484,7 +494,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                 }
             }
 
-            if(timestamps.size() >= 3) {
+            if(limitLines && timestamps.size() >= 3) {
                 minutesNotes.append("..." + (timestamps.size() - 3) + " more");
                 lines++;
             }
@@ -593,7 +603,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                         }
 
                                         mainView.animate()
-                                                .translationXBy(width).setDuration(1000).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
+                                                .translationXBy(width).setDuration(800).setInterpolator(new OvershootInterpolator()).withEndAction(new Runnable() {
                                             @Override
                                             public void run() {
                                                 mainDashboardDayAdapter.updateTaskCards(task, null);
@@ -632,7 +642,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
                                     updateTaskCards(task, holder, true);
 
                                     mainView.animate()
-                                            .translationXBy(width).setStartDelay(200).setDuration(1000).setInterpolator(new AnticipateOvershootInterpolator(4)).withEndAction(new Runnable() {
+                                            .translationXBy(width).setStartDelay(200).setDuration(800).setInterpolator(new AnticipateOvershootInterpolator(4)).withEndAction(new Runnable() {
                                         @Override
                                         public void run() {
                                             mainDashboardDayAdapter.updateTaskCards(task, null);

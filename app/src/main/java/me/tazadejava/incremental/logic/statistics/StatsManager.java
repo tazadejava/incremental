@@ -253,7 +253,7 @@ public class StatsManager {
         saveData();
     }
 
-    public int getMinutesWorked(LocalDate date) {
+    public int getMinutesWorked(LocalDate date, boolean includeTimeInvariants) {
         int minutes = 0;
 
         if(totalMinutesWorkedByGroup.containsKey(date)) {
@@ -262,26 +262,44 @@ public class StatsManager {
             }
         }
 
+        if(includeTimeInvariants) {
+            minutes += timePeriod.getTimeInvariantMinutes(date);
+        }
+
         return minutes;
     }
 
-    public int getMinutesWorkedByGroup(Group group, LocalDate date) {
+    public int getMinutesWorkedByGroup(Group group, LocalDate date, boolean includeTimeInvariants) {
+        int minutes = 0;
+
         if(totalMinutesWorkedByGroup.containsKey(date)) {
             if(totalMinutesWorkedByGroup.get(date).containsKey(group)) {
-                return totalMinutesWorkedByGroup.get(date).get(group);
+                minutes += totalMinutesWorkedByGroup.get(date).get(group);
             }
         }
 
-        return 0;
+        if(includeTimeInvariants) {
+            minutes += timePeriod.getTimeInvariantMinutes(group, date);
+        }
+
+        return minutes;
     }
 
-    public HashMap<Group, Integer> getMinutesWorkedSplitByGroup(LocalDate date) {
+    public HashMap<Group, Integer> getMinutesWorkedSplitByGroup(LocalDate date, boolean includeTimeInvariants) {
         HashMap<Group, Integer> minutesWorked = new HashMap<>();
 
-        if(totalMinutesWorkedByGroup.containsKey(date)) {
-            for (Group group : totalMinutesWorkedByGroup.get(date).keySet()) {
-                minutesWorked.put(group, totalMinutesWorkedByGroup.get(date).get(group));
+        for (Group group : timePeriod.getAllGroups()) { //need to obtain groups differently if only time invariant was found for a date
+            int minutes = 0;
+
+            if(includeTimeInvariants) {
+                minutes += timePeriod.getTimeInvariantMinutes(group, date);
             }
+
+            if(totalMinutesWorkedByGroup.containsKey(date) && totalMinutesWorkedByGroup.get(date).containsKey(group)) {
+                minutes += totalMinutesWorkedByGroup.get(date).get(group);
+            }
+
+            minutesWorked.put(group, minutes);
         }
 
         return minutesWorked;

@@ -280,7 +280,11 @@ public class Utils {
     }
 
     public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, Group group, View sideCardAccent, double accentPercentage) {
-        if(expandedOptionsLayout.getVisibility() == View.VISIBLE) {
+        animateTaskCardOptionsLayout(expandedOptionsLayout, group, sideCardAccent, accentPercentage, false);
+    }
+
+    public static void animateTaskCardOptionsLayout(ConstraintLayout expandedOptionsLayout, Group group, View sideCardAccent, double accentPercentage, boolean forceShowLayout) {
+        if(!forceShowLayout && expandedOptionsLayout.getVisibility() == View.VISIBLE) {
             int height = expandedOptionsLayout.getHeight();
 
             Animation anim = new Animation() {
@@ -312,6 +316,7 @@ public class Utils {
 
             expandedOptionsLayout.startAnimation(anim);
         } else {
+            boolean wasExpandedOptionsLayoutVisible = expandedOptionsLayout.getVisibility() == View.VISIBLE;
             expandedOptionsLayout.setVisibility(View.VISIBLE);
             expandedOptionsLayout.setAlpha(1);
 
@@ -320,12 +325,18 @@ public class Utils {
 
             int measuredHeight = expandedOptionsLayout.getMeasuredHeight();
 
-            expandedOptionsLayout.getLayoutParams().height = 0;
+            int initialHeight;
+            if(!wasExpandedOptionsLayoutVisible) {
+                expandedOptionsLayout.getLayoutParams().height = 0;
+                initialHeight = 0;
+            } else {
+                initialHeight = expandedOptionsLayout.getLayoutParams().height;
+            }
 
             Animation anim = new Animation() {
                 @Override
                 protected void applyTransformation(float interpolatedTime, Transformation t) {
-                    expandedOptionsLayout.getLayoutParams().height = (int) (measuredHeight * interpolatedTime);
+                    expandedOptionsLayout.getLayoutParams().height = initialHeight + (int) ((measuredHeight - initialHeight) * interpolatedTime);
                     expandedOptionsLayout.requestLayout();
 
                     if(group != null) {

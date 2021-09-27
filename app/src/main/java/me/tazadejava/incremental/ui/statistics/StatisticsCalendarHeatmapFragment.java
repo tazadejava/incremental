@@ -6,7 +6,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
+import android.widget.Switch;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -27,10 +29,25 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
 
     private CalendarMonthsAdapter monthAdapter;
 
+    private Spinner heatmapGroupSpinner;
+    private Switch toggleTimeInvariant;
+
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
         ConstraintLayout root = (ConstraintLayout) inflater.inflate(R.layout.fragment_statistics_calendar_heatmap, container, false);
+
+        toggleTimeInvariant = root.findViewById(R.id.toggleTimeInvariant);
+
+        toggleTimeInvariant.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
+
+                monthAdapter.setHeatmapGroup(heatmapGroupSpinner.getSelectedItemPosition() == 0 ? null :
+                        taskManager.getCurrentGroupByName(heatmapGroupSpinner.getSelectedItem().toString())); //use to refresh the layout
+            }
+        });
 
         setupNav(root, container, StatisticsWorkloadTrendsFragment.class, StatisticsWorkloadTrendsFragment.class);
 
@@ -42,7 +59,7 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
     private void setupCalendar(ConstraintLayout root) {
         TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
-        Spinner heatmapGroupSpinner = root.findViewById(R.id.heatmapGroupSpinner);
+        heatmapGroupSpinner = root.findViewById(R.id.heatmapGroupSpinner);
 
         List<String> items = new ArrayList<>();
         items.add("All groups");
@@ -88,6 +105,10 @@ public class StatisticsCalendarHeatmapFragment extends StatisticsFragment {
             currentYearMonth = YearMonth.from(currentYearMonth.atEndOfMonth().plusDays(1));
         } while(currentYearMonth.isBefore(endDate) || currentYearMonth.equals(endDate));
 
-        calendarLayout.setAdapter(monthAdapter = new CalendarMonthsAdapter(getActivity(), yearMonths.toArray(new YearMonth[0])));
+        calendarLayout.setAdapter(monthAdapter = new CalendarMonthsAdapter(getActivity(), this, yearMonths.toArray(new YearMonth[0])));
+    }
+
+    public boolean shouldIncludeTimeInvariants() {
+        return toggleTimeInvariant.isChecked();
     }
 }

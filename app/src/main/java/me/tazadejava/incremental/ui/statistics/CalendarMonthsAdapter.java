@@ -38,6 +38,7 @@ public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAd
     }
 
     private Activity activity;
+    private StatisticsCalendarHeatmapFragment fragment;
     private HashMap<DayOfWeek, Integer> dowIndices;
 
     private YearMonth[] yearMonths;
@@ -45,8 +46,9 @@ public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAd
     //TODO: this is not very good if the time period lasts for large numbers, but this is the temporary solution in order to create animations
     private CalendarWeeksAdapter[] weekAdapters;
 
-    public CalendarMonthsAdapter(Activity activity, YearMonth[] yearMonths) {
+    public CalendarMonthsAdapter(Activity activity, StatisticsCalendarHeatmapFragment fragment, YearMonth[] yearMonths) {
         this.activity = activity;
+        this.fragment = fragment;
         this.yearMonths = yearMonths;
 
         dowIndices = new HashMap<>();
@@ -69,7 +71,7 @@ public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAd
                 daysTotal += yearMonths[i - 1].lengthOfMonth();
             }
 
-            weekAdapters[i] = new CalendarWeeksAdapter(activity, daysTotal, maxMinutesWorked, null, dowIndices, yearMonths[i]);
+            weekAdapters[i] = new CalendarWeeksAdapter(activity, fragment, daysTotal, maxMinutesWorked, null, dowIndices, yearMonths[i]);
         }
     }
 
@@ -82,9 +84,9 @@ public class CalendarMonthsAdapter extends RecyclerView.Adapter<CalendarMonthsAd
             for (int j = 1; j <= yearMonths[i].lengthOfMonth(); j++) { //for all days of the month
                 int worked;
                 if(group == null) {
-                    worked = stats.getMinutesWorked(yearMonths[i].atDay(j));
+                    worked = stats.getMinutesWorked(yearMonths[i].atDay(j), fragment.shouldIncludeTimeInvariants());
                 } else {
-                    worked = stats.getMinutesWorkedByGroup(group, yearMonths[i].atDay(j));
+                    worked = stats.getMinutesWorkedByGroup(group, yearMonths[i].atDay(j), fragment.shouldIncludeTimeInvariants());
                 }
 
                 maxMinutesWorked = Math.max(worked, maxMinutesWorked);

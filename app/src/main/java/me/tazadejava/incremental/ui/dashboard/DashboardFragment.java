@@ -268,7 +268,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         int totalNonzeroDays = 0;
         //calculate maxes and determine whether to show hours or minutes as y axis
         for(LocalDate date : currentDates) {
-            int minutes = stats.getMinutesWorked(date);
+            int minutes = stats.getMinutesWorked(date, false);
 
             maxMinutes = Math.max(maxMinutes, minutes);
 
@@ -283,20 +283,18 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         List<BarEntry> values = new ArrayList<>();
         if(totalNonzeroDays != 0 && totalMinutes / totalNonzeroDays > 60 || maxProjectedMinutes >= 120) {
             isShowingHours = true;
-            float totalHours = totalMinutes / 60f;
-            totalHours = Math.round(totalHours * 10f) / 10f;
-            description.setText("Hours worked this week (" + totalHours + " total)");
+            description.setText("Hours worked this week (" + Utils.formatHourMinuteTime(totalMinutes) + " total)");
             ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(0);
 
             int index = 0;
             for(LocalDate date : currentDates) {
                 float hours;
-                if(date.isAfter(now) || (date.isEqual(now) && stats.getMinutesWorked(date) == 0)) {
+                if(date.isAfter(now) || (date.isEqual(now) && stats.getMinutesWorked(date, false) == 0)) {
                     //projection
                     maxMinutes = Math.max(taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date), maxMinutes);
                     hours = taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date) / 60f;
                 } else {
-                    hours = stats.getMinutesWorked(date) / 60f;
+                    hours = stats.getMinutesWorked(date, false) / 60f;
                 }
                 values.add(new BarEntry(index, hours));
 
@@ -307,18 +305,18 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             workBarChart.getAxisLeft().setAxisMaximum((int) Math.ceil(maxMinutes / 60f / 4f) * 4);
         } else {
             isShowingHours = false;
-            description.setText("Minutes worked this week (" + totalMinutes + " total)");
+            description.setText("Minutes worked this week (" + Utils.formatHourMinuteTime(totalMinutes) + " total)");
             ((DefaultValueFormatter) workBarChart.getAxisLeft().getValueFormatter()).setup(0);
 
             int index = 0;
             for(LocalDate date : currentDates) {
                 int minutes;
-                if(date.isAfter(now) || (date.isEqual(now) && stats.getMinutesWorked(date) == 0)) {
+                if(date.isAfter(now) || (date.isEqual(now) && stats.getMinutesWorked(date, false) == 0)) {
                     //projection
                     maxMinutes = Math.max(taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date), maxMinutes);
                     minutes = taskManager.getCurrentTimePeriod().getEstimatedMinutesOfWorkForDate(date);
                 } else {
-                    minutes = stats.getMinutesWorked(date);
+                    minutes = stats.getMinutesWorked(date, false);
                 }
                 values.add(new BarEntry(index, minutes));
 
@@ -335,7 +333,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         int[] colors = new int[currentDates.length];
         int index = 0;
         for(LocalDate date : currentDates) {
-            if(date.equals(now) && stats.getMinutesWorked(now) > 0) {
+            if(date.equals(now) && stats.getMinutesWorked(now, false) > 0) {
                 colors[index] = ContextCompat.getColor(getContext(), R.color.primaryColor);
             } else if(date.isBefore(now)) {
                 colors[index] = ContextCompat.getColor(getContext(), R.color.secondaryColor);

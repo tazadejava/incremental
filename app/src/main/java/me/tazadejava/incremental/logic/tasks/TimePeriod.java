@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -58,13 +59,13 @@ public class TimePeriod {
 
     //representing index in allTasks for each day; INDEX 0 IS TOMORROW; does not save and is recreated each time
     private List<Task>[] tasksByDay;
-    private int[] timeCommitmentsPerDay;
+
+    private HashMap<Group, WeeklyTimeInvariant> timeInvariantsPerGroup = new HashMap<>();
 
     private TimePeriod(TaskManager taskManager) {
         this.taskManager = taskManager;
 
         tasksByDay = new List[DAILY_LOGS_AHEAD_COUNT_LOAD];
-        timeCommitmentsPerDay = new int[DAILY_LOGS_AHEAD_COUNT_LOAD];
 
         for (int i = 0; i < tasksByDay.length; i++) {
             tasksByDay[i] = new ArrayList<>();
@@ -82,8 +83,6 @@ public class TimePeriod {
         workPreferences = new GlobalTaskWorkPreference();
 
         timePeriodID = UUID.randomUUID().toString().replace("-", "") + beginDate.format(DateTimeFormatter.BASIC_ISO_DATE);
-
-        timeCommitmentsPerDay = new int[Utils.getDaysUntilEndOfWeek(1 + (int) Math.max(0, ChronoUnit.WEEKS.between(LocalDate.now(), endDate)))];
     }
 
     //load from file
@@ -107,6 +106,14 @@ public class TimePeriod {
             for(JsonElement group : groupData) {
                 Group groupObject = new Group(group.getAsJsonObject());
                 groups.put(groupObject.getGroupName(), groupObject);
+            }
+        }
+
+        if(data.has("timeInvariantData")) {
+            JsonObject timeInvariantData = data.getAsJsonObject("timeInvariantData");
+
+            for(String groupName : timeInvariantData.keySet()) {
+                timeInvariantsPerGroup.put(getGroupByName(groupName), new WeeklyTimeInvariant(timeInvariantData.get(groupName).getAsJsonObject()));
             }
         }
 
@@ -241,6 +248,17 @@ public class TimePeriod {
             }
 
             data.add("groupData", groupData);
+        }
+
+        if(!timeInvariantsPerGroup.isEmpty()) {
+            JsonObject timeInvariantData = new JsonObject();
+
+            //add time invariants
+            for(Group group : timeInvariantsPerGroup.keySet()) {
+                timeInvariantData.add(group.getGroupName(), timeInvariantsPerGroup.get(group).save());
+            }
+
+            data.add("timeInvariantData", timeInvariantData);
         }
 
         data.add("workPreferences", gson.toJsonTree(workPreferences));
@@ -892,6 +910,35 @@ public class TimePeriod {
         });
 
         return tasks;
+    }
+
+    public int getTimeInvariantMinutes(LocalDate date) {
+        int minutes = 0;
+        for(Group group : groups.values()) {
+            if(timeInvariantsPerGroup.containsKey(group)) {
+                WeeklyTimeInvariant invariant = timeInvariantsPerGroup.get(group);
+                minutes += invariant.getMinutes(this, date);
+            }
+        }
+
+        return minutes;
+    }
+
+    public int getTimeInvariantMinutes(Group group, LocalDate date) {
+        if(timeInvariantsPerGroup.containsKey(group)) {
+            WeeklyTimeInvariant invariant = timeInvariantsPerGroup.get(group);
+            return invariant.getMinutes(this, date);
+        }
+
+        return 0;
+    }
+
+    public WeeklyTimeInvariant getTimeInvariant(Group group) {
+        return timeInvariantsPerGroup.getOrDefault(group, null);
+    }
+
+    public void setTimeInvariant(Group group, WeeklyTimeInvariant invariant) {
+        timeInvariantsPerGroup.put(group, invariant);
     }
 
     public String getTimePeriodID() {

@@ -3,6 +3,7 @@ package me.tazadejava.incremental.ui.groups;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Html;
@@ -57,7 +58,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public ConstraintLayout taskCardConstraintLayout, expandedOptionsLayout;
-        public TextView taskGroupName, tasksCount, actionTaskText, timePeriodText, secondaryActionTaskText, thirdActionTaskText, taskNotes;
+        public TextView taskGroupName, tasksCount, actionTaskText, timePeriodText, secondaryActionTaskText, thirdActionTaskText, taskNotes, fourthActionTaskText;
 
         public View sideCardAccent;
 
@@ -73,6 +74,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             secondaryActionTaskText = itemView.findViewById(R.id.secondaryActionTaskText);
             thirdActionTaskText = itemView.findViewById(R.id.thirdActionTaskText);
             taskNotes = itemView.findViewById(R.id.taskNotes);
+
+            fourthActionTaskText = itemView.findViewById(R.id.fourthActionTaskText);
 
             timePeriodText = itemView.findViewById(R.id.task_due_date);
 
@@ -216,8 +219,16 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             }
         });
 
-        holder.secondaryActionTaskText.setText("Change Color");
+        holder.secondaryActionTaskText.setText("Set Time Invariants");
         holder.secondaryActionTaskText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                navigateToGroupTimeInvariant(group);
+            }
+        });
+
+        holder.thirdActionTaskText.setText("Change Color");
+        holder.thirdActionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 AlertDialog.Builder dialog = new AlertDialog.Builder(context);
@@ -309,8 +320,9 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
             }
         });
 
-        holder.thirdActionTaskText.setText("Delete Group");
-        holder.thirdActionTaskText.setOnClickListener(new View.OnClickListener() {
+        holder.fourthActionTaskText.setVisibility(View.VISIBLE);
+        holder.fourthActionTaskText.setText("Delete Group");
+        holder.fourthActionTaskText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 AlertDialog.Builder deleteDialog = new AlertDialog.Builder(context);
@@ -426,10 +438,28 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         nav.navigate(R.id.nav_specific_group, bundle, navOptions);
     }
 
+    private void navigateToGroupTimeInvariant(Group group) {
+        NavController nav = Navigation.findNavController(context, R.id.nav_host_fragment);
+
+        Bundle bundle = new Bundle();
+
+        bundle.putString("group", group.getGroupName());
+
+        NavOptions navOptions = new NavOptions.Builder()
+                .setEnterAnim(R.anim.slide_in_left)
+                .setExitAnim(R.anim.slide_out_right)
+                .setPopEnterAnim(R.anim.slide_in_right)
+                .setPopExitAnim(R.anim.slide_out_left)
+                .build();
+
+        nav.navigate(R.id.nav_time_invariant, bundle, navOptions);
+    }
+
     /**
      *
      * into groupStats -> array of four ints: average minutes, median minutes, standard deviation, then total weeks counted
      * into groupMinMax -> min minutes and date, max minutes and date (monday)
+     * TODO: only calculates WORKED, does not calculate worked and lectures; option to view?
      * @param group
      *
      */
@@ -450,7 +480,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
         main:
         while(currentLoopDate.plusDays(-1).isBefore(endLoopDate)) {
             for(LocalDate date : LogicalUtils.getWorkWeekDates(currentLoopDate)) {
-                if(taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date) > 0) {
+                if(taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date, false) > 0) {
                     break main;
                 }
             }
@@ -480,7 +510,7 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
                     workedThisWeek = true;
                 }
 
-                int minutes = statsManager.getMinutesWorkedByGroup(group, date);
+                int minutes = statsManager.getMinutesWorkedByGroup(group, date, false);
                 totalMinutes += minutes;
                 averageMinutesWorked += minutes;
             }
@@ -535,8 +565,8 @@ public class TaskGroupListAdapter extends RecyclerView.Adapter<TaskGroupListAdap
     private int getMinutesWorkedThisWeek(Group group) {
         int minutesWorked = 0;
 
-        for(LocalDate date : LogicalUtils.getWorkWeekDates()) {
-            minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date);
+        for(LocalDate date : LogicalUtils.getWorkWeekDates()) { //TODO: GIVES WORKED THIS WEEK, NOT NECESSARILY WITH LECTURES
+            minutesWorked += taskManager.getCurrentTimePeriod().getStatsManager().getMinutesWorkedByGroup(group, date, false);
         }
 
         return minutesWorked;

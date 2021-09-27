@@ -54,6 +54,7 @@ public class GroupWorkloadTrendsStatisticsAdapter extends RecyclerView.Adapter<G
     }
 
     private Activity activity;
+    private StatisticsWorkloadTrendsFragment fragment;
 
     private TaskManager taskManager;
 
@@ -75,8 +76,9 @@ public class GroupWorkloadTrendsStatisticsAdapter extends RecyclerView.Adapter<G
 
     private boolean isViewingWeeklyAverage = true;
 
-    public GroupWorkloadTrendsStatisticsAdapter(Activity activity, TaskManager taskManager) {
+    public GroupWorkloadTrendsStatisticsAdapter(Activity activity, StatisticsWorkloadTrendsFragment fragment, TaskManager taskManager) {
         this.activity = activity;
+        this.fragment = fragment;
         this.taskManager = taskManager;
         timePeriod = taskManager.getCurrentTimePeriod();
 
@@ -130,7 +132,7 @@ public class GroupWorkloadTrendsStatisticsAdapter extends RecyclerView.Adapter<G
 
             for (LocalDate[] dates : dateWeeks) {
                 for (int i = 0; i < 7; i++) {
-                    totalMinutes[i] += statsManager.getMinutesWorkedByGroup(group, dates[i]);
+                    totalMinutes[i] += statsManager.getMinutesWorkedByGroup(group, dates[i], fragment.shouldIncludeTimeInvariants());
                 }
             }
 
@@ -169,7 +171,7 @@ public class GroupWorkloadTrendsStatisticsAdapter extends RecyclerView.Adapter<G
 
             int index = 0;
             for(LocalDate date : LogicalUtils.getWorkWeekDates()) {
-                int minutesWorked = statsManager.getMinutesWorkedByGroup(group, date);
+                int minutesWorked = statsManager.getMinutesWorkedByGroup(group, date, fragment.shouldIncludeTimeInvariants());
                 entriesByDay.add(minutesWorked);
 
                 if(minutesWorked > maxMinutes) {

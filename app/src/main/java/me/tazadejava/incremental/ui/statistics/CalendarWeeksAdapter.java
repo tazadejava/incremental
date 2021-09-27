@@ -59,6 +59,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
     private static final int TODAY_HEATMAP_SIZE = 6;
 
     private Activity activity;
+    private StatisticsCalendarHeatmapFragment fragment;
     private TaskManager taskManager;
     private StatsManager statsManager;
 
@@ -76,8 +77,9 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
 
     private View dayOutlineView;
 
-    public CalendarWeeksAdapter(Activity activity, int daysOffsetFromTop, int maxMinutesWorked, @Nullable Group heatmapGroup, HashMap<DayOfWeek, Integer> dowIndices, YearMonth yearMonth) {
+    public CalendarWeeksAdapter(Activity activity, StatisticsCalendarHeatmapFragment fragment, int daysOffsetFromTop, int maxMinutesWorked, @Nullable Group heatmapGroup, HashMap<DayOfWeek, Integer> dowIndices, YearMonth yearMonth) {
         this.activity = activity;
+        this.fragment = fragment;
         this.daysOffsetFromTop = daysOffsetFromTop;
         this.yearMonth = yearMonth;
         this.maxMinutesWorked = maxMinutesWorked;
@@ -112,9 +114,9 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
             int minutesWorked;
             LocalDate day = yearMonth.atDay(1).plusDays(i - firstDayIndex);
             if(heatmapGroup == null) {
-                minutesWorked = statsManager.getMinutesWorked(day);
+                minutesWorked = statsManager.getMinutesWorked(day, fragment.shouldIncludeTimeInvariants());
             } else {
-                minutesWorked = statsManager.getMinutesWorkedByGroup(heatmapGroup, day);
+                minutesWorked = statsManager.getMinutesWorkedByGroup(heatmapGroup, day, fragment.shouldIncludeTimeInvariants());
             }
             minutesWorkedPerDay[i] = minutesWorked;
 
@@ -206,6 +208,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
 
                             Bundle bundle = new Bundle();
 
+                            bundle.putBoolean("shouldIncludeTimeInvariants", fragment.shouldIncludeTimeInvariants());
                             bundle.putString("date", date.toString());
 
                             NavOptions navOptions = new NavOptions.Builder()
@@ -248,7 +251,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
                     String[] dates = new String[7];
                     LocalDate day = yearMonth.atDay(1).plusDays(-firstDayIndex);
                     for(int i = 0; i < 7; i++) {
-                        int heatmapPosition = i + (position * 7);
+                        int heatmapPosition = i + (holder.getAdapterPosition() * 7);
                         dates[i] = day.plusDays(heatmapPosition).toString();
                     }
 
@@ -257,6 +260,7 @@ public class CalendarWeeksAdapter extends RecyclerView.Adapter<CalendarWeeksAdap
 
                     Bundle bundle = new Bundle();
 
+                    bundle.putBoolean("shouldIncludeTimeInvariants", fragment.shouldIncludeTimeInvariants());
                     bundle.putStringArray("dates", dates);
 
                     NavOptions navOptions = new NavOptions.Builder()

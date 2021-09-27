@@ -43,16 +43,18 @@ public class CalendarHeatmapPointFragment extends Fragment implements BackPresse
 
         TaskManager taskManager = ((IncrementalApplication) getActivity().getApplication()).getTaskManager();
 
+        boolean shouldIncludeTimeInvariants = getArguments().getBoolean("shouldIncludeTimeInvariants");
+
         if(getArguments().getString("date") != null) {
             LocalDate date = LocalDate.parse(getArguments().getString("date"));
-            groupView.setAdapter(new CalendarHeatmapPointAdapter(taskManager, date));
+            groupView.setAdapter(new CalendarHeatmapPointAdapter(shouldIncludeTimeInvariants, taskManager, date));
         } else {
             String[] datesString = getArguments().getStringArray("dates");
             LocalDate[] dates = new LocalDate[7];
             for(int i = 0; i < datesString.length; i++) {
                 dates[i] = LocalDate.parse(datesString[i]);
             }
-            groupView.setAdapter(new CalendarHeatmapPointAdapter(taskManager, dates));
+            groupView.setAdapter(new CalendarHeatmapPointAdapter(shouldIncludeTimeInvariants, taskManager, dates));
         }
 
         groupView.setLayoutManager(new LinearLayoutManager(getContext()));

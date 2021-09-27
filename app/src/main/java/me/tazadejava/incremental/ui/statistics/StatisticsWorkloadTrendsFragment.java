@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,7 +26,6 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.DefaultValueFormatter;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +39,6 @@ import me.tazadejava.incremental.logic.tasks.TaskManager;
 import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
-import me.tazadejava.incremental.ui.main.MainActivity;
 import me.tazadejava.incremental.ui.main.Utils;
 
 public class StatisticsWorkloadTrendsFragment extends StatisticsFragment implements BackPressedInterface {
@@ -46,6 +46,9 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
     private GroupWorkloadTrendsStatisticsAdapter groupWorkloadTrendsStatisticsAdapter;
 
     private TextView dailyGroupTrends;
+    private BarChart workloadTrendsChart;
+    private RecyclerView dailyGroupTrendsRecyclerView;
+    private Switch toggleTimeInvariant;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -53,20 +56,32 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
         View root = inflater.inflate(R.layout.fragment_statistics_workload_trends, container, false);
 
         dailyGroupTrends = root.findViewById(R.id.dailyGroupTrendsText);
+        workloadTrendsChart = root.findViewById(R.id.workloadTrendChart);
+        dailyGroupTrendsRecyclerView = root.findViewById(R.id.dailyGroupTrendsRecyclerView);
+        toggleTimeInvariant = root.findViewById(R.id.toggleTimeInvariant);
 
         dailyGroupTrends.setText("Average Workload Trends (min)");
 
-        BarChart workloadTrendsChart = root.findViewById(R.id.workloadTrendChart);
-
-        defineWorkloadTrends(workloadTrendsChart);
-
-        RecyclerView dailyGroupTrendsRecyclerView = root.findViewById(R.id.dailyGroupTrendsRecyclerView);
-        dailyGroupTrendsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        dailyGroupTrendsRecyclerView.setAdapter(groupWorkloadTrendsStatisticsAdapter = new GroupWorkloadTrendsStatisticsAdapter(getActivity(), ((IncrementalApplication) getActivity().getApplication()).getTaskManager()));
+        refreshTrendsData();
 
         setupNav(root, container, StatisticsCalendarHeatmapFragment.class, StatisticsCalendarHeatmapFragment.class);
 
+        toggleTimeInvariant.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                refreshTrendsData();
+            }
+        });
+
         return root;
+    }
+
+    private void refreshTrendsData() {
+        defineWorkloadTrends(workloadTrendsChart);
+
+        dailyGroupTrendsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        dailyGroupTrendsRecyclerView.setAdapter(groupWorkloadTrendsStatisticsAdapter = new GroupWorkloadTrendsStatisticsAdapter(getActivity(),
+                this, ((IncrementalApplication) getActivity().getApplication()).getTaskManager()));
     }
 
     private void defineWorkloadTrends(BarChart chart) {
@@ -166,7 +181,7 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
         for(int i = 0; i < weekSize - 1; i++) {
             LocalDate[] dates = weeks.get(i);
             for(LocalDate date : dates) {
-                int minutes = stats.getMinutesWorked(date);
+                int minutes = stats.getMinutesWorked(date, toggleTimeInvariant.isChecked());
 
                 if(minutes > 0) {
                     totalMinutes[i] += minutes;
@@ -288,5 +303,9 @@ public class StatisticsWorkloadTrendsFragment extends StatisticsFragment impleme
                 return false;
             }
         });
+    }
+
+    public boolean shouldIncludeTimeInvariants() {
+        return toggleTimeInvariant.isChecked();
     }
 }
