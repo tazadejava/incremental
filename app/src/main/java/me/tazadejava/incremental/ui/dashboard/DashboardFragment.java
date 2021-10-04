@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -37,6 +38,7 @@ import me.tazadejava.incremental.R;
 import me.tazadejava.incremental.logic.LogicalUtils;
 import me.tazadejava.incremental.logic.statistics.StatsManager;
 import me.tazadejava.incremental.logic.tasks.TaskManager;
+import me.tazadejava.incremental.logic.tasks.TimePeriod;
 import me.tazadejava.incremental.ui.create.CreateTaskActivity;
 import me.tazadejava.incremental.ui.main.BackPressedInterface;
 import me.tazadejava.incremental.ui.main.IncrementalApplication;
@@ -58,6 +60,7 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
     private int currentDateOffset;
     private LocalDate[] currentDates;
+    private boolean workBarChartLongPressed;
 
     private LocalDate lastRefreshDate;
 
@@ -107,6 +110,19 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
         dashboardView.setLayoutManager(llm = new LinearLayoutManager(getContext()));
         dashboardView.setAdapter(adapter = new MainDashboardDayAdapter(((IncrementalApplication) getActivity().getApplication()).getTaskManager(),
                 this, dashboardView, llm, getActivity()));
+
+        dashboardView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                if(!dashboardView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    //expand list by 7 days
+                    taskManager.getCurrentTimePeriod().extendLookaheadTasksViewCount(TimePeriod.DAILY_LOGS_AHEAD_COUNT_SHOW_UI + 7);
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
 
         lastRefreshDate = LocalDate.now();
 
@@ -163,6 +179,35 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
                 currentDateOffset--;
                 refreshChartData();
+            }
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                v.onTouchEvent(event);
+
+                if(event.getAction() == MotionEvent.ACTION_UP && workBarChartLongPressed) {
+                    workBarChartLongPressed = false;
+
+                    while(currentDateOffset != 0) {
+                        int dir = currentDateOffset > 0 ? -1 : 1;
+                        for(int i = 0; i < currentDates.length; i++) {
+                            currentDates[i] = currentDates[i].plusDays(dir * 7);
+                        }
+
+                        currentDateOffset += dir;
+                    }
+                    refreshChartData();
+                }
+
+                return super.onTouch(v, event);
+            }
+        });
+
+        workBarChart.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                workBarChartLongPressed = true;
+                return true;
             }
         });
 
@@ -258,9 +303,17 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
             workBarChart.getXAxis().setTextColor(ContextCompat.getColor(getContext(), R.color.primaryColor));
         }
 
+        TimePeriod timePeriod = ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod();
+
+        //extend time period lookahead dynamically
+
+        if(currentDateOffset > 0) {
+            timePeriod.extendLookaheadWeekCount(currentDateOffset);
+        }
+
         //refresh data
 
-        StatsManager stats = ((IncrementalApplication) getActivity().getApplication()).getTaskManager().getCurrentTimePeriod().getStatsManager();
+        StatsManager stats = timePeriod.getStatsManager();
 
         int maxMinutes = 0;
         int maxProjectedMinutes = 0;
@@ -383,6 +436,10 @@ public class DashboardFragment extends Fragment implements BackPressedInterface 
 
     @Override
     public void onBackPressed() {
-        dashboardView.smoothScrollToPosition(0);
+        if(llm.findFirstVisibleItemPosition() >= 7) { //if deeper than 7 days, then do not scroll smoothly
+            dashboardView.scrollToPosition(0);
+        } else {
+            dashboardView.smoothScrollToPosition(0);
+        }
     }
 }

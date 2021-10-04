@@ -34,8 +34,8 @@ import me.tazadejava.incremental.ui.main.Utils;
 public class TimePeriod {
 
     //need to account for the possible next week plus 6 days if on a Monday
-    public static final int DAILY_LOGS_AHEAD_COUNT_LOAD = Utils.getDaysUntilEndOfWeek(2);
-    public static final int DAILY_LOGS_AHEAD_COUNT_SHOW_UI = 6; //not including today
+    public static int DAILY_LOGS_AHEAD_COUNT_LOAD = Utils.getDaysUntilEndOfWeek(3);
+    public static int DAILY_LOGS_AHEAD_COUNT_SHOW_UI = 6; //not including today
 
     private TaskManager taskManager;
     private Gson gson;
@@ -65,11 +65,7 @@ public class TimePeriod {
     private TimePeriod(TaskManager taskManager) {
         this.taskManager = taskManager;
 
-        tasksByDay = new List[DAILY_LOGS_AHEAD_COUNT_LOAD];
-
-        for (int i = 0; i < tasksByDay.length; i++) {
-            tasksByDay[i] = new ArrayList<>();
-        }
+        resetTasksByDayList();
     }
 
     public TimePeriod(TaskManager taskManager, String fileDir, Gson gson, String name, LocalDate beginDate, LocalDate endDate) {
@@ -125,10 +121,48 @@ public class TimePeriod {
 
         if(loadTaskData) {
             loadTaskData(taskManager, gson, dataFolder);
-        } else {
-            this.gson = gson;
-            this.dataFolder = dataFolder;
         }
+
+        this.gson = gson;
+        this.dataFolder = dataFolder;
+    }
+
+    public void extendLookaheadWeekCount(int weeks) {
+        //maintain the max weeks
+        //TODO: revamp loading system to be more efficient
+        //goal: maintains the mobile app idea of "infinite content" while lazily loading
+        int oldLookaheadCount = DAILY_LOGS_AHEAD_COUNT_LOAD;
+        DAILY_LOGS_AHEAD_COUNT_LOAD = Math.max(DAILY_LOGS_AHEAD_COUNT_LOAD, Utils.getDaysUntilEndOfWeek(weeks + 1));
+
+        if(oldLookaheadCount != DAILY_LOGS_AHEAD_COUNT_LOAD) {
+            resetTasksByDayList();
+            loadTaskData(taskManager, gson, dataFolder);
+        }
+    }
+
+    public void extendLookaheadTasksViewCount(int days) {
+        int oldLookaheadCount = DAILY_LOGS_AHEAD_COUNT_SHOW_UI;
+        DAILY_LOGS_AHEAD_COUNT_SHOW_UI = Math.max(DAILY_LOGS_AHEAD_COUNT_SHOW_UI, days);
+
+        if(oldLookaheadCount != DAILY_LOGS_AHEAD_COUNT_SHOW_UI) {
+            //check if weeks is enough
+            if(DAILY_LOGS_AHEAD_COUNT_SHOW_UI > DAILY_LOGS_AHEAD_COUNT_LOAD) {
+                extendLookaheadWeekCount((int) Math.ceil(DAILY_LOGS_AHEAD_COUNT_SHOW_UI / 7d) + 1);
+            }
+
+            resetTasksByDayList();
+            loadTaskData(taskManager, gson, dataFolder);
+        }
+    }
+
+    private void resetTasksByDayList() {
+        tasksByDay = new List[DAILY_LOGS_AHEAD_COUNT_LOAD];
+
+        for (int i = 0; i < tasksByDay.length; i++) {
+            tasksByDay[i] = new ArrayList<>();
+        }
+
+        allActiveTasks = new ArrayList<>();
     }
 
     public boolean setBeginDate(LocalDate date) {
