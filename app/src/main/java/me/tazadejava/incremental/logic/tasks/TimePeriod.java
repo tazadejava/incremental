@@ -1,5 +1,7 @@
 package me.tazadejava.incremental.logic.tasks;
 
+import android.widget.Toast;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -125,11 +127,32 @@ public class TimePeriod {
 
         this.gson = gson;
         this.dataFolder = dataFolder;
+
+        //TODO: temp
+        Iterator<Task> activeTasks = allActiveTasks.iterator();
+        Set<Task> seenTasks = new HashSet<>();
+        int removed = 0;
+        while(activeTasks.hasNext()) {
+            Task task = activeTasks.next();
+
+            if(seenTasks.contains(task)) {
+                activeTasks.remove();
+                removed++;
+            } else {
+                seenTasks.add(task);
+            }
+        }
+
+        if (removed > 0) {
+            System.out.println("REMOVED " + removed + " duplicate tasks from active tasks");
+            saveTaskData(gson, dataFolder);
+        }
     }
 
     public void extendLookaheadWeekCount(int weeks) {
+        if(true) return;
         //maintain the max weeks
-        //TODO: revamp loading system to be more efficient
+        //TODO: revamp loading system to be more efficient; TODO: this is not working because it duplicates tasks??
         //goal: maintains the mobile app idea of "infinite content" while lazily loading
         int oldLookaheadCount = DAILY_LOGS_AHEAD_COUNT_LOAD;
         DAILY_LOGS_AHEAD_COUNT_LOAD = Math.max(DAILY_LOGS_AHEAD_COUNT_LOAD, Utils.getDaysUntilEndOfWeek(weeks + 1));
@@ -141,6 +164,8 @@ public class TimePeriod {
     }
 
     public void extendLookaheadTasksViewCount(int days) {
+        if(true) return;
+        //TODO: this is not working because it duplicates tasks??
         int oldLookaheadCount = DAILY_LOGS_AHEAD_COUNT_SHOW_UI;
         DAILY_LOGS_AHEAD_COUNT_SHOW_UI = Math.max(DAILY_LOGS_AHEAD_COUNT_SHOW_UI, days);
 
@@ -162,7 +187,9 @@ public class TimePeriod {
             tasksByDay[i] = new ArrayList<>();
         }
 
-        allActiveTasks = new ArrayList<>();
+        allActiveTasks.clear();
+        allTaskGenerators.clear();
+        allCompletedTaskGenerators.clear();
     }
 
     public boolean setBeginDate(LocalDate date) {
@@ -912,14 +939,19 @@ public class TimePeriod {
     public List<Task> getCompletedTasksHistory() {
         List<Task> tasks = new ArrayList<>();
 
+        //TODO: REMOVE THIS SHOULD NOT EXIST
+        Set<Task> seenTasks = new HashSet<>();
+
         for(TaskGenerator generator : allTaskGenerators) {
             for(Task task : generator.getAllTasks()) {
                 if(task == null) {
                     continue;
                 }
 
-                if(task.isTaskComplete()) {
+                if(task.isTaskComplete() && !seenTasks.contains(task)) {
                     tasks.add(task);
+                    System.out.println("HAD TO REMOVE DUPLICATE TASK GEN");
+                    seenTasks.add(task);
                 }
             }
         }
@@ -930,8 +962,10 @@ public class TimePeriod {
                     continue;
                 }
 
-                if(task.isTaskComplete()) {
+                if(task.isTaskComplete() && !seenTasks.contains(task)) {
                     tasks.add(task);
+                    System.out.println("HAD TO REMOVE DUPLICATE COMPLETED TASK GEN");
+                    seenTasks.add(task);
                 }
             }
         }
